@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntax Sheet — DIGITECH</title>
+<style>
+  :root{
+    --bg:#04010f;
+    --bg-mid:#0a0420;
+    --pink:#ff2e9a;
+    --cyan:#21e6ff;
+    --purple:#a855f7;
+    --amber:#fbbf24;
+    --green:#4ade80;
+    --coral:#f97316;
+    --text:#eef0ff;
+    --text2:#a8a8d8;
+    --grid:#ff2e9a;
+    --grid2:#21e6ff;
+    --card:rgba(10,4,32,0.85);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;
+    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);
+    pointer-events:none;z-index:9999;
+  }
+
+  /* HEADER STRIP */
+  .grid-strip{
+    position:relative;height:160px;
+    background:var(--bg);overflow:hidden;
+    border-bottom:2px solid var(--cyan);
+  }
+  .grid-strip::before{
+    content:"";position:absolute;
+    left:50%;bottom:0;
+    width:max(1400px,180vw);height:380px;
+    transform-origin:50% 100%;
+    transform:translateX(-50%) rotateX(60deg);
+    background-image:
+      repeating-linear-gradient(90deg,var(--grid2) 0 2px,transparent 2px 70px),
+      repeating-linear-gradient(0deg,var(--grid) 0 2px,transparent 2px 50px);
+    -webkit-mask-image:linear-gradient(to top,black 0%,black 40%,transparent 90%);
+    mask-image:linear-gradient(to top,black 0%,black 40%,transparent 90%);
+    opacity:0.5;
+    animation:grid-scroll 1.4s linear infinite;
+  }
+  @keyframes grid-scroll{from{background-position:0 0,0 0;}to{background-position:0 0,0 50px;}}
+  .strip-content{
+    position:absolute;inset:0;z-index:2;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;
+  }
+  .eyebrow{font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:var(--cyan);}
+  .poster-title{
+    font-family:'Arial Black',Arial,sans-serif;font-weight:900;
+    font-size:clamp(2rem,7vw,4.5rem);letter-spacing:0.06em;
+    background:linear-gradient(100deg,#fff 0%,#e8eaf0 20%,#9aa3c4 40%,#3d4470 52%,#e8eaf0 65%,#fff 80%,#9aa3c4 95%);
+    background-size:250% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 28px rgba(255,255,255,0.25));
+    animation:chrome-shimmer 6s ease-in-out infinite;
+  }
+  @keyframes chrome-shimmer{0%{background-position:100% 0;}50%{background-position:0% 0;}100%{background-position:100% 0;}}
+  .poster-tagline{font-size:13px;color:var(--text2);font-family:'Courier New',monospace;letter-spacing:0.08em;}
+  .poster-tagline span{color:var(--pink);}
+
+  /* MAIN */
+  main{max-width:1100px;margin:0 auto;padding:48px 24px 80px;}
+
+  /* SECTION HEADER */
+  .section-head{
+    display:flex;align-items:center;gap:14px;
+    margin:48px 0 20px;
+  }
+  .section-head:first-child{margin-top:0;}
+  .section-badge{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:11px;letter-spacing:0.2em;text-transform:uppercase;
+    font-weight:900;padding:5px 14px;border:1px solid;
+    border-radius:2px;white-space:nowrap;
+  }
+  .section-line{flex:1;height:1px;background:rgba(255,255,255,0.07);}
+  .section-desc{font-size:12px;color:var(--text2);letter-spacing:0.04em;}
+
+  /* SYNTAX GRID */
+  .syn-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:14px;
+  }
+
+  /* SYNTAX CARD */
+  .syn-card{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.07);
+    border-top:2px solid;
+    overflow:hidden;
+  }
+  .syn-card-head{
+    padding:12px 16px 10px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .syn-name{font-size:14px;font-weight:700;color:var(--text);}
+  .syn-tag{
+    font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+    padding:2px 8px;border-radius:2px;
+  }
+  .syn-desc{
+    font-size:12px;color:var(--text2);
+    padding:10px 16px 0;line-height:1.55;
+  }
+  .syn-code{
+    font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size:12px;line-height:1.75;
+    padding:10px 16px 14px;
+    overflow-x:auto;
+  }
+  /* syntax colours */
+  .kw{color:var(--pink);}
+  .fn{color:var(--cyan);}
+  .cm{color:#6272a4;font-style:italic;}
+  .st{color:var(--amber);}
+  .nm{color:#bd93f9;}
+  .op{color:var(--text2);}
+  .hl{color:var(--green);}
+  .num{color:#f97316;}
+
+  /* COMPARISON TABLE */
+  .cmp-table{
+    width:100%;border-collapse:collapse;
+    font-size:12.5px;margin-top:4px;
+  }
+  .cmp-table th{
+    text-align:left;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;
+    color:var(--text2);padding:8px 12px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .cmp-table td{
+    padding:9px 12px;vertical-align:top;line-height:1.5;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+  }
+  .cmp-table tr:last-child td{border-bottom:none;}
+  .cmp-table td:first-child{
+    font-family:'Cascadia Code','Consolas',monospace;
+    font-size:11.5px;color:var(--cyan);white-space:nowrap;
+    width:28%;
+  }
+  .cmp-table td:nth-child(2){color:var(--text2);width:36%;}
+  .cmp-table td:last-child{
+    font-family:'Cascadia Code','Consolas',monospace;
+    font-size:11px;color:#bd93f9;
+  }
+  .cmp-wrap{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.07);
+    border-top:2px solid;
+    overflow:hidden;
+  }
+  .cmp-label{
+    padding:11px 16px 9px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:13px;font-weight:700;color:var(--text);
+    display:flex;align-items:center;gap:8px;
+  }
+
+  /* PYGAME GAME LOOP BLOCK — full width */
+  .full-card{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.07);
+    border-top:2px solid var(--green);
+    margin-bottom:14px;
+  }
+  .full-card-head{
+    padding:12px 16px 10px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .full-code{
+    font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    font-size:12px;line-height:1.8;
+    padding:14px 20px 18px;
+    overflow-x:auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 40px;
+  }
+  @media(max-width:700px){.full-code{grid-template-columns:1fr;}}
+
+  /* WARN BOX */
+  .warn-box{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:14px 16px;
+    background:rgba(251,191,36,0.07);
+    border:1px solid rgba(251,191,36,0.2);
+    border-left:3px solid var(--amber);
+    margin-bottom:14px;
+    font-size:13px;color:var(--text2);line-height:1.6;
+  }
+  .warn-box strong{color:var(--amber);}
+
+  /* FOOTER */
+  footer{
+    text-align:center;padding:28px 24px;
+    border-top:1px solid rgba(255,46,154,0.2);
+    color:var(--text2);font-size:12px;letter-spacing:0.05em;line-height:1.8;
+  }
+  footer span{color:var(--pink);}
+
+  @media print{
+    @page{size:A3;margin:10mm;}
+    body::after,.grid-strip::before{animation:none;}
+    body{background:#04010f;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    main{padding:24px 16px 32px;}
+    .grid-strip{height:110px;}
+    .full-code{grid-template-columns:1fr 1fr;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .grid-strip::before,.poster-title{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-strip">
+  <div class="strip-content">
+    <p class="eyebrow">DIGITECH — Year 8 Digital Technologies</p>
+    <div class="poster-title">Syntax Sheet</div>
+    <p class="poster-tagline">Python + pygame — <span>keep this open while you code</span></p>
+  </div>
+</div>
+
+<main>
+
+  <!-- ══════════════════════════════
+       SECTION 1 — CORE PYTHON
+  ══════════════════════════════ -->
+  <div class="section-head">
+    <div class="section-badge" style="color:var(--pink);border-color:rgba(255,46,154,0.35);background:rgba(255,46,154,0.08);">Core Python</div>
+    <div class="section-line"></div>
+    <div class="section-desc">Works in any Python project — text RPG, dashboard, or pygame game</div>
+  </div>
+
+  <div class="syn-grid">
+
+    <!-- Variables -->
+    <div class="syn-card" style="border-top-color:var(--pink);">
+      <div class="syn-card-head">
+        <span class="syn-name">Variables</span>
+        <span class="syn-tag" style="background:rgba(255,46,154,0.1);color:var(--pink);border:1px solid rgba(255,46,154,0.2);">store a value</span>
+      </div>
+      <div class="syn-desc">Give a value a name so you can use it later. No declaration needed — just assign.</div>
+      <div class="syn-code">
+<span class="nm">player_health</span> <span class="op">=</span> <span class="num">100</span><br>
+<span class="nm">name</span> <span class="op">=</span> <span class="st">"Zara"</span><br>
+<span class="nm">is_alive</span> <span class="op">=</span> <span class="kw">True</span><br>
+<span class="nm">speed</span> <span class="op">=</span> <span class="num">3.5</span>
+      </div>
+    </div>
+
+    <!-- if / elif / else -->
+    <div class="syn-card" style="border-top-color:var(--pink);">
+      <div class="syn-card-head">
+        <span class="syn-name">if / elif / else</span>
+        <span class="syn-tag" style="background:rgba(255,46,154,0.1);color:var(--pink);border:1px solid rgba(255,46,154,0.2);">state-check</span>
+      </div>
+      <div class="syn-desc">One branch fires — never both. <code style="color:var(--cyan)">elif</code> = "else if". Indentation is the structure.</div>
+      <div class="syn-code">
+<span class="kw">if</span> <span class="nm">hp</span> <span class="op">&lt;=</span> <span class="num">0</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="st">"You died"</span><span class="op">)</span><br>
+<span class="kw">elif</span> <span class="nm">hp</span> <span class="op">&lt;</span> <span class="num">20</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="st">"Low health!"</span><span class="op">)</span><br>
+<span class="kw">else</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="st">"Still fighting"</span><span class="op">)</span>
+      </div>
+    </div>
+
+    <!-- for loop -->
+    <div class="syn-card" style="border-top-color:var(--amber);">
+      <div class="syn-card-head">
+        <span class="syn-name">for loop</span>
+        <span class="syn-tag" style="background:rgba(251,191,36,0.1);color:var(--amber);border:1px solid rgba(251,191,36,0.2);">fixed repeats</span>
+      </div>
+      <div class="syn-desc">Runs once per item in a list, or a set number of times with <code style="color:var(--cyan)">range()</code>.</div>
+      <div class="syn-code">
+<span class="kw">for</span> <span class="nm">enemy</span> <span class="kw">in</span> <span class="nm">enemies</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="nm">enemy</span><span class="op">)</span><br>
+<br>
+<span class="kw">for</span> <span class="nm">i</span> <span class="kw">in</span> <span class="fn">range</span><span class="op">(</span><span class="num">5</span><span class="op">):</span> <span class="cm"># 0,1,2,3,4</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="nm">i</span><span class="op">)</span>
+      </div>
+    </div>
+
+    <!-- while loop -->
+    <div class="syn-card" style="border-top-color:var(--amber);">
+      <div class="syn-card-head">
+        <span class="syn-name">while loop</span>
+        <span class="syn-tag" style="background:rgba(251,191,36,0.1);color:var(--amber);border:1px solid rgba(251,191,36,0.2);">unknown repeats</span>
+      </div>
+      <div class="syn-desc">Keeps looping until the condition is false. Use when you don't know how many turns the game will take.</div>
+      <div class="syn-code">
+<span class="kw">while</span> <span class="nm">hp</span> <span class="op">&gt;</span> <span class="num">0</span> <span class="kw">and</span> <span class="nm">dist</span> <span class="op">&gt;</span> <span class="num">0</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">hp</span> <span class="op">-=</span> <span class="nm">damage</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">dist</span> <span class="op">-=</span> <span class="nm">speed</span><br>
+<span class="cm"># exits when either condition fails</span>
+      </div>
+    </div>
+
+    <!-- functions -->
+    <div class="syn-card" style="border-top-color:var(--purple);">
+      <div class="syn-card-head">
+        <span class="syn-name">Functions</span>
+        <span class="syn-tag" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2);">reuse code</span>
+      </div>
+      <div class="syn-desc">Give a block of code a name so you can call it anywhere. Use <code style="color:var(--cyan)">return</code> to send a value back out.</div>
+      <div class="syn-code">
+<span class="kw">def</span> <span class="fn">attack</span><span class="op">(</span><span class="nm">damage</span><span class="op">,</span> <span class="nm">target_hp</span><span class="op">):</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">target_hp</span> <span class="op">-=</span> <span class="nm">damage</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="nm">target_hp</span><br>
+<br>
+<span class="nm">enemy_hp</span> <span class="op">=</span> <span class="fn">attack</span><span class="op">(</span><span class="num">15</span><span class="op">,</span> <span class="nm">enemy_hp</span><span class="op">)</span>
+      </div>
+    </div>
+
+    <!-- lists -->
+    <div class="syn-card" style="border-top-color:var(--green);">
+      <div class="syn-card-head">
+        <span class="syn-name">Lists</span>
+        <span class="syn-tag" style="background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2);">ordered collection</span>
+      </div>
+      <div class="syn-desc">Ordered, changeable. Index starts at <code style="color:var(--cyan)">0</code>. Use <code style="color:var(--cyan)">.append()</code> to add, <code style="color:var(--cyan)">len()</code> to count.</div>
+      <div class="syn-code">
+<span class="nm">inventory</span> <span class="op">= [</span><span class="st">"sword"</span><span class="op">,</span> <span class="st">"potion"</span><span class="op">]</span><br>
+<span class="nm">inventory</span><span class="op">.</span><span class="fn">append</span><span class="op">(</span><span class="st">"shield"</span><span class="op">)</span><br>
+<span class="fn">print</span><span class="op">(</span><span class="nm">inventory</span><span class="op">[</span><span class="num">0</span><span class="op">])</span> <span class="cm"># "sword"</span><br>
+<span class="fn">print</span><span class="op">(</span><span class="fn">len</span><span class="op">(</span><span class="nm">inventory</span><span class="op">))</span> <span class="cm"># 3</span>
+      </div>
+    </div>
+
+    <!-- dictionaries -->
+    <div class="syn-card" style="border-top-color:var(--purple);">
+      <div class="syn-card-head">
+        <span class="syn-name">Dictionaries</span>
+        <span class="syn-tag" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2);">named pairs</span>
+      </div>
+      <div class="syn-desc">Key → value pairs. Look up by name, not position. Great for character stats, room data, item properties.</div>
+      <div class="syn-code">
+<span class="nm">player</span> <span class="op">= {</span><span class="st">"hp"</span><span class="op">:</span> <span class="num">80</span><span class="op">,</span> <span class="st">"xp"</span><span class="op">:</span> <span class="num">120</span><span class="op">}</span><br>
+<span class="fn">print</span><span class="op">(</span><span class="nm">player</span><span class="op">[</span><span class="st">"hp"</span><span class="op">])</span>  <span class="cm"># 80</span><br>
+<span class="nm">player</span><span class="op">[</span><span class="st">"hp"</span><span class="op">] -=</span> <span class="num">10</span>  <span class="cm"># take damage</span><br>
+<span class="nm">player</span><span class="op">[</span><span class="st">"level"</span><span class="op">] =</span> <span class="num">2</span>  <span class="cm"># add new key</span>
+      </div>
+    </div>
+
+    <!-- input -->
+    <div class="syn-card" style="border-top-color:var(--cyan);">
+      <div class="syn-card-head">
+        <span class="syn-name">User input</span>
+        <span class="syn-tag" style="background:rgba(33,230,255,0.1);color:var(--cyan);border:1px solid rgba(33,230,255,0.2);">text RPG</span>
+      </div>
+      <div class="syn-desc"><code style="color:var(--cyan)">input()</code> always returns a string. Wrap in <code style="color:var(--cyan)">int()</code> if you need a number.</div>
+      <div class="syn-code">
+<span class="nm">choice</span> <span class="op">=</span> <span class="fn">input</span><span class="op">(</span><span class="st">"Attack or flee? "</span><span class="op">)</span><br>
+<span class="kw">if</span> <span class="nm">choice</span> <span class="op">==</span> <span class="st">"attack"</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span><span class="op">(</span><span class="st">"You swing your sword!"</span><span class="op">)</span><br>
+<br>
+<span class="nm">age</span> <span class="op">=</span> <span class="fn">int</span><span class="op">(</span><span class="fn">input</span><span class="op">(</span><span class="st">"Enter age: "</span><span class="op">))</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- QUICK OPERATORS -->
+  <div style="margin-top:14px;">
+    <div class="cmp-wrap" style="border-top-color:var(--text2);">
+      <div class="cmp-label" style="color:var(--text2);">Shorthand operators — update a variable in place</div>
+      <table class="cmp-table">
+        <thead><tr><th>Shorthand</th><th>Means</th><th>Long form</th></tr></thead>
+        <tbody>
+          <tr><td>x += 5</td><td>add 5 to x</td><td>x = x + 5</td></tr>
+          <tr><td>x -= 10</td><td>subtract 10 from x</td><td>x = x - 10</td></tr>
+          <tr><td>x *= 2</td><td>multiply x by 2</td><td>x = x * 2</td></tr>
+          <tr><td>x //= 3</td><td>divide x by 3, round down</td><td>x = x // 3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SECTION 2 — PYGAME
+  ══════════════════════════════ -->
+  <div class="section-head">
+    <div class="section-badge" style="color:var(--green);border-color:rgba(74,222,128,0.35);background:rgba(74,222,128,0.08);">pygame</div>
+    <div class="section-line"></div>
+    <div class="section-desc">Adds a window, graphics, movement, and input — needed for maze, snake, shooter</div>
+  </div>
+
+  <div class="warn-box">
+    <span style="font-size:18px;flex-shrink:0;">⚠</span>
+    <div><strong>Import pygame first</strong> — every pygame project starts with the same three lines. If you forget <code style="color:var(--cyan)">pygame.init()</code> or the game loop, nothing works. Copy the skeleton below and build from it.</div>
+  </div>
+
+  <!-- GAME LOOP — full width, two columns -->
+  <div class="full-card">
+    <div class="full-card-head">
+      <span class="syn-name">The pygame skeleton — every project starts here</span>
+      <span class="syn-tag" style="background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;">copy this</span>
+    </div>
+    <div class="full-code">
+      <div>
+<span class="kw">import</span> <span class="nm">pygame</span><br>
+<span class="nm">pygame</span><span class="op">.</span><span class="fn">init</span><span class="op">()</span><br>
+<br>
+<span class="cm"># window setup</span><br>
+<span class="nm">WIDTH</span><span class="op">,</span> <span class="nm">HEIGHT</span> <span class="op">=</span> <span class="num">800</span><span class="op">,</span> <span class="num">600</span><br>
+<span class="nm">screen</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">display</span><span class="op">.</span><span class="fn">set_mode</span><span class="op">((</span><span class="nm">WIDTH</span><span class="op">,</span> <span class="nm">HEIGHT</span><span class="op">))</span><br>
+<span class="nm">pygame</span><span class="op">.</span><span class="nm">display</span><span class="op">.</span><span class="fn">set_caption</span><span class="op">(</span><span class="st">"My Game"</span><span class="op">)</span><br>
+<span class="nm">clock</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">time</span><span class="op">.</span><span class="fn">Clock</span><span class="op">()</span><br>
+<span class="nm">FPS</span> <span class="op">=</span> <span class="num">60</span><br>
+<br>
+<span class="cm"># colours (R, G, B)</span><br>
+<span class="nm">BLACK</span> <span class="op">= (</span><span class="num">0</span><span class="op">,</span> <span class="num">0</span><span class="op">,</span> <span class="num">0</span><span class="op">)</span><br>
+<span class="nm">WHITE</span> <span class="op">= (</span><span class="num">255</span><span class="op">,</span> <span class="num">255</span><span class="op">,</span> <span class="num">255</span><span class="op">)</span><br>
+<span class="nm">PINK</span>  <span class="op">= (</span><span class="num">255</span><span class="op">,</span> <span class="num">46</span><span class="op">,</span> <span class="num">154</span><span class="op">)</span>
+      </div>
+      <div>
+<span class="cm"># game loop</span><br>
+<span class="nm">running</span> <span class="op">=</span> <span class="kw">True</span><br>
+<span class="kw">while</span> <span class="nm">running</span><span class="op">:</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># 1 — handle events</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> <span class="nm">event</span> <span class="kw">in</span> <span class="nm">pygame</span><span class="op">.</span><span class="fn">event.get</span><span class="op">():</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> <span class="nm">event</span><span class="op">.</span><span class="nm">type</span> <span class="op">==</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">QUIT</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">running</span> <span class="op">=</span> <span class="kw">False</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># 2 — update game state</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># (move player, check collisions, etc)</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># 3 — draw everything</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">screen</span><span class="op">.</span><span class="fn">fill</span><span class="op">(</span><span class="nm">BLACK</span><span class="op">)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># draw shapes here</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">pygame</span><span class="op">.</span><span class="nm">display</span><span class="op">.</span><span class="fn">flip</span><span class="op">()</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">clock</span><span class="op">.</span><span class="fn">tick</span><span class="op">(</span><span class="nm">FPS</span><span class="op">)</span><br>
+<br>
+<span class="nm">pygame</span><span class="op">.</span><span class="fn">quit</span><span class="op">()</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- pygame cards -->
+  <div class="syn-grid">
+
+    <!-- drawing shapes -->
+    <div class="syn-card" style="border-top-color:var(--green);">
+      <div class="syn-card-head">
+        <span class="syn-name">Drawing shapes</span>
+        <span class="syn-tag" style="background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2);">pygame.draw</span>
+      </div>
+      <div class="syn-desc">All draw calls go between <code style="color:var(--cyan)">screen.fill()</code> and <code style="color:var(--cyan)">display.flip()</code>. Rect = (x, y, width, height).</div>
+      <div class="syn-code">
+<span class="cm"># rectangle</span><br>
+<span class="nm">pygame</span><span class="op">.</span><span class="nm">draw</span><span class="op">.</span><span class="fn">rect</span><span class="op">(</span><span class="nm">screen</span><span class="op">,</span> <span class="nm">WHITE</span><span class="op">, (</span><span class="num">100</span><span class="op">,</span><span class="num">200</span><span class="op">,</span><span class="num">50</span><span class="op">,</span><span class="num">50</span><span class="op">))</span><br>
+<span class="cm"># circle: (surface, colour, centre, radius)</span><br>
+<span class="nm">pygame</span><span class="op">.</span><span class="nm">draw</span><span class="op">.</span><span class="fn">circle</span><span class="op">(</span><span class="nm">screen</span><span class="op">,</span> <span class="nm">PINK</span><span class="op">, (</span><span class="num">400</span><span class="op">,</span><span class="num">300</span><span class="op">),</span> <span class="num">20</span><span class="op">)</span><br>
+<span class="cm"># line: start, end, thickness</span><br>
+<span class="nm">pygame</span><span class="op">.</span><span class="nm">draw</span><span class="op">.</span><span class="fn">line</span><span class="op">(</span><span class="nm">screen</span><span class="op">,</span> <span class="nm">WHITE</span><span class="op">, (</span><span class="num">0</span><span class="op">,</span><span class="num">0</span><span class="op">), (</span><span class="num">100</span><span class="op">,</span><span class="num">100</span><span class="op">),</span> <span class="num">2</span><span class="op">)</span>
+      </div>
+    </div>
+
+    <!-- keyboard input -->
+    <div class="syn-card" style="border-top-color:var(--cyan);">
+      <div class="syn-card-head">
+        <span class="syn-name">Keyboard input</span>
+        <span class="syn-tag" style="background:rgba(33,230,255,0.1);color:var(--cyan);border:1px solid rgba(33,230,255,0.2);">movement</span>
+      </div>
+      <div class="syn-desc"><code style="color:var(--cyan)">get_pressed()</code> checks keys held down — use in the update section of the game loop.</div>
+      <div class="syn-code">
+<span class="nm">keys</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">key</span><span class="op">.</span><span class="fn">get_pressed</span><span class="op">()</span><br>
+<span class="kw">if</span> <span class="nm">keys</span><span class="op">[</span><span class="nm">pygame</span><span class="op">.</span><span class="nm">K_LEFT</span><span class="op">]:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">player_x</span> <span class="op">-=</span> <span class="nm">speed</span><br>
+<span class="kw">if</span> <span class="nm">keys</span><span class="op">[</span><span class="nm">pygame</span><span class="op">.</span><span class="nm">K_RIGHT</span><span class="op">]:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">player_x</span> <span class="op">+=</span> <span class="nm">speed</span><br>
+<span class="cm"># also: K_UP K_DOWN K_SPACE K_a K_w</span>
+      </div>
+    </div>
+
+    <!-- collision detection -->
+    <div class="syn-card" style="border-top-color:var(--pink);">
+      <div class="syn-card-head">
+        <span class="syn-name">Collision detection</span>
+        <span class="syn-tag" style="background:rgba(255,46,154,0.1);color:var(--pink);border:1px solid rgba(255,46,154,0.2);">hit check</span>
+      </div>
+      <div class="syn-desc"><code style="color:var(--cyan)">pygame.Rect</code> objects can check if they overlap with <code style="color:var(--cyan)">.colliderect()</code>. Define rects for player and enemies.</div>
+      <div class="syn-code">
+<span class="nm">player_rect</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="fn">Rect</span><span class="op">(</span><span class="nm">px</span><span class="op">,</span><span class="nm">py</span><span class="op">,</span><span class="num">40</span><span class="op">,</span><span class="num">40</span><span class="op">)</span><br>
+<span class="nm">enemy_rect</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="fn">Rect</span><span class="op">(</span><span class="nm">ex</span><span class="op">,</span><span class="nm">ey</span><span class="op">,</span><span class="num">40</span><span class="op">,</span><span class="num">40</span><span class="op">)</span><br>
+<span class="kw">if</span> <span class="nm">player_rect</span><span class="op">.</span><span class="fn">colliderect</span><span class="op">(</span><span class="nm">enemy_rect</span><span class="op">):</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">hp</span> <span class="op">-=</span> <span class="num">10</span>
+      </div>
+    </div>
+
+    <!-- displaying text -->
+    <div class="syn-card" style="border-top-color:var(--amber);">
+      <div class="syn-card-head">
+        <span class="syn-name">Displaying text</span>
+        <span class="syn-tag" style="background:rgba(251,191,36,0.1);color:var(--amber);border:1px solid rgba(251,191,36,0.2);">HUD / UI</span>
+      </div>
+      <div class="syn-desc">Create a font object once, then use <code style="color:var(--cyan)">.render()</code> each frame. Text must be a string — wrap numbers in <code style="color:var(--cyan)">str()</code>.</div>
+      <div class="syn-code">
+<span class="nm">font</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">font</span><span class="op">.</span><span class="fn">SysFont</span><span class="op">(</span><span class="kw">None</span><span class="op">,</span> <span class="num">36</span><span class="op">)</span><br>
+<span class="nm">text</span> <span class="op">=</span> <span class="nm">font</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="st">"HP: "</span> <span class="op">+</span> <span class="fn">str</span><span class="op">(</span><span class="nm">hp</span><span class="op">),</span> <span class="kw">True</span><span class="op">,</span> <span class="nm">WHITE</span><span class="op">)</span><br>
+<span class="nm">screen</span><span class="op">.</span><span class="fn">blit</span><span class="op">(</span><span class="nm">text</span><span class="op">, (</span><span class="num">10</span><span class="op">,</span> <span class="num">10</span><span class="op">))</span><br>
+<span class="cm"># blit = "draw this onto the screen"</span>
+      </div>
+    </div>
+
+    <!-- sprites/images -->
+    <div class="syn-card" style="border-top-color:var(--purple);">
+      <div class="syn-card-head">
+        <span class="syn-name">Loading a sprite image</span>
+        <span class="syn-tag" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2);">Art cross-over</span>
+      </div>
+      <div class="syn-desc">Load your sprite image file (PNG with transparency works best). Scale it to fit your game's tile or character size.</div>
+      <div class="syn-code">
+<span class="nm">img</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">image</span><span class="op">.</span><span class="fn">load</span><span class="op">(</span><span class="st">"player.png"</span><span class="op">)</span><br>
+<span class="nm">img</span> <span class="op">=</span> <span class="nm">pygame</span><span class="op">.</span><span class="nm">transform</span><span class="op">.</span><span class="fn">scale</span><span class="op">(</span><span class="nm">img</span><span class="op">, (</span><span class="num">40</span><span class="op">,</span><span class="num">40</span><span class="op">))</span><br>
+<span class="cm"># then in the game loop:</span><br>
+<span class="nm">screen</span><span class="op">.</span><span class="fn">blit</span><span class="op">(</span><span class="nm">img</span><span class="op">, (</span><span class="nm">player_x</span><span class="op">,</span> <span class="nm">player_y</span><span class="op">))</span>
+      </div>
+    </div>
+
+    <!-- boundary checking -->
+    <div class="syn-card" style="border-top-color:var(--coral);">
+      <div class="syn-card-head">
+        <span class="syn-name">Boundary checking</span>
+        <span class="syn-tag" style="background:rgba(249,115,22,0.1);color:var(--coral);border:1px solid rgba(249,115,22,0.2);">keep in bounds</span>
+      </div>
+      <div class="syn-desc">Stop player or objects from moving off screen. Clamp the position after movement — pattern used in every movement game.</div>
+      <div class="syn-code">
+<span class="nm">player_x</span> <span class="op">+=</span> <span class="nm">speed</span><br>
+<span class="cm"># clamp: don't go past edges</span><br>
+<span class="kw">if</span> <span class="nm">player_x</span> <span class="op">&lt;</span> <span class="num">0</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">player_x</span> <span class="op">=</span> <span class="num">0</span><br>
+<span class="kw">if</span> <span class="nm">player_x</span> <span class="op">&gt;</span> <span class="nm">WIDTH</span> <span class="op">-</span> <span class="nm">tile</span><span class="op">:</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">player_x</span> <span class="op">=</span> <span class="nm">WIDTH</span> <span class="op">-</span> <span class="nm">tile</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PYGAME QUICK REF TABLE -->
+  <div style="margin-top:14px;">
+    <div class="cmp-wrap" style="border-top-color:var(--green);">
+      <div class="cmp-label" style="color:var(--green);">pygame quick reference</div>
+      <table class="cmp-table">
+        <thead><tr><th>Command</th><th>What it does</th><th>Where to call it</th></tr></thead>
+        <tbody>
+          <tr><td>pygame.init()</td><td>Start pygame — must be first</td><td>once, at the top</td></tr>
+          <tr><td>pygame.quit()</td><td>Shut down pygame cleanly</td><td>once, at the end</td></tr>
+          <tr><td>screen.fill(colour)</td><td>Wipe the screen (do before drawing)</td><td>start of each frame</td></tr>
+          <tr><td>pygame.display.flip()</td><td>Show everything drawn this frame</td><td>end of each frame</td></tr>
+          <tr><td>clock.tick(FPS)</td><td>Limit speed to FPS frames per second</td><td>end of each frame</td></tr>
+          <tr><td>pygame.event.get()</td><td>Get all events since last frame</td><td>start of event loop</td></tr>
+          <tr><td>pygame.QUIT</td><td>User clicked the close button</td><td>inside event loop</td></tr>
+          <tr><td>pygame.key.get_pressed()</td><td>Dict of which keys are held down</td><td>update section</td></tr>
+          <tr><td>pygame.Rect(x,y,w,h)</td><td>A rectangle object — use for collision</td><td>setup or update</td></tr>
+          <tr><td>.colliderect(other)</td><td>True if two Rects overlap</td><td>update section</td></tr>
+          <tr><td>screen.blit(img, pos)</td><td>Draw an image or text surface</td><td>draw section</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Part of <span>DIGITECH with James</span> — Year 8 Digital Technologies · SA Curriculum
+</footer>
+
+</body>
+</html>

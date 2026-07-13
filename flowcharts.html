@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Flowcharts — DIGITECH</title>
+<style>
+  :root {
+    --bg: #0a0420;
+    --bg2: #120836;
+    --pink: #ff2e9a;
+    --cyan: #21e6ff;
+    --purple: #a855f7;
+    --amber: #fbbf24;
+    --green: #4ade80;
+    --text: #eef0ff;
+    --text2: #a8a8d8;
+    --card: rgba(18,8,54,0.85);
+    --border-pink: rgba(255,46,154,0.4);
+    --border-cyan: rgba(33,230,255,0.3);
+    --glow-pink: 0 0 16px rgba(255,46,154,0.35);
+    --glow-cyan: 0 0 16px rgba(33,230,255,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    border-bottom: 1px solid var(--border-pink);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 50%, var(--pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    color: var(--text2);
+    font-size: 15px;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* COMPLEXITY BADGE */
+  .level-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .level-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border-pink);
+    transition: background 0.3s;
+  }
+  .level-dot.active { background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+
+  /* SECTION */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .complexity-badge {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .badge-1 { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .badge-2 { background: rgba(251,191,36,0.15); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+  .badge-3 { background: rgba(255,46,154,0.15); color: var(--pink); border: 1px solid rgba(255,46,154,0.3); }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-pink);
+  }
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cyan);
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .mismatch-tag {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tag-correct { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+  .tag-mismatch { background: rgba(255,46,154,0.12); color: var(--pink); border: 1px solid rgba(255,46,154,0.25); }
+  .tag-hidden { visibility: hidden; }
+
+  /* SPLIT PANE */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 320px;
+  }
+  @media (max-width: 640px) {
+    .split { grid-template-columns: 1fr; }
+  }
+  .pane {
+    padding: 20px 20px 24px;
+  }
+  .pane + .pane {
+    border-left: 1px solid rgba(255,255,255,0.06);
+  }
+  @media (max-width: 640px) {
+    .pane + .pane { border-left: none; border-top: 1px solid rgba(255,255,255,0.06); }
+  }
+  .pane-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pane-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .pane:first-child .pane-label::before { background: var(--cyan); }
+  .pane:last-child .pane-label::before { background: var(--purple); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    overflow-x: auto;
+  }
+  .kw { color: var(--pink); }
+  .fn { color: var(--cyan); }
+  .cm { color: #6272a4; font-style: italic; }
+  .st { color: var(--amber); }
+  .nm { color: #bd93f9; }
+  .op { color: var(--text2); }
+
+  /* REVEAL PANEL */
+  .reveal-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--border-cyan);
+    color: var(--cyan);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: background 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .reveal-btn:hover {
+    background: rgba(33,230,255,0.08);
+    box-shadow: var(--glow-cyan);
+  }
+  .reveal-panel {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    border-left: 3px solid;
+  }
+  .reveal-panel.correct {
+    background: rgba(74,222,128,0.07);
+    border-color: var(--green);
+    color: #d1fae5;
+  }
+  .reveal-panel.mismatch {
+    background: rgba(255,46,154,0.07);
+    border-color: var(--pink);
+    color: #fce7f3;
+  }
+  .reveal-panel.active { display: block; }
+  .reveal-panel strong { color: inherit; }
+
+  /* FLOWCHART SVG WRAPPER */
+  .flowchart-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .shape-name {
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    text-align: center;
+    color: var(--text2);
+    font-size: 13px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border-pink);
+  }
+  .footer-note span { color: var(--pink); }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Year 8 Digital Technologies — DIGITECH</p>
+  <h1>Code &amp; Flowcharts</h1>
+  <p class="subtitle">Can you catch the mismatch? Read the comment, check the shape, then reveal the answer.</p>
+  <div class="level-bar">
+    <div class="level-dot active"></div>
+    <div class="level-dot active"></div>
+    <div class="level-dot active"></div>
+    <div class="level-dot"></div>
+    <div class="level-dot"></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════════════════
+       EXAMPLE 1 — Simple, correct match
+  ══════════════════════════════════════ -->
+  <section>
+    <div class="section-label">
+      <span class="complexity-badge badge-1">Level 1</span>
+      <span class="section-title">Single action, no decisions</span>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Health potion pickup</div>
+          <div class="card-desc">Player picks up a potion — health increases by a fixed amount.</div>
+        </div>
+        <span class="mismatch-tag tag-hidden">hidden</span>
+      </div>
+
+      <div class="split">
+        <!-- FLOWCHART -->
+        <div class="pane">
+          <div class="pane-label">Flowchart</div>
+          <div class="flowchart-wrap">
+            <svg width="100%" viewBox="0 0 260 300" role="img">
+              <title>Level 1 flowchart: health potion pickup</title>
+              <desc>Start → Pick up potion → Add 25 to health → End</desc>
+              <defs>
+                <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#21e6ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+              </defs>
+              <!-- START oval -->
+              <ellipse cx="130" cy="30" rx="48" ry="20" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="35" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">Start</text>
+              <line x1="130" y1="50" x2="130" y2="78" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a1)"/>
+              <!-- PROCESS: pick up -->
+              <rect x="50" y="80" width="160" height="48" rx="6" fill="rgba(33,230,255,0.1)" stroke="#21e6ff" stroke-width="1"/>
+              <text x="130" y="99" text-anchor="middle" fill="#21e6ff" font-size="13" font-family="Segoe UI,sans-serif" font-weight="600">Pick up potion</text>
+              <text x="130" y="117" text-anchor="middle" fill="#a8a8d8" font-size="11" font-family="Segoe UI,sans-serif">player finds item</text>
+              <line x1="130" y1="128" x2="130" y2="158" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a1)"/>
+              <!-- PROCESS: add health -->
+              <rect x="50" y="160" width="160" height="48" rx="6" fill="rgba(33,230,255,0.1)" stroke="#21e6ff" stroke-width="1"/>
+              <text x="130" y="179" text-anchor="middle" fill="#21e6ff" font-size="13" font-family="Segoe UI,sans-serif" font-weight="600">Add 25 to health</text>
+              <text x="130" y="197" text-anchor="middle" fill="#a8a8d8" font-size="11" font-family="Segoe UI,sans-serif">health = health + 25</text>
+              <line x1="130" y1="208" x2="130" y2="258" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a1)"/>
+              <!-- END oval -->
+              <ellipse cx="130" cy="272" rx="48" ry="20" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="277" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">End</text>
+            </svg>
+            <div class="shape-name">Shape: accumulate (decrement variant)</div>
+          </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="pane">
+          <div class="pane-label">Annotated code</div>
+          <div class="code-block">
+<span class="cm"># Player picks up a health potion</span>
+<br><span class="cm"># — health increases by 25</span>
+<br>
+<br><span class="nm">player_health</span> <span class="op">=</span> <span class="nm">60</span>
+<br><span class="nm">potion_heal</span> <span class="op">=</span> <span class="nm">25</span>
+<br>
+<br><span class="nm">player_health</span> <span class="op">=</span> <span class="nm">player_health</span> <span class="op">+</span> <span class="nm">potion_heal</span>
+<br>
+<br><span class="fn">print</span>(<span class="st">"Health is now:"</span>, <span class="nm">player_health</span>)
+          </div>
+
+          <button class="reveal-btn" onclick="reveal('r1', this)">▶ Reveal answer</button>
+          <div id="r1" class="reveal-panel correct">
+            <strong>✅ Match.</strong> The flowchart says "Add 25 to health" — the code does exactly that: <code>player_health = player_health + 25</code>. Shape: <em>accumulate</em> (a variable updated by adding a fixed amount). Comment, flowchart, and code all agree.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════
+       EXAMPLE 2 — Decision branch, mismatch
+  ══════════════════════════════════════ -->
+  <section>
+    <div class="section-label">
+      <span class="complexity-badge badge-2">Level 2</span>
+      <span class="section-title">Decision branch — something's off</span>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Enemy encounter — attack or flee</div>
+          <div class="card-desc">Player decides whether to fight or run based on their health.</div>
+        </div>
+        <span class="mismatch-tag tag-mismatch">⚠ Mismatch</span>
+      </div>
+
+      <div class="split">
+        <!-- FLOWCHART -->
+        <div class="pane">
+          <div class="pane-label">Flowchart</div>
+          <div class="flowchart-wrap">
+            <svg width="100%" viewBox="0 0 260 370" role="img">
+              <title>Level 2 flowchart: attack or flee decision</title>
+              <desc>Start → diamond: health above 20? → Yes: Attack enemy → End. No: Flee from enemy → End.</desc>
+              <defs>
+                <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#21e6ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+                <marker id="a2p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#ff2e9a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+              </defs>
+              <!-- START -->
+              <ellipse cx="130" cy="28" rx="48" ry="18" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="33" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">Start</text>
+              <line x1="130" y1="46" x2="130" y2="72" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a2)"/>
+              <!-- DIAMOND -->
+              <polygon points="130,75 210,112 130,149 50,112" fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1.2"/>
+              <text x="130" y="106" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI,sans-serif" font-weight="600">health</text>
+              <text x="130" y="121" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI,sans-serif" font-weight="600">above 20?</text>
+              <!-- YES branch (down) -->
+              <line x1="130" y1="149" x2="130" y2="182" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a2)"/>
+              <text x="142" y="168" fill="#4ade80" font-size="11" font-family="Segoe UI,sans-serif">Yes</text>
+              <!-- Attack box -->
+              <rect x="50" y="184" width="160" height="44" rx="6" fill="rgba(74,222,128,0.1)" stroke="#4ade80" stroke-width="1"/>
+              <text x="130" y="201" text-anchor="middle" fill="#4ade80" font-size="13" font-family="Segoe UI,sans-serif" font-weight="600">Attack enemy</text>
+              <text x="130" y="218" text-anchor="middle" fill="#a8a8d8" font-size="11" font-family="Segoe UI,sans-serif">deal damage</text>
+              <line x1="130" y1="228" x2="130" y2="320" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a2)"/>
+              <!-- NO branch (right then down) -->
+              <line x1="210" y1="112" x2="240" y2="112" stroke="#ff2e9a" stroke-width="1.2"/>
+              <line x1="240" y1="112" x2="240" y2="270" stroke="#ff2e9a" stroke-width="1.2"/>
+              <line x1="240" y1="270" x2="212" y2="270" stroke="#ff2e9a" stroke-width="1.2" marker-end="url(#a2p)"/>
+              <text x="248" y="108" fill="#ff2e9a" font-size="11" font-family="Segoe UI,sans-serif">No</text>
+              <!-- Flee box -->
+              <rect x="50" y="248" width="160" height="44" rx="6" fill="rgba(255,46,154,0.1)" stroke="#ff2e9a" stroke-width="1"/>
+              <text x="130" y="265" text-anchor="middle" fill="#ff2e9a" font-size="13" font-family="Segoe UI,sans-serif" font-weight="600">Flee from enemy</text>
+              <text x="130" y="283" text-anchor="middle" fill="#a8a8d8" font-size="11" font-family="Segoe UI,sans-serif">escape safely</text>
+              <!-- END -->
+              <ellipse cx="130" cy="340" rx="48" ry="18" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="345" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">End</text>
+            </svg>
+            <div class="shape-name">Shape: state-check (if/else branch)</div>
+          </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="pane">
+          <div class="pane-label">Annotated code</div>
+          <div class="code-block">
+<span class="cm"># Decides whether to attack or flee</span>
+<br><span class="cm"># based on player health</span>
+<br>
+<br><span class="nm">player_health</span> <span class="op">=</span> <span class="nm">15</span>
+<br>
+<br><span class="kw">if</span> <span class="nm">player_health</span> <span class="op">&gt;</span> <span class="nm">20</span><span class="op">:</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"You attack the enemy!"</span>)
+<br><span class="kw">if</span> <span class="nm">player_health</span> <span class="op">&lt;=</span> <span class="nm">20</span><span class="op">:</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(<span class="st">"You flee from the enemy!"</span>)
+          </div>
+
+          <button class="reveal-btn" onclick="reveal('r2', this)">▶ Reveal answer</button>
+          <div id="r2" class="reveal-panel mismatch">
+            <strong>⚠️ Mismatch.</strong> The flowchart has one diamond with two exits — a proper <em>if/else</em>. The code uses two separate <em>if</em> statements. That means both conditions get checked every time, even when the first one fires. This isn't a visual error — it's a structural one. If <code>player_health</code> were exactly 21, both conditions would still be evaluated (the second one just wouldn't trigger). The correct fix: <code>if … else</code>, not <code>if … if</code>. The flowchart's two-exit diamond should always map to an <em>if/else</em> in the code.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════
+       EXAMPLE 3 — While loop, mismatch
+  ══════════════════════════════════════ -->
+  <section>
+    <div class="section-label">
+      <span class="complexity-badge badge-3">Level 3</span>
+      <span class="section-title">Loop — watch the stop condition</span>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Wave survival — fight until defeated or escaped</div>
+          <div class="card-desc">Enemies keep coming until the player dies or reaches the exit.</div>
+        </div>
+        <span class="mismatch-tag tag-mismatch">⚠ Mismatch</span>
+      </div>
+
+      <div class="split">
+        <!-- FLOWCHART -->
+        <div class="pane">
+          <div class="pane-label">Flowchart</div>
+          <div class="flowchart-wrap">
+            <svg width="100%" viewBox="0 0 260 420" role="img">
+              <title>Level 3 flowchart: wave survival loop</title>
+              <desc>Start → diamond: player alive AND not escaped? → No: print outcome → End. Yes: Take 10 damage, distance increases by 8 → loop back to diamond.</desc>
+              <defs>
+                <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#21e6ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+                <marker id="a3p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="#ff2e9a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+              </defs>
+              <!-- START -->
+              <ellipse cx="130" cy="28" rx="48" ry="18" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="33" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">Start</text>
+              <line x1="130" y1="46" x2="130" y2="72" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a3)"/>
+              <!-- DIAMOND -->
+              <polygon points="130,75 215,118 130,161 45,118" fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1.2"/>
+              <text x="130" y="109" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="Segoe UI,sans-serif" font-weight="600">alive AND</text>
+              <text x="130" y="124" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="Segoe UI,sans-serif" font-weight="600">not escaped?</text>
+              <!-- YES (down) -->
+              <line x1="130" y1="161" x2="130" y2="192" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a3)"/>
+              <text x="142" y="178" fill="#4ade80" font-size="11" font-family="Segoe UI,sans-serif">Yes</text>
+              <!-- Wave actions box -->
+              <rect x="38" y="194" width="184" height="56" rx="6" fill="rgba(33,230,255,0.08)" stroke="#21e6ff" stroke-width="1"/>
+              <text x="130" y="213" text-anchor="middle" fill="#21e6ff" font-size="12" font-family="Segoe UI,sans-serif" font-weight="600">Take 10 damage</text>
+              <text x="130" y="230" text-anchor="middle" fill="#21e6ff" font-size="12" font-family="Segoe UI,sans-serif" font-weight="600">Move 8 toward exit</text>
+              <text x="130" y="246" text-anchor="middle" fill="#a8a8d8" font-size="10" font-family="Segoe UI,sans-serif">one wave passes</text>
+              <!-- Loop back arrow -->
+              <line x1="38" y1="222" x2="16" y2="222" stroke="#21e6ff" stroke-width="1.2"/>
+              <line x1="16" y1="222" x2="16" y2="118" stroke="#21e6ff" stroke-width="1.2"/>
+              <line x1="16" y1="118" x2="43" y2="118" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a3)"/>
+              <text x="8" y="173" fill="#a8a8d8" font-size="10" font-family="Segoe UI,sans-serif" text-anchor="middle">loop</text>
+              <!-- NO (right) -->
+              <line x1="215" y1="118" x2="244" y2="118" stroke="#ff2e9a" stroke-width="1.2"/>
+              <line x1="244" y1="118" x2="244" y2="320" stroke="#ff2e9a" stroke-width="1.2"/>
+              <line x1="244" y1="320" x2="214" y2="320" stroke="#ff2e9a" stroke-width="1.2" marker-end="url(#a3p)"/>
+              <text x="248" y="114" fill="#ff2e9a" font-size="11" font-family="Segoe UI,sans-serif">No</text>
+              <!-- Outcome box -->
+              <rect x="46" y="298" width="166" height="44" rx="6" fill="rgba(255,46,154,0.1)" stroke="#ff2e9a" stroke-width="1"/>
+              <text x="130" y="316" text-anchor="middle" fill="#ff2e9a" font-size="12" font-family="Segoe UI,sans-serif" font-weight="600">Print outcome</text>
+              <text x="130" y="333" text-anchor="middle" fill="#a8a8d8" font-size="10" font-family="Segoe UI,sans-serif">died or escaped</text>
+              <line x1="130" y1="342" x2="130" y2="374" stroke="#21e6ff" stroke-width="1.2" marker-end="url(#a3)"/>
+              <!-- END -->
+              <ellipse cx="130" cy="390" rx="48" ry="18" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="1"/>
+              <text x="130" y="395" text-anchor="middle" fill="#eef0ff" font-size="13" font-family="Segoe UI,sans-serif">End</text>
+            </svg>
+            <div class="shape-name">Shape: while loop with compound stop condition</div>
+          </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="pane">
+          <div class="pane-label">Annotated code</div>
+          <div class="code-block">
+<span class="cm"># Player survives waves until</span>
+<br><span class="cm"># they die OR reach the exit</span>
+<br>
+<br><span class="nm">player_health</span> <span class="op">=</span> <span class="nm">50</span>
+<br><span class="nm">distance_to_exit</span> <span class="op">=</span> <span class="nm">40</span>
+<br><span class="nm">wave_damage</span> <span class="op">=</span> <span class="nm">10</span>
+<br><span class="nm">move_per_wave</span> <span class="op">=</span> <span class="nm">8</span>
+<br>
+<br><span class="kw">while</span> <span class="nm">player_health</span> <span class="op">&gt;</span> <span class="nm">0</span><span class="op">:</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">player_health</span> <span class="op">=</span> <span class="nm">player_health</span> <span class="op">-</span> <span class="nm">wave_damage</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">distance_to_exit</span> <span class="op">=</span> <span class="nm">distance_to_exit</span> <span class="op">-</span> <span class="nm">move_per_wave</span>
+<br>
+<br><span class="fn">print</span>(<span class="st">"Game over!"</span>)
+          </div>
+
+          <button class="reveal-btn" onclick="reveal('r3', this)">▶ Reveal answer</button>
+          <div id="r3" class="reveal-panel mismatch">
+            <strong>⚠️ Mismatch — two problems.</strong><br><br>
+            <strong>1. Missing stop condition.</strong> The flowchart's diamond has two conditions: <em>alive AND not escaped</em>. The code only checks <code>player_health &gt; 0</code>. Even if <code>distance_to_exit</code> reaches zero (player escaped!), the loop keeps running. Escape is never detected.<br><br>
+            <strong>2. Missing outcome message.</strong> The flowchart shows a "print outcome" box that says <em>died or escaped</em>. The code just prints <code>"Game over!"</code> regardless — it can't tell the difference because it never tracked the escape condition.<br><br>
+            Fix: <code>while player_health &gt; 0 and distance_to_exit &gt; 0:</code> — then check <em>which</em> condition ended the loop before printing.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">Part of <span>DIGITECH with James</span> — Year 8 Digital Technologies</p>
+
+</main>
+
+<script>
+  function reveal(id, btn) {
+    const panel = document.getElementById(id);
+    panel.classList.toggle('active');
+    btn.textContent = panel.classList.contains('active') ? '▼ Hide answer' : '▶ Reveal answer';
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-size: 13px; }
+.sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 0; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.card.wide { grid-column: span 2; }
+.card h2 { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+.card h3 { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; margin-top: 6px; }
+.card h3:first-of-type { margin-top: 0; }
+.card p, .card li { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.card ul { padding-left: 14px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 4px; margin: 2px 2px 2px 0; }
+.tag.blue  { background: #E6F1FB; color: #0C447C; }
+.tag.teal  { background: #E1F5EE; color: #085041; }
+.tag.amber { background: #FAEEDA; color: #633806; }
+.tag.coral { background: #FAECE7; color: #4A1B0C; }
+.tag.purple{ background: #EEEDFE; color: #26215C; }
+.tag.green { background: #EAF3DE; color: #173404; }
+@media (prefers-color-scheme: dark) {
+  .tag.blue  { background: #0C447C; color: #B5D4F4; }
+  .tag.teal  { background: #085041; color: #9FE1CB; }
+  .tag.amber { background: #633806; color: #FAC775; }
+  .tag.coral { background: #4A1B0C; color: #F5C4B3; }
+  .tag.purple{ background: #26215C; color: #CECBF6; }
+  .tag.green { background: #173404; color: #C0DD97; }
+}
+code { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); padding: 1px 4px; border-radius: 3px; color: var(--color-text-primary); }
+.flow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 4px 0; }
+.fbox { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); background: var(--color-background-secondary); white-space: nowrap; }
+.arrow { color: var(--color-text-tertiary); font-size: 13px; }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 7px 0; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+</style>
+
+<div class="sheet">
+
+  <!-- Variables & Data Types -->
+  <div class="card">
+    <h2>Variables &amp; data types</h2>
+    <p>A <strong>variable</strong> stores a value with a name so you can reuse it.</p>
+    <div style="margin:5px 0">
+      <span class="tag blue">int — whole number</span>
+      <span class="tag teal">float — decimal</span>
+      <span class="tag amber">str — text</span>
+      <span class="tag coral">bool — True/False</span>
+      <span class="tag purple">list — ordered collection</span>
+      <span class="tag green">dict — key→value pairs</span>
+    </div>
+    <code>age = 14 &nbsp;&nbsp; name = "Maya" &nbsp;&nbsp; scores = [8, 9, 7]</code>
+  </div>
+
+  <!-- Operators -->
+  <div class="card">
+    <h2>Operators</h2>
+    <div class="two-col">
+      <div>
+        <h3>Arithmetic</h3>
+        <p><code>+ - * /</code> — basic math<br>
+        <code>//</code> — floor divide<br>
+        <code>%</code> — remainder<br>
+        <code>**</code> — power</p>
+      </div>
+      <div>
+        <h3>Comparison / logic</h3>
+        <p><code>== != &lt; &gt;</code> — compare<br>
+        <code>and or not</code> — logic<br>
+        → always returns <code>True</code> or <code>False</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control flow -->
+  <div class="card wide">
+    <h2>Control flow — how a program makes decisions and repeats</h2>
+    <div class="two-col">
+      <div>
+        <h3>If / elif / else</h3>
+        <div class="flow">
+          <div class="fbox">condition?</div><span class="arrow">→</span>
+          <div class="fbox">True → run block</div>
+        </div>
+        <div class="flow">
+          <div style="width:80px"></div><span class="arrow">→</span>
+          <div class="fbox">False → elif / else</div>
+        </div>
+        <p style="margin-top:4px"><code>if score &gt;= 90:<br>&nbsp;&nbsp;print("A")<br>elif score &gt;= 75:<br>&nbsp;&nbsp;print("B")<br>else:<br>&nbsp;&nbsp;print("C")</code></p>
+      </div>
+      <div>
+        <h3>Loops</h3>
+        <p><code>for</code> — iterate over a sequence</p>
+        <p style="margin-bottom:4px"><code>for item in list:<br>&nbsp;&nbsp;do_something(item)</code></p>
+        <hr class="divider">
+        <p><code>while</code> — repeat while a condition is True</p>
+        <p><code>while count &lt; 10:<br>&nbsp;&nbsp;count += 1</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Functions -->
+  <div class="card">
+    <h2>Functions</h2>
+    <p>Reusable blocks of code. <strong>Define once, call many times.</strong></p>
+    <div class="flow" style="margin:5px 0">
+      <div class="fbox">def name(params)</div>
+      <span class="arrow">→</span>
+      <div class="fbox">body runs</div>
+      <span class="arrow">→</span>
+      <div class="fbox">return value</div>
+    </div>
+    <code>def greet(name):<br>&nbsp;&nbsp;return "Hi, " + name</code>
+    <hr class="divider">
+    <ul>
+      <li><strong>Parameters</strong> — inputs the function receives</li>
+      <li><strong>Return value</strong> — what the function sends back</li>
+      <li><strong>Scope</strong> — variables inside a function are local</li>
+    </ul>
+  </div>
+
+  <!-- Data structures -->
+  <div class="card">
+    <h2>Data structures</h2>
+    <h3>List <code>[ ]</code></h3>
+    <p>Ordered, indexed from 0. Add with <code>.append()</code>, remove with <code>.remove()</code>.</p>
+    <h3>Dictionary <code>{ }</code></h3>
+    <p>Key→value pairs. Access with <code>d["key"]</code>. Fast lookup.</p>
+    <h3>String <code>" "</code></h3>
+    <p>Sequence of characters. <code>.upper()</code> <code>.split()</code> <code>len()</code></p>
+    <h3>When to use what</h3>
+    <div class="flow">
+      <span class="tag blue">ordered items → list</span>
+      <span class="tag teal">label→value → dict</span>
+      <span class="tag amber">yes/no set → bool</span>
+    </div>
+  </div>
+
+  <!-- Algorithms -->
+  <div class="card">
+    <h2>Algorithms — step-by-step problem solving</h2>
+    <h3>Input → Process → Output (IPO)</h3>
+    <div class="flow" style="margin:4px 0 6px">
+      <div class="fbox">📥 Input</div><span class="arrow">→</span>
+      <div class="fbox">⚙ Process</div><span class="arrow">→</span>
+      <div class="fbox">📤 Output</div>
+    </div>
+    <h3>Key patterns</h3>
+    <ul>
+      <li><strong>Sequence</strong> — steps run in order</li>
+      <li><strong>Selection</strong> — if/else chooses a path</li>
+      <li><strong>Iteration</strong> — loop repeats a block</li>
+      <li><strong>Recursion</strong> — function calls itself</li>
+    </ul>
+  </div>
+
+  <!-- Debugging -->
+  <div class="card">
+    <h2>Debugging</h2>
+    <h3>Common errors</h3>
+    <ul>
+      <li><span class="tag coral">SyntaxError</span> — invalid code structure</li>
+      <li><span class="tag amber">NameError</span> — variable not defined</li>
+      <li><span class="tag blue">TypeError</span> — wrong data type used</li>
+      <li><span class="tag purple">IndexError</span> — list index out of range</li>
+    </ul>
+    <h3>Fix strategy</h3>
+    <div class="flow" style="margin-top:4px">
+      <div class="fbox">read error msg</div><span class="arrow">→</span>
+      <div class="fbox">find line</div><span class="arrow">→</span>
+      <div class="fbox">print/trace</div><span class="arrow">→</span>
+      <div class="fbox">test fix</div>
+    </div>
+  </div>
+
+  <!-- Big ideas -->
+  <div class="card wide">
+    <h2>Big ideas to remember</h2>
+    <div class="two-col">
+      <ul>
+        <li><strong>Decomposition</strong> — break big problems into smaller ones</li>
+        <li><strong>Abstraction</strong> — hide detail, show only what matters</li>
+        <li><strong>Pattern recognition</strong> — spot similarities to reuse solutions</li>
+      </ul>
+      <ul>
+        <li><strong>DRY</strong> — Don't Repeat Yourself → use functions</li>
+        <li><strong>Comments</strong> — explain <em>why</em>, not just what</li>
+        <li><strong>Test edge cases</strong> — what if input is 0, empty, or huge?</li>
+      </ul>
+    </div>
+  </div>
+
+</div>

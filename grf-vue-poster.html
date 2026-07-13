@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRF / VUE Workflow — DIGITECH</title>
+<style>
+  :root{
+    --bg:#04010f;
+    --bg-mid:#0a0420;
+    --pink:#ff2e9a;
+    --cyan:#21e6ff;
+    --purple:#a855f7;
+    --amber:#fbbf24;
+    --green:#4ade80;
+    --text:#eef0ff;
+    --text2:#a8a8d8;
+    --grid:#ff2e9a;
+    --grid2:#21e6ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ── SCANLINES ── */
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      transparent 0px,transparent 3px,
+      rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px
+    );
+    pointer-events:none;
+    z-index:9999;
+  }
+
+  /* ── GRID FLOOR STRIP (top) ── */
+  .grid-strip{
+    position:relative;
+    height:180px;
+    background:var(--bg);
+    overflow:hidden;
+    border-bottom:2px solid var(--pink);
+  }
+  .grid-strip::before{
+    content:"";
+    position:absolute;
+    left:50%;bottom:0;
+    width:max(1400px,180vw);height:380px;
+    transform-origin:50% 100%;
+    transform:translateX(-50%) rotateX(60deg);
+    background-image:
+      repeating-linear-gradient(90deg,var(--grid2) 0 2px,transparent 2px 70px),
+      repeating-linear-gradient(0deg,var(--grid) 0 2px,transparent 2px 50px);
+    -webkit-mask-image:linear-gradient(to top,black 0%,black 40%,transparent 90%);
+    mask-image:linear-gradient(to top,black 0%,black 40%,transparent 90%);
+    opacity:0.55;
+    animation:grid-scroll 1.4s linear infinite;
+  }
+  @keyframes grid-scroll{from{background-position:0 0,0 0;}to{background-position:0 0,0 50px;}}
+
+  /* title in grid strip */
+  .strip-content{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    z-index:2;gap:6px;
+  }
+  .poster-eyebrow{
+    font-size:11px;letter-spacing:0.25em;text-transform:uppercase;
+    color:var(--pink);
+  }
+  .poster-title{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-weight:900;
+    font-size:clamp(2.4rem,8vw,5.5rem);
+    letter-spacing:0.08em;
+    background:linear-gradient(100deg,#fff 0%,#e8eaf0 20%,#9aa3c4 40%,#3d4470 52%,#e8eaf0 65%,#fff 80%,#9aa3c4 95%);
+    background-size:250% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 30px rgba(255,255,255,0.3));
+    animation:chrome-shimmer 6s ease-in-out infinite;
+  }
+  @keyframes chrome-shimmer{
+    0%{background-position:100% 0;}50%{background-position:0% 0;}100%{background-position:100% 0;}
+  }
+  .poster-tagline{
+    font-size:clamp(12px,2vw,15px);
+    color:var(--text2);letter-spacing:0.1em;
+    font-family:'Courier New',monospace;
+  }
+  .poster-tagline span{color:var(--cyan);}
+
+  /* ── MAIN LAYOUT ── */
+  .poster-body{
+    max-width:1100px;
+    margin:0 auto;
+    padding:48px 28px 72px;
+    display:flex;
+    flex-direction:column;
+    gap:48px;
+  }
+
+  /* ── LOOP LABEL ── */
+  .loop-label{
+    display:flex;align-items:center;gap:14px;
+    margin-bottom:20px;
+  }
+  .loop-badge{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:clamp(1.4rem,4vw,2.4rem);
+    font-weight:900;
+    letter-spacing:0.12em;
+    line-height:1;
+    padding:8px 20px;
+    border-left:4px solid;
+    clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);
+    padding-right:28px;
+  }
+  .badge-grf{
+    background:rgba(255,46,154,0.1);
+    border-color:var(--pink);
+    color:var(--pink);
+    text-shadow:0 0 20px rgba(255,46,154,0.6);
+  }
+  .badge-vue{
+    background:rgba(33,230,255,0.1);
+    border-color:var(--cyan);
+    color:var(--cyan);
+    text-shadow:0 0 20px rgba(33,230,255,0.6);
+  }
+  .loop-subtitle{
+    flex:1;
+  }
+  .loop-subtitle-main{
+    font-size:clamp(14px,2.5vw,18px);
+    font-weight:700;color:var(--text);
+    margin-bottom:3px;
+  }
+  .loop-subtitle-desc{
+    font-size:13px;color:var(--text2);line-height:1.5;
+  }
+
+  /* ── STEP CARDS ROW ── */
+  .steps-row{
+    display:grid;
+    gap:16px;
+  }
+  .steps-row.three{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:680px){.steps-row.three{grid-template-columns:1fr;}}
+
+  /* arrow connectors between cards */
+  .steps-outer{position:relative;}
+  .steps-outer.three .arrow-row{
+    display:grid;
+    grid-template-columns:1fr 40px 1fr 40px 1fr;
+    align-items:center;
+    gap:0;
+    margin-bottom:0;
+  }
+  /* we use a flex container trick instead — keep it simple */
+
+  /* ── STEP CARD ── */
+  .step{
+    background:rgba(10,4,32,0.85);
+    border:1px solid rgba(255,255,255,0.07);
+    border-top:3px solid;
+    padding:22px 20px 20px;
+    position:relative;
+    clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+  }
+
+  .step-num{
+    position:absolute;top:14px;right:16px;
+    font-family:'Courier New',monospace;
+    font-size:11px;letter-spacing:0.15em;
+    opacity:0.35;
+  }
+
+  .step-letter{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:clamp(2rem,5vw,3.2rem);
+    font-weight:900;
+    line-height:1;
+    margin-bottom:6px;
+  }
+
+  .step-word{
+    font-size:clamp(15px,2.5vw,19px);
+    font-weight:700;
+    letter-spacing:0.04em;
+    margin-bottom:10px;
+    color:var(--text);
+  }
+
+  .step-body{
+    font-size:13px;
+    line-height:1.7;
+    color:var(--text2);
+  }
+  .step-body strong{font-weight:600;}
+
+  /* step question */
+  .step-q{
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:2px;
+    font-size:12px;
+    line-height:1.55;
+    font-family:'Courier New',monospace;
+    letter-spacing:0.03em;
+    border-left:3px solid;
+  }
+  .step-q::before{content:"// ask yourself: ";opacity:0.5;}
+
+  /* GRF colours */
+  .grf .step{border-top-color:var(--pink);}
+  .grf .step-letter{color:var(--pink);text-shadow:0 0 20px rgba(255,46,154,0.5);}
+  .grf .step-q{background:rgba(255,46,154,0.06);border-color:var(--pink);color:#fce7f3;}
+
+  /* VUE colours */
+  .vue .step{border-top-color:var(--cyan);}
+  .vue .step-letter{color:var(--cyan);text-shadow:0 0 20px rgba(33,230,255,0.5);}
+  .vue .step-q{background:rgba(33,230,255,0.06);border-color:var(--cyan);color:#cffafe;}
+
+  /* ── CONNECTOR ARROWS ── */
+  .connector{
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    color:var(--text2);
+    opacity:0.4;
+    flex-shrink:0;
+    padding:0 4px;
+  }
+
+  /* flex row wrapper for cards + arrows */
+  .flex-steps{
+    display:flex;
+    align-items:stretch;
+    gap:0;
+  }
+  .flex-steps .step{flex:1;}
+  .flex-steps .connector{align-self:center;}
+
+  /* ── BRIDGE ROW ── */
+  .bridge{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:18px 24px;
+    background:rgba(168,85,247,0.08);
+    border:1px solid rgba(168,85,247,0.25);
+    border-left:4px solid var(--purple);
+    clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);
+    padding-right:28px;
+  }
+  .bridge-icon{font-size:24px;flex-shrink:0;}
+  .bridge-text{flex:1;}
+  .bridge-head{
+    font-size:15px;font-weight:700;
+    color:var(--purple);margin-bottom:4px;
+  }
+  .bridge-desc{
+    font-size:13px;color:var(--text2);line-height:1.55;
+  }
+  .bridge-arrow{
+    font-size:28px;color:var(--purple);opacity:0.6;flex-shrink:0;
+  }
+
+  /* ── FULL LOOP DIAGRAM ── */
+  .loop-diagram{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:24px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .loop-pill{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:clamp(12px,2vw,16px);
+    font-weight:900;
+    letter-spacing:0.1em;
+    padding:8px 18px;
+    border:1px solid;
+    border-radius:2px;
+  }
+  .pill-g{color:var(--pink);border-color:rgba(255,46,154,0.4);background:rgba(255,46,154,0.08);}
+  .pill-r{color:var(--amber);border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.08);}
+  .pill-f{color:var(--green);border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.08);}
+  .pill-v{color:var(--cyan);border-color:rgba(33,230,255,0.4);background:rgba(33,230,255,0.08);}
+  .pill-u{color:var(--purple);border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.08);}
+  .pill-e{color:#f97316;border-color:rgba(249,115,22,0.4);background:rgba(249,115,22,0.08);}
+  .loop-arrow{font-size:18px;color:var(--text2);opacity:0.35;}
+  .loop-repeat{
+    font-size:12px;font-family:'Courier New',monospace;
+    color:var(--text2);letter-spacing:0.1em;
+    margin-left:4px;opacity:0.5;
+  }
+
+  /* ── FOOTER ── */
+  .poster-footer{
+    text-align:center;
+    border-top:1px solid rgba(255,46,154,0.2);
+    padding:24px;
+    font-size:12px;color:var(--text2);
+    letter-spacing:0.06em;
+  }
+  .poster-footer span{color:var(--pink);}
+
+  /* ── PRINT STYLES ── */
+  @media print{
+    @page{size:A3 landscape;margin:12mm;}
+    body::after{display:none;}
+    .grid-strip::before{animation:none;}
+    body{background:#04010f;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .poster-body{padding:24px 20px 32px;gap:28px;}
+    .grid-strip{height:130px;}
+    .step-body{font-size:12px;}
+    .step-word{font-size:15px;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .grid-strip::before,.poster-title{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- GRID STRIP HEADER -->
+<div class="grid-strip">
+  <div class="strip-content">
+    <p class="poster-eyebrow">DIGITECH — Year 8 Digital Technologies</p>
+    <div class="poster-title">GRF / VUE</div>
+    <p class="poster-tagline">Your vibe coding workflow — <span>use it every session</span></p>
+  </div>
+</div>
+
+<div class="poster-body">
+
+  <!-- ═══════════════════════════════
+       GRF LOOP — the AI conversation
+  ═══════════════════════════════ -->
+  <section class="grf">
+    <div class="loop-label">
+      <div class="loop-badge badge-grf">GRF</div>
+      <div class="loop-subtitle">
+        <div class="loop-subtitle-main">Generate → Review → Refine</div>
+        <div class="loop-subtitle-desc">How you work <em>with</em> the AI to build something — not just accept whatever it gives you.</div>
+      </div>
+    </div>
+
+    <div class="flex-steps">
+
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-letter">G</div>
+        <div class="step-word">Generate</div>
+        <div class="step-body">
+          Give the AI a clear, specific prompt. Describe what you want to build, what it should do, and any constraints. <strong>The better your prompt, the better the output</strong> — vague prompts produce vague code.
+        </div>
+        <div class="step-q">Is my prompt specific enough that someone else could understand exactly what I want?</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-letter">R</div>
+        <div class="step-word">Review</div>
+        <div class="step-body">
+          Read what the AI produced. Don't just run it — <strong>read it first</strong>. Does it match what you asked for? Can you identify the shapes (accumulate, filter, find-best)? Does each comment match what the code actually does?
+        </div>
+        <div class="step-q">Can I explain what each block does before I run it?</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-letter">F</div>
+        <div class="step-word">Refine</div>
+        <div class="step-body">
+          Test it. Fix it. Adjust the prompt and regenerate if needed. <strong>You own the final product</strong> — not the AI. If something is wrong, go back to G with a better prompt, not just "fix this."
+        </div>
+        <div class="step-q">Does this actually do what I designed it to do, or just what the AI guessed I wanted?</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BRIDGE -->
+  <div class="bridge">
+    <div class="bridge-icon">⟳</div>
+    <div class="bridge-text">
+      <div class="bridge-head">GRF feeds into VUE</div>
+      <div class="bridge-desc">Once you've refined your code, you can't just ship it — you need to be able to <strong>explain it</strong>. VUE is how you check that your understanding is real, not just assumed.</div>
+    </div>
+    <div class="bridge-arrow">↓</div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       VUE — the understanding check
+  ═══════════════════════════════ -->
+  <section class="vue">
+    <div class="loop-label">
+      <div class="loop-badge badge-vue">VUE</div>
+      <div class="loop-subtitle">
+        <div class="loop-subtitle-main">Verified → Understood → Explainable</div>
+        <div class="loop-subtitle-desc">How you check that you actually understand the code before you annotate or present it.</div>
+      </div>
+    </div>
+
+    <div class="flex-steps">
+
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-letter">V</div>
+        <div class="step-word">Verified</div>
+        <div class="step-body">
+          The code runs and does what you intended. You've tested it with real inputs, including edge cases. <strong>Working code is the floor</strong>, not the ceiling — it has to actually function before anything else matters.
+        </div>
+        <div class="step-q">Have I tested this with more than one input, including a tricky one?</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-letter">U</div>
+        <div class="step-word">Understood</div>
+        <div class="step-body">
+          You know what each part does and <em>why</em>. You can name the shapes. Your comments describe what the code <strong>actually does</strong>, not just what you hoped it would do. No copy-pasting AI explanations — rewrite in your own words.
+        </div>
+        <div class="step-q">Can I rewrite this comment from scratch without looking at the AI's explanation?</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <div class="step">
+        <span class="step-num">06</span>
+        <div class="step-letter">E</div>
+        <div class="step-word">Explainable</div>
+        <div class="step-body">
+          You can walk someone through your code out loud — James, a classmate, a parent at exhibition — and answer follow-up questions. <strong>If you can't explain it, you don't own it yet.</strong> Go back to U.
+        </div>
+        <div class="step-q">Could I explain this to someone who hasn't seen it before, and answer their questions?</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FULL LOOP SUMMARY -->
+  <div class="loop-diagram">
+    <div class="loop-pill pill-g">Generate</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-pill pill-r">Review</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-pill pill-f">Refine</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-pill pill-v">Verified</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-pill pill-u">Understood</div>
+    <div class="loop-arrow">→</div>
+    <div class="loop-pill pill-e">Explainable</div>
+    <div class="loop-repeat">↺ repeat each sprint</div>
+  </div>
+
+</div>
+
+<div class="poster-footer">
+  Part of <span>DIGITECH with James</span> — Year 8 Digital Technologies · SA Curriculum
+</div>
+
+</body>
+</html>
