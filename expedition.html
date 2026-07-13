@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITECH with James — Learning Expedition</title>
+<style>
+  :root{
+    --bg-deep:#0a0420;
+    --bg-mid:#1a0b3d;
+    --grid:#ff2e9a;
+    --grid2:#21e6ff;
+    --sun-top:#ffd93d;
+    --sun-mid:#ff6b9d;
+    --sun-bot:#c026d3;
+    --chrome-1:#e8eaf0;
+    --chrome-2:#9aa3c4;
+    --chrome-3:#3d4470;
+    --accent-pink:#ff2e9a;
+    --accent-cyan:#21e6ff;
+    --accent-purple:#a855f7;
+    --accent-amber:#fbbf24;
+    --text-main:#eef0ff;
+    --text-dim:#a8a8d8;
+    --card-bg:rgba(26,11,61,0.55);
+    --card-border:rgba(255,46,154,0.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 0%, #2d1158 0%, var(--bg-deep) 55%, #050213 100%);
+    color:var(--text-main);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  a{color:var(--accent-cyan);}
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    height:100vh;
+    min-height:560px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .stars{
+    position:absolute; inset:-20% 0 0 0;
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, white, transparent),
+      radial-gradient(1px 1px at 140px 80px, white, transparent),
+      radial-gradient(2px 2px at 90px 40px, white, transparent),
+      radial-gradient(1px 1px at 230px 110px, white, transparent),
+      radial-gradient(1px 1px at 310px 60px, white, transparent),
+      radial-gradient(2px 2px at 400px 20px, white, transparent),
+      radial-gradient(1px 1px at 480px 90px, white, transparent),
+      radial-gradient(1px 1px at 560px 50px, white, transparent);
+    background-repeat:repeat;
+    background-size:600px 200px;
+    opacity:0.6;
+    animation:twinkle 4s ease-in-out infinite alternate, drift 90s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .stars{animation:none;} }
+  @keyframes twinkle{ from{opacity:0.4;} to{opacity:0.8;} }
+  @keyframes drift{ from{background-position:0 0;} to{background-position:-600px 200px;} }
+
+  .sun{
+    position:absolute;
+    top:50px;
+    left:50%;
+    transform:translateX(-50%);
+    width:330px; height:330px;
+    border-radius:50%;
+    background:linear-gradient(180deg, var(--sun-top) 0%, var(--sun-mid) 55%, var(--sun-bot) 100%);
+    box-shadow:0 0 90px rgba(255,107,157,0.55);
+    overflow:hidden;
+    z-index:1;
+    animation:sun-glow 5s ease-in-out infinite;
+  }
+  @media (max-width:480px){
+    .sun{ top:34px; width:220px; height:220px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .sun{animation:none;} }
+  @keyframes sun-glow{
+    0%,100%{ box-shadow:0 0 90px rgba(255,107,157,0.55); }
+    50%{ box-shadow:0 0 130px rgba(255,107,157,0.8); }
+  }
+  .sun::before{
+    content:"";
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 10px,
+      var(--bg-deep) 10px, var(--bg-deep) 14px
+    );
+    top:55%;
+  }
+
+  .skyline{
+    position:absolute;
+    bottom:calc(34% - 16px);
+    width:100%;
+    height:176px;
+    background:#000000;
+    clip-path:polygon(0 100%, 0 70%, 4% 70%, 4% 50%, 8% 50%, 8% 76%, 13% 76%, 13% 42%, 18% 42%, 18% 64%, 24% 64%, 24% 32%, 29% 32%, 29% 73%, 35% 73%, 35% 50%, 41% 50%, 41% 80%, 47% 80%, 47% 26%, 53% 26%, 53% 60%, 59% 60%, 59% 30%, 65% 30%, 65% 76%, 71% 76%, 71% 50%, 77% 50%, 77% 68%, 83% 68%, 83% 42%, 89% 42%, 89% 64%, 95% 64%, 95% 73%, 100% 73%, 100% 100%);
+    filter:drop-shadow(0 0 14px rgba(255,46,154,0.45));
+    opacity:1;
+    z-index:4;
+  }
+  @media (max-width:480px){
+    .skyline{ height:80px; }
+  }
+
+  .grid-floor{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:34%;
+    background:var(--bg-deep);
+    overflow:hidden;
+    perspective:300px;
+    perspective-origin:50% 0%;
+  }
+  .grid-floor::before{
+    content:"";
+    position:absolute;
+    left:50%; bottom:0;
+    width:max(1400px, 180vw); height:420px;
+    transform-origin:50% 100%;
+    transform:translateX(-50%) rotateX(60deg);
+    background-image:
+      repeating-linear-gradient(90deg, var(--grid2) 0 2px, transparent 2px 70px),
+      repeating-linear-gradient(0deg, var(--grid) 0 2px, transparent 2px 50px);
+    -webkit-mask-image:linear-gradient(to top, black 0%, black 55%, transparent 95%);
+    mask-image:linear-gradient(to top, black 0%, black 55%, transparent 95%);
+    opacity:0.55;
+    animation:grid-scroll 1.4s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .grid-floor::before{animation:none;} }
+  @keyframes grid-scroll{ from{background-position:0 0, 0 0;} to{background-position:0 0, 0 50px;} }
+
+  .palm{
+    position:absolute;
+    bottom:28%;
+    width:90px;
+    opacity:0.9;
+    filter:drop-shadow(0 0 12px rgba(168,85,247,0.4));
+  }
+  .palm.left1{left:1%; width:120px; bottom:30%;}
+  .palm.left2{left:14%; width:80px; bottom:33%;}
+  .palm.right1{right:1%; width:120px; bottom:30%; transform:scaleX(-1);}
+  .palm.right2{right:14%; width:80px; bottom:33%; transform:scaleX(-1);}
+
+  .title-wrap{
+    position:relative;
+    z-index:5;
+    text-align:center;
+    padding:0 16px;
+  }
+  .title-chrome{
+    font-family:Arial Black, Arial, sans-serif;
+    font-weight:900;
+    font-size:clamp(4rem, 19vw, 13rem);
+    letter-spacing:0.02em;
+    margin:0;
+    line-height:0.92;
+    background:linear-gradient(100deg,
+      #ffffff 0%, var(--chrome-1) 15%, var(--chrome-2) 35%,
+      var(--chrome-3) 48%, var(--chrome-1) 60%, #ffffff 75%,
+      var(--chrome-2) 90%, var(--chrome-1) 100%);
+    background-size:250% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 6px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 40px rgba(255,255,255,0.4));
+    animation:chrome-shimmer 6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .title-chrome{animation:none; background-position:30% 0;} }
+  @keyframes chrome-shimmer{
+    0%{ background-position:100% 0; }
+    50%{ background-position:0% 0; }
+    100%{ background-position:100% 0; }
+  }
+  .title-script{
+    font-family:'Brush Script MT', cursive;
+    font-size:clamp(2.6rem, 9vw, 5.2rem);
+    color:#ffffff;
+    margin-top:0.1rem;
+    position:relative;
+    z-index:6;
+    text-shadow:
+      0 1px 3px rgba(0,0,0,0.9),
+      0 0 4px #ffffff,
+      0 0 11px #ffffff,
+      0 0 19px #ff4fb8,
+      0 0 34px #ff2e9a,
+      0 0 60px #ff2e9a,
+      0 0 95px #ff2e9a;
+    animation:script-glow 2.8s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .title-script{animation:none;} }
+  @keyframes script-glow{
+    0%,100%{
+      text-shadow:
+        0 0 4px #ffffff, 0 0 11px #ffffff,
+        0 0 19px #ff4fb8, 0 0 34px #ff2e9a,
+        0 0 60px #ff2e9a, 0 0 95px #ff2e9a;
+    }
+    49%{
+      text-shadow:
+        0 0 4px #ffffff, 0 0 11px #ffffff,
+        0 0 19px #ff4fb8, 0 0 34px #ff2e9a,
+        0 0 60px #ff2e9a, 0 0 95px #ff2e9a;
+    }
+    50%{
+      text-shadow:
+        0 0 2px #ffffff, 0 0 4px #ffffff,
+        0 0 7px #ff4fb8, 0 0 12px #ff2e9a;
+    }
+    51%{
+      text-shadow:
+        0 0 4px #ffffff, 0 0 11px #ffffff,
+        0 0 19px #ff4fb8, 0 0 34px #ff2e9a,
+        0 0 60px #ff2e9a, 0 0 95px #ff2e9a;
+    }
+  }
+  .subtitle{
+    margin-top:1.4rem;
+    font-size:clamp(0.95rem, 2vw, 1.2rem);
+    color:var(--text-dim);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+  }
+  .scroll-hint{
+    position:absolute;
+    bottom:18px; left:50%;
+    transform:translateX(-50%);
+    font-size:13px;
+    color:var(--text-dim);
+    letter-spacing:0.1em;
+    z-index:5;
+    animation:bob 2s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .scroll-hint{animation:none;} }
+  @keyframes bob{ 0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,6px);} }
+
+  /* ===== SECTIONS ===== */
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:64px 20px 100px;
+  }
+  .section-label{
+    display:inline-block;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent-cyan);
+    border:1px solid rgba(33,230,255,0.4);
+    border-radius:999px;
+    padding:4px 14px;
+    margin-bottom:14px;
+  }
+  h2.section-title{
+    font-size:clamp(1.5rem, 3.5vw, 2.1rem);
+    margin:0 0 8px;
+    background:linear-gradient(90deg, var(--accent-pink), var(--accent-purple), var(--accent-cyan));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .lede{
+    color:var(--text-dim);
+    font-size:1.05rem;
+    max-width:680px;
+    margin:0 0 36px;
+    line-height:1.6;
+  }
+
+  .guiding-q{
+    text-align:center;
+    margin:0 auto 60px;
+    padding:36px 24px;
+    max-width:760px;
+    background:linear-gradient(135deg, rgba(255,46,154,0.12), rgba(33,230,255,0.10));
+    border:1px solid var(--card-border);
+    border-radius:18px;
+  }
+  .guiding-q .label{
+    font-size:12px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--accent-amber); margin-bottom:10px; display:block;
+  }
+  .guiding-q .q{
+    font-size:clamp(1.3rem, 3.4vw, 1.9rem);
+    font-weight:600;
+    line-height:1.35;
+    color:#fff;
+  }
+
+  .expedition-quote{
+    border-left: 3px solid var(--accent-pink);
+    margin: 0 auto 40px;
+    max-width: 720px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(255,46,154,0.07), rgba(168,85,247,0.05));
+    border-radius: 0 10px 10px 0;
+  }
+  .expedition-quote p{
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    font-style: italic;
+    color: #e8d5ff;
+    margin: 0 0 10px;
+    line-height: 1.6;
+  }
+  .expedition-quote cite{
+    font-size: 0.82rem;
+    color: var(--accent-pink);
+    letter-spacing: 0.05em;
+    font-style: normal;
+  }
+
+  .gq-three{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin:20px 0 0;
+    max-width:980px;
+  }
+  @media (max-width:700px){ .gq-three{grid-template-columns:1fr;} }
+  .gq-domain{
+    background:linear-gradient(135deg, rgba(168,85,247,0.10), rgba(33,230,255,0.08));
+    border:1px solid rgba(168,85,247,0.35);
+    border-radius:14px;
+    padding:22px 18px;
+    text-align:center;
+  }
+  .gq-domain-label{
+    display:block;
+    font-size:11px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--accent-purple);
+    margin-bottom:10px;
+  }
+  .gq-domain-q{
+    font-size:clamp(0.95rem, 2vw, 1.1rem);
+    font-weight:600;
+    line-height:1.4;
+    color:#fff;
+  }
+
+  /* timeline */
+  .timeline{
+    position:relative;
+    margin:0 0 70px;
+    padding-left:28px;
+    border-left:2px solid rgba(255,46,154,0.4);
+  }
+  .stage{
+    position:relative;
+    margin-bottom:40px;
+    cursor:pointer;
+  }
+  .stage::before{
+    content:"";
+    position:absolute;
+    left:-35px; top:6px;
+    width:14px; height:14px;
+    border-radius:50%;
+    background:var(--accent-pink);
+    box-shadow:0 0 12px var(--accent-pink);
+    border:2px solid var(--bg-deep);
+  }
+  .stage.case::before{ background:var(--accent-cyan); box-shadow:0 0 12px var(--accent-cyan); }
+  .stage.product::before{ background:var(--accent-amber); box-shadow:0 0 12px var(--accent-amber); }
+  .stage-card{
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:18px 22px;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .stage-card:hover{
+    transform:translateX(4px);
+    border-color:var(--accent-cyan);
+    background:rgba(33,230,255,0.08);
+  }
+  .stage-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    flex-wrap:wrap;
+  }
+  .stage-title{
+    font-size:1.1rem; font-weight:600; color:#fff; margin:0;
+  }
+  .chev{
+    color:var(--accent-cyan);
+    transition:transform 0.2s ease;
+    font-size:18px;
+    flex-shrink:0;
+  }
+  .stage.open .chev{ transform:rotate(90deg); }
+  .stage-sub{
+    font-size:0.85rem; color:var(--text-dim); margin-top:4px;
+  }
+  .stage-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+  }
+  .stage.open .stage-body{
+    max-height:900px;
+  }
+  .stage-body-inner{
+    padding-top:16px;
+    color:var(--text-dim);
+    font-size:0.95rem;
+    line-height:1.65;
+  }
+  .stage-body-inner p{margin:0 0 12px;}
+  .stage-body-inner ul{margin:0 0 12px; padding-left:20px;}
+
+  .tag-row{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;
+  }
+  .tag{
+    font-size:11px;
+    letter-spacing:0.04em;
+    padding:4px 10px;
+    border-radius:6px;
+    font-weight:600;
+  }
+  .tag.knowledge{ background:rgba(168,85,247,0.18); color:#d8b4fe; border:1px solid rgba(168,85,247,0.4); }
+  .tag.capability{ background:rgba(33,230,255,0.15); color:#a5f3fc; border:1px solid rgba(33,230,255,0.4); }
+  .tag.disposition{ background:rgba(251,191,36,0.15); color:#fde68a; border:1px solid rgba(251,191,36,0.4); }
+  .tag.content{ background:rgba(255,46,154,0.15); color:#fbcfe8; border:1px solid rgba(255,46,154,0.4); }
+
+  /* anchor texts box */
+  .anchor-box{
+    margin-top:14px;
+    padding:12px 14px;
+    background:rgba(0,0,0,0.25);
+    border-left:3px solid var(--accent-cyan);
+    border-radius:6px;
+    font-size:0.85rem;
+  }
+  .anchor-box .at-label{
+    color:var(--accent-cyan); font-weight:600; font-size:11px;
+    text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px;
+  }
+
+  /* grid cards (project mgmt / done criteria) */
+  .grid2{
+    display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:60px;
+  }
+  @media (max-width:640px){ .grid2{grid-template-columns:1fr;} }
+  .pm-card{
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:20px;
+  }
+  .pm-card h3{
+    margin:0 0 12px; font-size:1.05rem; color:var(--accent-amber);
+  }
+  .pm-card ul{ margin:0; padding-left:18px; color:var(--text-dim); font-size:0.9rem; line-height:1.7;}
+
+  .checklist{
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    padding:24px;
+    margin-bottom:60px;
+  }
+  .checklist h3{ margin:0 0 16px; color:#fff; font-size:1.2rem; }
+  .check-item{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    font-size:0.95rem;
+    color:var(--text-dim);
+  }
+  .check-item:last-child{ border-bottom:none; }
+  .check-item .box-icon{
+    flex-shrink:0; width:18px; height:18px; margin-top:2px;
+    border:1.5px solid var(--accent-cyan); border-radius:4px;
+  }
+  .check-item b{ color:#fff; }
+
+  /* curriculum panel */
+  .curric-panel{
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(168,85,247,0.4);
+    border-radius:16px;
+    padding:26px;
+    margin-bottom:60px;
+  }
+  .curric-panel h3{
+    margin:0 0 6px; color:var(--accent-purple); font-size:1.1rem;
+  }
+  .curric-panel .note{
+    color:var(--text-dim); font-size:0.85rem; margin-bottom:18px;
+  }
+  .codes{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .code-card{
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:0.83rem;
+    color:var(--text-dim);
+  }
+  .code-card b{ display:block; color:var(--accent-cyan); font-size:0.85rem; margin-bottom:4px; }
+
+  /* ===== XP ANATOMY LAYOUT ===== */
+  .xp-layout{
+    margin-bottom:70px;
+  }
+  .xp-row{
+    display:flex;
+    justify-content:center;
+    gap:16px;
+  }
+  .xp-case-row{ align-items:stretch; }
+  .xp-two-row{ align-items:stretch; }
+  .xp-arrow{
+    text-align:center;
+    font-size:1.6rem;
+    color:var(--accent-pink);
+    line-height:1;
+    margin:6px 0;
+    filter:drop-shadow(0 0 8px var(--accent-pink));
+  }
+  .xp-node{
+    background:var(--card-bg);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:18px 20px;
+    cursor:pointer;
+    transition:border-color 0.15s, background 0.15s;
+    position:relative;
+  }
+  .xp-node:hover{
+    border-color:var(--accent-cyan);
+    background:rgba(33,230,255,0.06);
+  }
+  .xp-node-head{
+    position:relative;
+    padding-right:24px;
+  }
+  .xp-node .chev{
+    position:absolute;
+    right:0; top:0;
+    color:var(--accent-cyan);
+    font-size:18px;
+    transition:transform 0.2s;
+  }
+  .xp-node.open .chev{ transform:rotate(90deg); }
+  .xp-node-label{
+    display:block;
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .xp-node-title{
+    font-size:1rem;
+    font-weight:600;
+    color:#fff;
+    margin:0 0 4px;
+  }
+  .xp-node-sub{
+    font-size:0.82rem;
+    color:var(--text-dim);
+    margin:0;
+    line-height:1.4;
+  }
+  .xp-node-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+    color:var(--text-dim);
+    font-size:0.92rem;
+    line-height:1.65;
+  }
+  .xp-node.open .xp-node-body{ max-height:7000px; }
+  .xp-node-body p{ margin:12px 0 0; }
+  .xp-node-body ul{ margin:8px 0 0; padding-left:18px; }
+
+  /* nested "full detail" sub-toggle, used inside expanded xp-nodes */
+  .subtoggle{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px dashed rgba(33,230,255,0.3);
+    color:var(--accent-cyan);
+    font-size:0.82rem;
+    font-weight:600;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    user-select:none;
+  }
+  .subtoggle:hover{ color:#fff; }
+  .subtoggle-chev{ display:inline-block; transition:transform 0.2s; margin-right:4px; }
+  .subpanel.open .subtoggle-chev{ transform:rotate(90deg); }
+  .subdetail{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.4s ease;
+  }
+  .subpanel.open .subdetail{ max-height:6000px; }
+  .subdetail-inner{ padding-top:14px; }
+  .subdetail h4{
+    color:#fff;
+    font-size:0.88rem;
+    margin:18px 0 6px;
+  }
+  .subdetail h4:first-child{ margin-top:0; }
+  .subdetail ol{ margin:6px 0 0; padding-left:18px; }
+  .subdetail ol li{ margin-bottom:8px; }
+  .subdetail .module-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:8px;
+  }
+  @media (max-width:600px){ .subdetail .module-grid{ grid-template-columns:1fr; } }
+  .subdetail .module-card{
+    background:rgba(10,4,32,0.4);
+    border:1px solid rgba(33,230,255,0.25);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:0.85rem;
+  }
+  .subdetail .module-card b{ display:block; color:var(--accent-cyan); font-size:0.82rem; margin-bottom:3px; }
+  .subdetail .callback{
+    margin-top:14px;
+    padding:10px 14px;
+    border-left:3px solid var(--accent-amber);
+    background:rgba(251,191,36,0.06);
+    font-size:0.85rem;
+    font-style:italic;
+    color:#fde68a;
+  }
+
+  /* node type colours */
+  .immersion-node{ border-color:rgba(251,191,36,0.4); }
+  .immersion-node .xp-node-label{ color:var(--accent-amber); }
+  .gq-node{
+    border-color:rgba(255,46,154,0.5);
+    background:linear-gradient(135deg,rgba(255,46,154,0.10),rgba(168,85,247,0.08));
+    cursor:default;
+    text-align:center;
+    max-width:640px;
+    width:100%;
+  }
+  .gq-node .xp-node-label{ color:var(--accent-pink); }
+  .gq-node .xp-node-title{ font-size:1.15rem; color:#fff; }
+  .case-node{ border-color:rgba(33,230,255,0.35); flex:1; min-width:0; }
+  .case-node .xp-node-label{ color:var(--accent-cyan); }
+  .mech-node{ border-color:rgba(168,85,247,0.4); flex:1; }
+  .mech-node .xp-node-label{ color:var(--accent-purple); }
+  .fieldwork-node{ border-color:rgba(34,197,94,0.4); flex:1; }
+  .fieldwork-node .xp-node-label{ color:#86efac; }
+  .product-node{ border-color:rgba(251,191,36,0.4); flex:1; }
+  .product-node .xp-node-label{ color:var(--accent-amber); }
+  .cross-node{ border-color:rgba(255,46,154,0.35); flex:1; }
+  .cross-node .xp-node-label{ color:var(--accent-pink); }
+  .exhibition-node{
+    border-color:rgba(255,46,154,0.6);
+    background:linear-gradient(135deg,rgba(255,46,154,0.12),rgba(168,85,247,0.10));
+    flex:1;
+  }
+  .exhibition-node .xp-node-label{ color:var(--accent-pink); }
+
+  @media (max-width:700px){
+    .xp-case-row, .xp-two-row{ flex-direction:column; }
+  }
+
+  .anchor-box.matrix{
+    border-left-color: var(--accent-cyan);
+    background: linear-gradient(135deg, rgba(33,230,255,0.07), rgba(168,85,247,0.05));
+  }
+  .anchor-box.matrix .at-label{ color: var(--accent-cyan); }
+
+  footer{
+    text-align:center;
+    padding:30px 20px 50px;
+    color:var(--text-dim);
+    font-size:0.8rem;
+    border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .hub-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:18px;
+    padding:10px 22px;
+    border-radius:999px;
+    border:1px solid rgba(33,230,255,0.4);
+    background:rgba(33,230,255,0.08);
+    color:var(--accent-cyan);
+    font-size:0.85rem;
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-decoration:none;
+    transition:background 0.2s,transform 0.2s;
+  }
+  .hub-link:hover{
+    background:rgba(33,230,255,0.18);
+    transform:translateY(-1px);
+  }
+
+  .filter-row{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:30px;
+  }
+  .filter-btn{
+    font-size:12px;
+    padding:6px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:transparent;
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .filter-btn.active{
+    background:var(--accent-pink);
+    border-color:var(--accent-pink);
+    color:#1a0b3d;
+    font-weight:600;
+  }
+  .filter-btn:hover{ border-color:var(--accent-cyan); color:#fff; }
+</style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="stars" aria-hidden="true"></div>
+    <div class="sun" aria-hidden="true"></div>
+    <svg class="palm left1" aria-hidden="true" viewBox="0 0 120 150">
+      <path d="M58 150 Q54 95 62 58 Q64 50 60 50 Q56 50 58 58 Q50 95 46 150 Z" fill="#050208"/>
+      <path d="M60 52 Q20 30 2 38 Q18 48 60 58 Z" fill="#050208"/>
+      <path d="M60 50 Q15 50 0 65 Q20 62 60 56 Z" fill="#050208"/>
+      <path d="M60 50 Q25 20 8 0 Q22 30 60 54 Z" fill="#050208"/>
+      <path d="M60 48 Q40 10 38 -8 Q50 20 60 52 Z" fill="#050208"/>
+      <path d="M60 48 Q90 18 110 2 Q92 32 60 53 Z" fill="#050208"/>
+      <path d="M60 50 Q100 38 118 42 Q98 54 60 56 Z" fill="#050208"/>
+      <path d="M60 52 Q95 55 112 70 Q90 64 60 58 Z" fill="#050208"/>
+    </svg>
+    <svg class="palm right1" aria-hidden="true" viewBox="0 0 120 150">
+      <path d="M58 150 Q54 95 62 58 Q64 50 60 50 Q56 50 58 58 Q50 95 46 150 Z" fill="#050208"/>
+      <path d="M60 52 Q20 30 2 38 Q18 48 60 58 Z" fill="#050208"/>
+      <path d="M60 50 Q15 50 0 65 Q20 62 60 56 Z" fill="#050208"/>
+      <path d="M60 50 Q25 20 8 0 Q22 30 60 54 Z" fill="#050208"/>
+      <path d="M60 48 Q40 10 38 -8 Q50 20 60 52 Z" fill="#050208"/>
+      <path d="M60 48 Q90 18 110 2 Q92 32 60 53 Z" fill="#050208"/>
+      <path d="M60 50 Q100 38 118 42 Q98 54 60 56 Z" fill="#050208"/>
+      <path d="M60 52 Q95 55 112 70 Q90 64 60 58 Z" fill="#050208"/>
+    </svg>
+    <div class="skyline" aria-hidden="true"></div>
+    <div class="grid-floor" aria-hidden="true"></div>
+
+    <div class="title-wrap">
+      <h1 class="title-chrome">DIGITECH</h1>
+      <div class="title-script">with James</div>
+      <p class="subtitle">A learning expedition · Year 8 Digital Technologies</p>
+    </div>
+    <div class="scroll-hint">scroll to explore the expedition ↓</div>
+  </section>
+
+  <div class="wrap">
+    <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;">Interactive overview of the Digital Technologies learning expedition, its case studies, product, and curriculum links</h2>
+
+    <span class="section-label">The expedition</span>
+    <h2 class="section-title">What are we doing this semester?</h2>
+    <p class="lede">This semester we are learning to code and examining the systems that shape us and the futures we're building. Click any stage below to explore what we'll cover, and check the curriculum tags to see exactly what's being assessed.</p>
+
+    <blockquote class="expedition-quote">
+      <p>"We all bear the responsibility to take the idea seriously that we might be the generation that achieves Artificial Super-Intelligence."</p>
+      <cite>— Google DeepMind team</cite>
+    </blockquote>
+
+    <div class="guiding-q">
+      <span class="label">Guiding questions</span>
+      <div class="gq-three">
+        <div class="gq-domain">
+          <span class="gq-domain-label">Environmental</span>
+          <div class="gq-domain-q">How does the digital world connect to the physical one?</div>
+        </div>
+        <div class="gq-domain">
+          <span class="gq-domain-label">Social</span>
+          <div class="gq-domain-q">How can we use digitech to shape a better world?</div>
+        </div>
+        <div class="gq-domain">
+          <span class="gq-domain-label">Individual</span>
+          <div class="gq-domain-q">How can I use powerful tools responsibly?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- XP ANATOMY LAYOUT -->
+    <div class="xp-layout">
+
+      <!-- IMMERSION -->
+      <div class="xp-row">
+        <div class="xp-node immersion-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Immersion / Hook / Kick-off</span>
+            <p class="xp-node-title">1. Ender's Game — visceral experience</p>
+            <p class="xp-node-sub">Someone has been watching you. They've been collecting data. And they've already made decisions about your future.</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>We open the unit with a read-aloud: Chapter 1 of Ender's Game. Ender's monitor is removed — the device that has been recording everything about him since birth. He doesn't know what the data said about him, who read it, or what they decided. We then ask: when does that start to sound familiar?</p>
+            <p>We follow it immediately with the Matrix waking-up scene. Both drop students into the same realisation from different angles: a system has been running around you, collecting data, making decisions, and you didn't know.</p>
+            <div class="anchor-box">
+              <span class="at-label">Ender's Game — Reading 1</span>
+              Orson Scott Card, <em>Ender's Game</em>, Chapter 1 — read aloud before students encounter their own PAT data. Who has been collecting information about you, and what have they done with it?
+            </div>
+            <div class="anchor-box matrix">
+              <span class="at-label">The Matrix — Screening 1 ⚠ Parental guidance</span>
+              Wachowski Sisters, <em>The Matrix</em> (1999) — the waking-up scene. Neo discovers the comfortable world was the lie, and the real world is a body in a pod. The visceral version of Plato's Cave.
+            </div>
+            <div class="tag-row">
+              <span class="tag disposition">Curious — questioning systems</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="xp-arrow">↓</div>
+
+      <!-- THREE CASE STUDIES -->
+      <div class="xp-row xp-case-row">
+        <div class="xp-node case-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Case study 1</span>
+            <p class="xp-node-title">Golems and Computers</p>
+            <p class="xp-node-sub">From ancient myth to modern machine — what happens when we build something that follows instructions but can't think?</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>Long before AI, the golem tradition asked what happens when humans create something that follows instructions but has no judgement of its own — and who's responsible when it goes wrong. We extend this through Plato's Cave: if the golem only sees the shadows it's shown, what does it think reality is? This grounds our later discussion of AI ethics in something ancient and human, not just technological.</p>
+            <div class="anchor-box">
+              <span class="at-label">Anchor texts</span>
+              Plato, <em>The Republic</em>, Book VII — the Allegory of the Cave; Jewish golem folklore (e.g. the Golem of Prague); selected passages on creator responsibility
+            </div>
+            <div class="tag-row">
+              <span class="tag disposition">Empathetic — interpreting perspectives</span>
+              <span class="tag capability">Ethical practices</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xp-node case-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Case study 2</span>
+            <p class="xp-node-title">Cybernetics and hyperreality</p>
+            <p class="xp-node-sub">Feedback loops, systems that watch themselves, and fictions that become real</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>We look at how systems — thermostats, ecosystems, social feeds — regulate themselves through feedback. Then we ask a stranger question: can an idea behave like a system too? Hyperstition (fictions that make themselves real), Spencer-Brown's distinctions, Baudrillard's simulacra. The Matrix is our primary case study in hyperstition — a film about simulation and AI that then shaped how Silicon Valley talked about simulation and AI for twenty years. The fiction became the vocabulary.</p>
+            <div class="anchor-box">
+              <span class="at-label">Anchor texts</span>
+              Norbert Wiener, foundational cybernetics concepts; G. Spencer-Brown, <em>Laws of Form</em> (the distinction); Jean Baudrillard, <em>Simulacra and Simulation</em> (selected excerpts)
+            </div>
+            <div class="anchor-box matrix">
+              <span class="at-label">The Matrix — Screening 2</span>
+              Wachowski Sisters, <em>The Matrix</em> (1999) — the Oracle's kitchen scene. A system that knows the future but chooses not to control you with it. Power operating from care rather than fear. "You're going to have to make a choice."
+            </div>
+            <div class="tag-row">
+              <span class="tag disposition">Curious — questioning systems</span>
+              <span class="tag capability">Local and global citizenship</span>
+              <span class="tag content">AC9TDI8K03 / K04 — data representation</span>
+            </div>
+
+            <div class="subpanel">
+              <div class="subtoggle" onclick="toggleSub(event, this)"><span class="subtoggle-chev">▸</span> Full detail — Digital Ethics: data, cybersecurity, sovereignty</div>
+              <div class="subdetail"><div class="subdetail-inner">
+
+                <p>Huizinga and Spencer-Brown do the same formal work from two angles, and that's what makes this week economical rather than five bolted-on topics. A distinction (Spencer-Brown) needs a boundary condition (Huizinga) to be legitimate, and it can fail in two ways: someone breaks the boundary (Baudrillard/hyperstition — already our case study), or the boundary breaks itself by re-entering its own space (Goodhart's Law).</p>
+
+                <h4>The conceptual spine</h4>
+                <ul>
+                  <li><b>Spencer-Brown — the cut (mechanism).</b> "Draw a distinction and a world comes into being." An algorithm, a test, a data point IS a cut: correct/incorrect, in/out, flagged/clear. Taught stripped of jargon — a circle on the board, in/out, that's an algorithm.</li>
+                  <li><b>Huizinga's magic circle — the boundary condition.</b> A game is voluntary, bounded, serious <em>within</em> its bounds while making no claim outside them. PAT testing is a magic circle — "correct/incorrect" is real inside the test, and means nothing about the whole child outside it.</li>
+                  <li><b>Baudrillard / hyperstition — the boundary violation (failure mode).</b> Harm = the game-token escapes the circle and gets treated as unbounded truth. A PAT score used to describe "the real student" is the map mistaken for the territory. Phishing and AI scams are this violation manufactured — a fake magic circle built to extract what's only safe inside a real one.</li>
+                  <li><b>Goodhart's Law — re-entry (why bias is structural, not moral).</b> The score places the student, which reshapes teaching, which reshapes the next score — the distinction eating its own tail. Bias compounds with nobody lying.</li>
+                </ul>
+
+                <h4>The Digital Ethics modules</h4>
+                <div class="module-grid">
+                  <div class="module-card"><b>Databases</b>Access the school's PAT data; students build their own stat sheet from it.</div>
+                  <div class="module-card"><b>Cybersecurity</b>Phishing, MFA, AI scams — why we have to be careful with PAT / personal data.</div>
+                  <div class="module-card"><b>Hardware</b>Capabilities of their own laptops vs others; cloud computers and their game limitations.</div>
+                  <div class="module-card"><b>Algorithmic bias</b>The picture data paints of you vs the real you; how algorithms work and how they're gamed.</div>
+                  <div class="module-card"><b>Cultural protocols</b>CARE Principles and Local Contexts TK Labels — Indigenous data sovereignty and attribution.</div>
+                </div>
+                <p style="margin-top:10px;">Databases, cybersecurity, and bias aren't separate gaps — they're one story told three times: your data → who holds it → what picture it paints → who could exploit it.</p>
+
+                <h4>The one-week sequence</h4>
+                <ol>
+                  <li><b>The cut</b> — circle on the board, in/out = an algorithm. Students hunt the cut in familiar systems (traffic light, win condition, spam filter), then formalise PAT's cut.</li>
+                  <li><b>The circle</b> — play something with an explicit boundary, then apply Huizinga to PAT. What happens when the score leaves the circle?</li>
+                  <li><b>The stat sheet</b> — build an RPG-style character sheet from own PAT data (student / domain / score / date). Closing question: is your stat sheet you? Privacy: each student pulls only their own record.</li>
+                  <li><b>Manufactured circles</b> — phishing spot-the-difference, MFA on a school-safe account, AI-scam case studies. All fake magic circles. Goodhart via "what happens when people learn the test."</li>
+                  <li><b>Whose circle, drawn how</b> — CARE vs the extraction model. Students write and justify an attribution/protocol statement for their own artefact.</li>
+                </ol>
+
+                <div class="callback">↻ Referenced throughout the rest of the unit — the game-state vs character, the dashboard's stat sheet, Ender's Battle School stats — are all the same cut/circle structure. No re-teaching, just the loop closing: "where's the circle here?"</div>
+
+                <div class="tag-row" style="margin-top:14px;">
+                  <span class="tag disposition">Curious — questioning systems</span>
+                  <span class="tag capability">Ethical practices</span>
+                  <span class="tag capability">Local and global citizenship</span>
+                  <span class="tag content">AC9TDI8K04* — databases</span>
+                  <span class="tag content">AC9TDI8P09 / P11* — implement; interact safely</span>
+                </div>
+                <p class="note" style="margin-top:8px; font-size:0.75rem; color:var(--text-dim);">*Indicative codes — verify against the live ACARA Digital Technologies v9 page before any moderation folder.</p>
+
+              </div></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="xp-node case-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Case study 3</span>
+            <p class="xp-node-title">AI, vibe coding, digital futures</p>
+            <p class="xp-node-sub">Bringing it into the present: the tools we're about to use ourselves</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>We examine AI tools as both subject and instrument — what they are, how they're made, what biases they carry, and how to use them with real understanding rather than blind trust. When is prompting an AI a shortcut, and when is it a genuine new way of working? Both anchor texts this week pivot on the same question: what do you do when you realise the rules don't have to apply?</p>
+            <div class="anchor-box">
+              <span class="at-label">Ender's Game — Reading 2</span>
+              Orson Scott Card, <em>Ender's Game</em>, Chapter 10 — Ender takes command and discovers the rules he was given don't apply. The vibe coding moment: understanding a system well enough to work outside its assumptions.
+            </div>
+            <div class="anchor-box matrix">
+              <span class="at-label">The Matrix — Screening 2 (continued)</span>
+              The Oracle scene — both texts this week show a character discovering that the system's assumptions were always provisional. Ender rewrites zero-gravity. Neo is told he gets to choose.
+            </div>
+            <div class="tag-row">
+              <span class="tag capability">Ethical practices</span>
+              <span class="tag capability">Local and global citizenship</span>
+              <span class="tag content">AC9TDI8P14 — digital footprint</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="xp-arrow">↓</div>
+
+      <!-- MECHANISM + FIELDWORK -->
+      <div class="xp-row xp-two-row">
+        <div class="xp-node mech-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">How it all works</span>
+            <p class="xp-node-title">2. The mechanism stage</p>
+            <p class="xp-node-sub">Hardware, circuits, binary, QR codes, software, real programming</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>Once we've asked the big questions, we ground them in how digital systems actually work — from a transistor to a working program. Students build a small text-based game (a "Zork-like") to learn control structures, then represent their logic as a flowchart.</p>
+            <ul>
+              <li>Hardware and circuits — what's physically inside the machine</li>
+              <li>Binary and data representation — QR codes as a hands-on decoding exercise</li>
+              <li>Software and programming — writing real, working Python</li>
+              <li>Flowcharting — representing and tracing algorithms</li>
+            </ul>
+            <div class="tag-row">
+              <span class="tag content">AC9TDI8P09 — implement, modify, debug</span>
+              <span class="tag capability">Thinking and innovation</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xp-node fieldwork-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Fieldwork</span>
+            <p class="xp-node-title">Outside the system</p>
+            <p class="xp-node-sub">A deliberate trip away from screens, into a non-digital system</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>After studying digital systems, we step into a natural one — a forest, a park, a patch of bush. Feedback loops, energy flow, and interdependence are all visible there without a single screen. Is a forest a "system" in the same way the internet is? This also serves as a deliberate digital-wellbeing practice.</p>
+            <div class="tag-row">
+              <span class="tag disposition">Resilient — adapting</span>
+              <span class="tag capability">Collaboration and management — wellbeing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="xp-arrow">↓</div>
+
+      <!-- TWO PRODUCTS -->
+      <div class="xp-row xp-two-row">
+        <div class="xp-node product-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Assessment 1 — Data</span>
+            <p class="xp-node-title">The stat sheet</p>
+            <p class="xp-node-sub">A relational data model built from the student's own PAT data</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>Students analyse their own PAT assessment data — identifying patterns, strengths, and gaps — and model it relationally: student / domain / score / date, joined by ID. This is the databases content standard done for real, not a worksheet, and it's the same stat-sheet exercise from Digital Ethics (Case study 2) done properly, with a mark attached.</p>
+            <p>Using Python and visualisation tools, they turn the model into a personal learning dashboard that turns raw scores into insight and action. The closing question carries over from Digital Ethics: <em>is your stat sheet you?</em> The data is theirs; the question is what they do with it, and what it leaves out.</p>
+            <p style="font-size:0.85rem;"><strong>Privacy:</strong> each student works from only their own longitudinal record. If cohort data is used for the databases exercise, it's anonymised or fictionalised first.</p>
+            <div class="tag-row">
+              <span class="tag content">AC9TDI8P02 — analyse and visualise data</span>
+              <span class="tag content">AC9TDI8P10 — evaluate against design criteria</span>
+              <span class="tag content">AC9TDI8K04* — databases</span>
+              <span class="tag capability">Producing and implementing</span>
+              <span class="tag capability">Data and information</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xp-node product-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Assessment 2 — Build</span>
+            <p class="xp-node-title">3. Choose your format, build the artefact</p>
+            <p class="xp-node-sub">An open-format artefact built from the stat sheet — genre chosen by the student, and defended</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>The format is not decided in advance. Each student turns their own stat sheet into an interactive digital artefact and <strong>chooses what kind</strong> — a racer where scores become cars, a self-improvement app that logs progress, a dungeon crawler, a board game, something with no existing genre. Working in groups with assigned roles, sprint check-ins, a co-constructed rubric, and annotated code with flowcharts document the process. One philosophical annotation asks: "What distinction did I draw here, and what did it leave out?"</p>
+
+            <p>Deciding what the artefact <em>is</em> = drawing the circle. Huizinga and Spencer-Brown stop being decoration and become the assessed act — the DigiTech-vs-woodtech distinction, stated plainly to students: both make things to a brief, but data and rules are political in a way timber isn't.</p>
+
+            <div class="anchor-box">
+              <span class="at-label">Ender's Game — Reading 3</span>
+              Orson Scott Card, <em>Ender's Game</em>, Chapter 14 — the game was always real. Read close to exhibition, when students are living inside their own projects. You were doing real things while thinking you were practicing.
+            </div>
+            <div class="anchor-box matrix">
+              <span class="at-label">The Matrix — Screening 3</span>
+              Wachowski Sisters, <em>The Matrix</em> (1999) — Neo's enlightenment. The bullets slow down not because he has more power but because he has stopped being afraid. Fear was the operating system all along. The win condition is named: powerful tools, used from love rather than fear.
+            </div>
+
+            <div class="subpanel">
+              <div class="subtoggle" onclick="toggleSub(event, this)"><span class="subtoggle-chev">▸</span> Full detail — open format, mark differentiator, protocol statement</div>
+              <div class="subdetail"><div class="subdetail-inner">
+
+                <h4>The mark differentiator (reward reasoning, not novelty)</h4>
+                <ul>
+                  <li><b>Traditional transposition</b> (e.g. scores → car stats) = competent, solid B.</li>
+                  <li><b>Framework critique</b> (e.g. a racer where the car gets <em>slower</em> as your "improvement" score rises, forcing the player to question what the metric rewards) = the format itself is the argument, reaches A.</li>
+                  <li><b>A-band descriptor:</b> "The format choice itself constitutes an argument about data and representation, and the student can defend it as such." A well-made game that says nothing is a B; a rougher game that knows what it argues and argues it through its form is an A. A traditional format done thoughtfully still scores well — this rewards the extra reach without punishing solid craft.</li>
+                </ul>
+
+                <h4>Wellbeing note — the self-improvement app option</h4>
+                <p>The richest option (Goodhart turned reflexive — the student draws and lives inside their own metric) and the one to keep a light hand on. Framing that keeps it safe: not "optimise yourself" but "notice what the measure does to you when you live inside it." If a student's app uncritically gamifies self-judgment, that's the teachable moment — redirect toward interrogating the metric, not a mark-down.</p>
+
+                <h4>Task stages (shared with Art — see Cross-curricular)</h4>
+                <ol>
+                  <li><b>Study (Art)</b> — analyse how artefacts across formats make claims (sprites, car design, app UI, board pieces).</li>
+                  <li><b>Stat sheet (DigiTech)</b> — this is Assessment 1, feeding directly into the build.</li>
+                  <li><b>Choose the format (shared)</b> — decide what the artefact is, argue why. The reasoning itself is assessed.</li>
+                  <li><b>Design + render (Art)</b> — develop the visual language the chosen format needs.</li>
+                  <li><b>Build (DigiTech)</b> — code it: sequence, selection, iteration, functions.</li>
+                  <li><b>Protocols (shared)</b> — attribution/protocol statement: data sources, assets, ICIP-aware, CARE-aware, plus one required line answering <em>"why does it matter that my data stays confidential?"</em> — the cybersecurity module's evidence point, folded in rather than separately assessed.</li>
+                  <li><b>Exhibit (shared)</b> — curate and present with the statement. One artefact, both gradebooks.</li>
+                </ol>
+
+              </div></div>
+            </div>
+
+            <div class="tag-row" style="margin-top:14px;">
+              <span class="tag content">AC9TDI8P09 — implement, modify, debug</span>
+              <span class="tag content">AC9TDI8P12 — manage agile projects</span>
+              <span class="tag content">AC9TDI8P14 — digital footprint</span>
+              <span class="tag content">AC9TDI8P11* — interacting safely</span>
+              <span class="tag capability">Producing and implementing</span>
+              <span class="tag capability">Ethical practices</span>
+              <span class="tag capability">Local and global citizenship</span>
+              <span class="tag capability">Collaboration and management</span>
+              <span class="tag disposition">Creative — generating ideas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="xp-arrow">↓</div>
+
+      <!-- CROSS-CURRICULAR + EXHIBITION -->
+      <div class="xp-row xp-two-row">
+        <div class="xp-node cross-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Cross-curricular</span>
+            <p class="xp-node-title">Is it art?</p>
+            <p class="xp-node-sub">Visual Arts and DigiTech, one artefact, both gradebooks</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>Using purposiveness as a minimum bar, we ask whether the artefact students designed and built can be art — and what that even means when its function is partly to play, and partly to express an idea. This isn't a side debate: the same cohort builds Assessment 2 in Art and DigiTech simultaneously, through a shared seven-stage task, with a single artist statement doubling as the DigiTech data-protocol statement.</p>
+
+            <div class="subpanel">
+              <div class="subtoggle" onclick="toggleSub(event, this)"><span class="subtoggle-chev">▸</span> Full detail — Visual Arts standards and the ICIP / CARE fusion</div>
+              <div class="subdetail"><div class="subdetail-inner">
+
+                <h4>The shared task, stage by stage</h4>
+                <ol>
+                  <li><b>Study (Art)</b> — analyse how artefacts across formats make claims (sprites, car design, app UI, board pieces). → AC9AVA8E01</li>
+                  <li><b>Stat sheet (DigiTech)</b> — relational data-self from own PAT data → Assessment 1</li>
+                  <li><b>Choose the format (shared)</b> — decide what the artefact is, argue why → AC9AVA8C01 / D02</li>
+                  <li><b>Design + render (Art)</b> — develop the visual language the chosen format needs → AC9AVA8D01, C02</li>
+                  <li><b>Build (DigiTech)</b> — code it → Assessment 2</li>
+                  <li><b>Protocols (shared)</b> — attribution/protocol statement → AC9AVA8E02 + CARE</li>
+                  <li><b>Exhibit (shared)</b> — curate and present with the statement → AC9AVA8P01</li>
+                </ol>
+
+                <h4>Visual Arts content descriptions (Years 7–8)</h4>
+                <div class="module-grid">
+                  <div class="module-card"><b>AC9AVA8E01</b>Investigate how visual conventions, processes and materials represent ideas across cultures, times, places</div>
+                  <div class="module-card"><b>AC9AVA8E02</b>Investigate First Nations Australians' artworks and practices, considering culturally responsive ICIP approaches</div>
+                  <div class="module-card"><b>AC9AVA8D01</b>Experiment with visual conventions, processes and materials to develop skills</div>
+                  <div class="module-card"><b>AC9AVA8D02</b>Reflect on how they and other artists respond to influences to inform choices</div>
+                  <div class="module-card"><b>AC9AVA8C01</b>Generate, document and develop ideas for artworks</div>
+                  <div class="module-card"><b>AC9AVA8C02</b>Select and manipulate visual conventions/processes/materials to create artworks representing meaning</div>
+                  <div class="module-card"><b>AC9AVA8P01</b>Curate and present examples of practice to accompany exhibits, communicating meaning to audiences</div>
+                </div>
+
+                <p>The load-bearing overlap: <b>AC9AVA8E02</b> (First Nations arts + ICIP) fuses with the DigiTech Local and global citizenship descriptor and CARE — they're the same principle, knowledge held in relationship and obligation rather than extracted as free-floating property. ICIP (Arts) and Indigenous data sovereignty (DigiTech) are two faces of one idea.</p>
+
+                <div class="callback">↻ This is where the Mabo colonialingualism / "western epistemological error" framing reconnects — extraction-as-default is the epistemological error; both ICIP and CARE are the correction. The loop closes across three units.</div>
+
+              </div></div>
+            </div>
+
+            <div class="tag-row" style="margin-top:14px;">
+              <span class="tag disposition">Creative — generating ideas</span>
+              <span class="tag capability">Ethical practices</span>
+              <span class="tag content">AC9AVA8E01 / E02 / C01 / C02 / D01 / D02 / P01</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xp-node exhibition-node" onclick="toggleXP(this)">
+          <div class="xp-node-head">
+            <span class="xp-node-label">Make it public</span>
+            <p class="xp-node-title">Exhibition</p>
+            <p class="xp-node-sub">Presenting finished work to peers, other classes, and family</p>
+            <span class="chev">›</span>
+          </div>
+          <div class="xp-node-body">
+            <p>Learning that's never shown to anyone outside the classroom loses most of its motivating power. Students present their stat sheet and their chosen-format artefact publicly — explaining not just what they built, but why they chose that format, and what it cost them to learn it.</p>
+            <div class="tag-row">
+              <span class="tag disposition">Empathetic — communicating ideas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <span class="section-label">How it's run</span>
+    <h2 class="section-title">Project management</h2>
+    <p class="lede">Students manage their own work in small groups, the same way a real software team would.</p>
+    <div class="grid2">
+      <div class="pm-card">
+        <h3>Sprint check-ins</h3>
+        <ul>
+          <li>One leader per group, rotating each sprint</li>
+          <li>Weekly review of what shipped and what's blocked</li>
+          <li>Roles, decisions, and progress logged in the dashboard itself</li>
+        </ul>
+      </div>
+      <div class="pm-card">
+        <h3>Done criteria</h3>
+        <ul>
+          <li>Stat sheet live and displaying real, correctly-modelled PAT data insights</li>
+          <li>Chosen-format artefact functional, playable/usable, and visually intentional</li>
+          <li>Format choice argued and defended, not just made</li>
+          <li>Code fully annotated and matched to a flowchart</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="lede" style="margin-top:-6px;">The tickable assessment artefact checklist now lives in Sprint HQ, so groups can check things off together as they go — see the Checklist tab there.</p>
+
+    <span class="section-label">For parents and colleagues</span>
+    <h2 class="section-title">Curriculum alignment</h2>
+    <p class="lede">This unit is mapped against the SA Curriculum Digital Technologies Years 7–8 learning standard — dispositions, capabilities, and knowledge — alongside specific assessable content descriptions.</p>
+
+    <div class="curric-panel">
+      <h3>Dispositions evidenced throughout</h3>
+      <p class="note">Curious, creative, resilient, empathetic — demonstrated continuously, not assessed as a single task</p>
+      <div class="codes">
+        <div class="code-card"><b>Curious</b>Questioning systems, investigating own data, testing ideas through fieldwork</div>
+        <div class="code-card"><b>Creative</b>Designing the dashboard, game, and visual identity of their own work</div>
+        <div class="code-card"><b>Resilient</b>Documented debugging, iteration, and adapting through sprint check-ins</div>
+        <div class="code-card"><b>Empathetic</b>Designing for real user needs (including their own), presenting at exhibition</div>
+      </div>
+    </div>
+
+    <div class="curric-panel">
+      <h3>Assessable content descriptions</h3>
+      <p class="note">Directly quoted from the SA Curriculum supporting content for Years 7–8</p>
+      <div class="codes">
+        <div class="code-card"><b>AC9TDI8P09</b>Implement, modify and debug programs involving control structures and functions in a general-purpose programming language</div>
+        <div class="code-card"><b>AC9TDI8P10</b>Evaluate existing and student solutions against design criteria, user stories and possible future impact</div>
+        <div class="code-card"><b>AC9TDI8P02</b>Analyse and visualise data using spreadsheets and databases to draw conclusions and identify trends</div>
+        <div class="code-card"><b>AC9TDI8P12</b>Select and use digital tools to share content and manage agile projects</div>
+        <div class="code-card"><b>AC9TDI8P14</b>Investigate and manage the digital footprint student solutions collect, and assess if data is essential</div>
+        <div class="code-card"><b>AC9TDI8K03 / K04*</b>Data representation and databases — covered through Digital Ethics and the stat sheet</div>
+        <div class="code-card"><b>AC9TDI8P11*</b>Interacting safely and securely — taught through Digital Ethics (phishing, MFA, AI scams); evidenced summatively via the confidentiality line in Assessment 2's protocol statement</div>
+      </div>
+      <p class="note" style="margin-top:12px;">*Indicative reconstructions — verify against the live ACARA Digital Technologies v9 page before any moderation folder.</p>
+    </div>
+
+    <div class="curric-panel">
+      <h3>Visual Arts — cross-curricular content descriptions</h3>
+      <p class="note">SA Curriculum Visual Arts Years 7–8, verified against the ACARA v9 alignment sheet — assessed jointly with DigiTech through the shared open-format task</p>
+      <div class="codes">
+        <div class="code-card"><b>AC9AVA8E01</b>Investigate how visual conventions, processes and materials represent ideas across cultures, times, places</div>
+        <div class="code-card"><b>AC9AVA8E02</b>Investigate First Nations Australians' artworks and practices, considering culturally responsive ICIP approaches</div>
+        <div class="code-card"><b>AC9AVA8D01</b>Experiment with visual conventions, processes and materials to develop skills</div>
+        <div class="code-card"><b>AC9AVA8D02</b>Reflect on how they and other artists respond to influences to inform choices</div>
+        <div class="code-card"><b>AC9AVA8C01</b>Generate, document and develop ideas for artworks</div>
+        <div class="code-card"><b>AC9AVA8C02</b>Select and manipulate visual conventions/processes/materials to create artworks representing meaning</div>
+        <div class="code-card"><b>AC9AVA8P01</b>Curate and present examples of practice to accompany exhibits, communicating meaning to audiences</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <a class="hub-link" href="digitech-hub.html">← Back to Mission Hub</a><br>
+    DIGITECH with James — a Year 8 Digital Technologies learning expedition · Mapped to the SA Curriculum<br>
+    Built with students, for students.
+  </footer>
+
+<script>
+function toggleXP(node){
+  node.classList.toggle('open');
+}
+function toggleSub(event, el){
+  event.stopPropagation();
+  el.closest('.subpanel').classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
