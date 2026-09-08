@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGITECH — Game Library</title>
+<style>
+  :root{
+    --bg-deep:#04010f;
+    --bg-mid:#0a0420;
+    --pink:#ff2e9a;
+    --cyan:#21e6ff;
+    --purple:#a855f7;
+    --amber:#fbbf24;
+    --green:#4ade80;
+    --text:#eef0ff;
+    --text2:#a8a8d8;
+    --card:rgba(10,4,32,0.82);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:var(--bg-deep);
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    background:repeating-linear-gradient(to bottom,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+    pointer-events:none;
+    z-index:9999;
+  }
+
+  header{
+    padding:40px 24px 32px;
+    text-align:center;
+    border-bottom:1px solid rgba(255,46,154,0.2);
+    background:linear-gradient(180deg, rgba(255,46,154,0.08), transparent);
+  }
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--cyan);text-decoration:none;font-weight:600;
+    margin-bottom:22px;
+  }
+  .back-link:hover{color:#fff;}
+  .title-chrome{
+    font-size:clamp(32px,7vw,52px);font-weight:900;letter-spacing:0.04em;
+    background:linear-gradient(180deg,#e8eaf0 0%,#9aa3c4 45%,#3d4470 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    line-height:1;
+  }
+  .title-sub{
+    margin-top:8px;
+    font-size:13px;letter-spacing:0.35em;text-transform:uppercase;
+    color:var(--pink);font-weight:700;
+  }
+  .terminal-tag{
+    margin-top:10px;font-size:12px;color:var(--text2);font-family:monospace;
+  }
+
+  main{max-width:960px;margin:0 auto;padding:56px 24px 80px;}
+
+  .eyebrow{
+    font-size:11px;letter-spacing:0.2em;text-transform:uppercase;
+    color:var(--cyan);font-weight:700;margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:"";width:18px;height:1px;background:var(--cyan);}
+  .lib-title{font-size:28px;font-weight:800;margin-bottom:14px;}
+  .lib-desc{color:var(--text2);font-size:15px;line-height:1.7;max-width:600px;margin-bottom:48px;}
+
+  .game-grid{display:grid;gap:24px;}
+
+  .game-card{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.08);
+    text-decoration:none;color:inherit;
+    display:flex;flex-direction:row;
+    overflow:hidden;position:relative;
+    transition:transform 0.2s, border-color 0.2s;
+    clip-path:polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+  .game-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.2);}
+  @media (max-width:640px){ .game-card{flex-direction:column;} .game-preview{flex-basis:180px !important;} }
+
+  .game-preview{
+    position:relative;
+    flex:0 0 260px;
+    min-height:180px;
+    background:
+      radial-gradient(ellipse at 50% 105%, #ffe08a 0%, #ff9d5c 22%, transparent 55%),
+      linear-gradient(180deg, #1a3a6b 0%, #0d5f8a 35%, #0a8f9e 60%, #0a3a52 100%);
+    overflow:hidden;
+  }
+  .game-preview .sun{
+    position:absolute;left:50%;bottom:28%;transform:translateX(-50%);
+    width:70px;height:70px;border-radius:50%;
+    background:linear-gradient(180deg,#fff6d8,#ffd479 50%,#ff8a3d);
+    box-shadow:0 0 40px rgba(255,180,90,0.6);
+  }
+  .game-preview .wave{
+    position:absolute;left:-10%;width:120%;height:40px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.35);
+    filter:blur(1px);
+  }
+  .game-preview .wave1{bottom:22%;}
+  .game-preview .wave2{bottom:10%;background:rgba(255,255,255,0.5);height:30px;}
+  .game-preview .wave3{bottom:0%;background:rgba(10,60,90,0.9);height:60px;border-radius:0;}
+
+  .game-body{padding:24px 26px;display:flex;flex-direction:column;flex:1;min-width:0;}
+  .game-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .game-tag{
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+    padding:3px 9px;border-radius:2px;font-weight:700;
+    background:rgba(33,230,255,0.1);color:var(--cyan);
+    border:1px solid rgba(33,230,255,0.25);
+  }
+  .game-name{font-size:22px;font-weight:800;margin-bottom:8px;}
+  .game-desc{font-size:13.5px;color:var(--text2);line-height:1.65;margin-bottom:18px;flex:1;}
+  .game-footer{
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);
+  }
+  .game-status{
+    font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+    padding:3px 10px;border-radius:2px;font-weight:600;
+    background:rgba(74,222,128,0.12);color:var(--green);
+    border:1px solid rgba(74,222,128,0.25);
+  }
+  .play-btn{
+    font-size:13px;font-weight:700;color:var(--bg-deep);
+    background:linear-gradient(90deg,var(--cyan),#7ff2ff);
+    padding:8px 18px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .game-card:hover .play-btn{background:linear-gradient(90deg,#7ff2ff,var(--cyan));}
+
+  /* coming soon placeholder card */
+  .game-card.soon{opacity:0.4;pointer-events:none;}
+  .game-card.soon .game-preview{
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 10px, transparent 10px 20px), var(--bg-mid);
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  footer{
+    text-align:center;padding:32px 24px;
+    border-top:1px solid rgba(255,46,154,0.2);
+    color:var(--text2);font-size:12px;letter-spacing:0.05em;line-height:1.8;
+  }
+  footer span{color:var(--pink);}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="digitech-hub.html">← Back to Mission Hub</a>
+  <div class="title-chrome">DIGITECH</div>
+  <div class="title-sub">Game Library</div>
+  <div class="terminal-tag">// playable builds from the expedition</div>
+</header>
+
+<main>
+  <p class="eyebrow">Year 8 Digital Technologies</p>
+  <h2 class="lib-title">Play something</h2>
+  <p class="lib-desc">A growing shelf of playable games connected to the expedition — starting with Sierra Surf, a full 3D surf game. Student-built games will join it here as they're finished and exhibited.</p>
+
+  <div class="game-grid">
+
+    <!-- SIERRA SURF -->
+    <a class="game-card" href="sierra-surf.html" target="_blank">
+      <div class="game-preview">
+        <div class="wave wave3"></div>
+        <div class="sun"></div>
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">3D</span>
+          <span class="game-tag">Arcade</span>
+          <span class="game-tag">Surfing</span>
+        </div>
+        <div class="game-name">Sierra Surf</div>
+        <div class="game-desc">Ride the waves in a full-window 3D surf game — chase combos, dodge wipeouts, and chain rides across a sunset coastline. Built single-file, playable straight in the browser.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- COMING SOON -->
+    <div class="game-card soon">
+      <div class="game-preview"></div>
+      <div class="game-body">
+        <div class="game-tags"><span class="game-tag">Student build</span></div>
+        <div class="game-name">More coming soon</div>
+        <div class="game-desc">Student-built open-format artefacts will land here as groups finish and exhibit their work.</div>
+        <div class="game-footer">
+          <span class="game-status" style="background:rgba(251,191,36,0.1);color:var(--amber);border-color:rgba(251,191,36,0.2);">Coming soon</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  DIGITECH with James — a Year 8 Digital Technologies learning expedition · Mapped to the SA Curriculum<br>
+  <span>Game Library</span> — playable builds live here.
+</footer>
+
+</body>
+</html>
