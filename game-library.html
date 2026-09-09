@@ -113,6 +113,33 @@
   .game-preview .wave2{bottom:10%;background:rgba(255,255,255,0.5);height:30px;}
   .game-preview .wave3{bottom:0%;background:rgba(10,60,90,0.9);height:60px;border-radius:0;}
 
+  .game-preview.cottage{
+    background:linear-gradient(180deg, #ffe8d6 0%, #ffd3b0 42%, #b7dfae 60%, #7cb87a 100%);
+  }
+  .cottage-roof{
+    position:absolute;left:50%;bottom:calc(24% + 58px);transform:translateX(-50%);
+    width:0;height:0;
+    border-left:58px solid transparent;
+    border-right:58px solid transparent;
+    border-bottom:42px solid #8a4a3a;
+  }
+  .cottage-house{
+    position:absolute;left:50%;bottom:24%;transform:translateX(-50%);
+    width:88px;height:58px;
+    background:#c97b5f;
+  }
+  .cottage-door{
+    position:absolute;left:50%;bottom:24%;transform:translateX(-50%);
+    width:18px;height:32px;border-radius:9px 9px 0 0;
+    background:#5c3a2e;
+  }
+  .cottage-window{
+    position:absolute;left:calc(50% + 24px);bottom:calc(24% + 26px);
+    width:15px;height:15px;border-radius:3px;
+    background:#ffe08a;
+    box-shadow:0 0 14px rgba(255,224,138,0.9);
+  }
+
   .game-body{padding:24px 26px;display:flex;flex-direction:column;flex:1;min-width:0;}
   .game-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-tag{
@@ -188,6 +215,29 @@
         </div>
         <div class="game-name">Sierra Surf</div>
         <div class="game-desc">Ride the waves in a full-window 3D surf game — chase combos, dodge wipeouts, and chain rides across a sunset coastline. Built single-file, playable straight in the browser.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- COZY COTTAGE COLLECT -->
+    <a class="game-card" href="https://toast-cottage.preview.emergentagent.com/" target="_blank">
+      <div class="game-preview cottage">
+        <div class="cottage-roof"></div>
+        <div class="cottage-house"></div>
+        <div class="cottage-door"></div>
+        <div class="cottage-window"></div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">Cozy</span>
+          <span class="game-tag">Collector</span>
+          <span class="game-tag">Builder</span>
+        </div>
+        <div class="game-name">Cozy Cottage Collect</div>
+        <div class="game-desc">Build your dream cottage, then play mini-games to earn more furniture and keep decorating.</div>
         <div class="game-footer">
           <span class="game-status">Live</span>
           <span class="play-btn">Play ▸</span>
