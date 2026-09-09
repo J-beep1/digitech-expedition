@@ -1,0 +1,3812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Force Arena - Balanced Damage Update</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#050812;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+canvas{
+    display:block;
+    width:100vw;
+    height:100vh;
+}
+
+button{
+    background:#202d44;
+    color:white;
+    border:2px solid #52627d;
+    border-radius:9px;
+    padding:8px 11px;
+    margin:3px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover,
+button.sel{
+    background:#1769ff;
+}
+
+#menu{
+    position:fixed;
+    inset:0;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#02050cee;
+}
+
+.box{
+    width:min(1100px,96vw);
+    max-height:95vh;
+    overflow:auto;
+    background:#10192a;
+    border:2px solid #50627f;
+    border-radius:18px;
+    padding:18px;
+    text-align:center;
+}
+
+h1{
+    font-size:38px;
+    margin:5px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+}
+
+.players{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+#play{
+    font-size:22px;
+    padding:12px 55px;
+    background:#1769ff;
+    margin-top:15px;
+}
+
+.info{
+    font-size:12px;
+    color:#aaa;
+    line-height:1.5;
+    margin-top:12px;
+}
+
+#hud{
+    position:fixed;
+    top:8px;
+    left:8px;
+    right:8px;
+    z-index:10;
+    display:flex;
+    justify-content:space-between;
+    pointer-events:none;
+}
+
+.h{
+    width:300px;
+    background:#000c;
+    border:2px solid #ffffff22;
+    border-radius:10px;
+    padding:7px;
+}
+
+.bar{
+    height:17px;
+    background:#222;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.fill{
+    height:100%;
+    background:#35df59;
+    width:100%;
+}
+
+#round,
+#timer,
+#msg{
+    position:fixed;
+    z-index:11;
+    left:50%;
+    transform:translateX(-50%);
+    background:#000c;
+    padding:7px 16px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+#round{top:92px}
+#timer{top:130px}
+#msg{bottom:8px}
+
+.hidden{
+    display:none!important;
+}
+
+#cursor{
+    position:fixed;
+    width:15px;
+    height:15px;
+    border:2px solid white;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:30;
+    box-shadow:0 0 15px white;
+    display:none;
+}
+
+@media(max-width:700px){
+    .players{
+        grid-template-columns:1fr;
+    }
+
+    .grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+<div id="cursor"></div>
+
+<div id="hud" class="hidden">
+
+    <div class="h">
+        <b id="p1name"></b>
+        <div class="bar">
+            <div id="p1hp" class="fill"></div>
+        </div>
+        <small id="p1score"></small>
+    </div>
+
+    <div class="h">
+        <b id="p2name"></b>
+        <div class="bar">
+            <div id="p2hp" class="fill"></div>
+        </div>
+        <small id="p2score"></small>
+    </div>
+
+</div>
+
+<div id="round" class="hidden"></div>
+<div id="timer" class="hidden"></div>
+<div id="msg">Choose your fighters!</div>
+
+<div id="menu">
+
+<div class="box">
+
+<h1>⚡ FORCE ARENA ⚡</h1>
+
+<h3>Game Mode</h3>
+
+<button id="mode2" class="sel">
+👥 PLAYER 1 VS PLAYER 2
+</button>
+
+<button id="modeAI">
+🤖 PLAYER 1 VS AI
+</button>
+
+<button id="modeAIAI">
+🤖 AI VS AI
+</button>
+
+<h3>Map</h3>
+
+<div id="maps">
+
+<button data-map="volcano" class="sel">
+🌋 Volcano
+</button>
+
+<button data-map="sky">
+☁️ Sky
+</button>
+
+<button data-map="ai">
+🤖 AI Arena
+</button>
+
+<button data-map="supreme">
+⚡ Supreme Arena
+</button>
+
+<button data-map="desert">
+🏜️ Desert
+</button>
+
+</div>
+
+<div class="players">
+
+<div>
+
+<h3>Player 1</h3>
+
+<div id="chars1" class="grid"></div>
+
+</div>
+
+<div>
+
+<h3>Player 2 / AI</h3>
+
+<div id="chars2" class="grid"></div>
+
+</div>
+
+</div>
+
+<button id="play">
+▶ PLAY
+</button>
+
+<div class="info">
+
+<b>P1:</b>
+A/D move • W jump • Z melee • HOLD X laser • C special • V ultimate • Double Space fly • B teleport
+
+<br>
+
+<b>P2:</b>
+←/→ move • ↑ jump • N melee • HOLD M laser • , special • . ultimate • Double ; fly • L teleport
+
+<br><br>
+
+🐉 Dragon:
+Fire Claw / Dragon Beam / Dragon Grab / Dragon Transform
+
+<br>
+
+🌑 Void Reaper:
+Void Slash / Void Beam / Black Hole / Reaper Mode
+
+<br>
+
+🌩️ Thunder God:
+Thunder Punch / Lightning Laser / Thunderstorm / God Mode
+
+<br>
+
+🔥 Inferno:
+Inferno Claw / Flame Laser / Meteor Rain / Inferno Rage
+
+<br>
+
+⚡ Supreme Force:
+Laser / Special / Ultimate
+
+<br>
+
+🌟 Heavenly Force and 🩸 Sanguine Force
+are transformation-only forms.
+
+<br><br>
+
+<b>⚖️ BALANCED DAMAGE UPDATE</b>
+
+<br>
+
+All attacks now deal significantly less damage so battles last longer.
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let W=innerWidth;
+let H=innerHeight;
+
+canvas.width=W;
+canvas.height=H;
+
+window.addEventListener("resize",()=>{
+    W=innerWidth;
+    H=innerHeight;
+
+    canvas.width=W;
+    canvas.height=H;
+
+    makePlatforms();
+});
+
+const held={};
+const pressed={};
+
+window.addEventListener("keydown",e=>{
+
+    if(
+        [" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"]
+        .includes(e.key)
+    ){
+        e.preventDefault();
+    }
+
+    if(!held[e.key]){
+        pressed[e.key]=true;
+    }
+
+    held[e.key]=true;
+});
+
+window.addEventListener("keyup",e=>{
+    held[e.key]=false;
+});
+
+function press(key){
+
+    if(pressed[key]){
+        delete pressed[key];
+        return true;
+    }
+
+    return false;
+}
+
+const mouse={
+    x:W/2,
+    y:H/2
+};
+
+canvas.addEventListener("mousemove",e=>{
+
+    mouse.x=e.clientX;
+    mouse.y=e.clientY;
+
+    cursor.style.left=(mouse.x-7)+"px";
+    cursor.style.top=(mouse.y-7)+"px";
+});
+
+
+/* =========================
+   CHARACTER DATA
+========================= */
+
+const CHARS={
+
+    Dragon:{
+        hp:220,
+        color:"#ff4b18"
+    },
+
+    SupremeForce:{
+        hp:150,
+        color:"#20dfff"
+    },
+
+    VoidReaper:{
+        hp:220,
+        color:"#9b4dff"
+    },
+
+    ThunderGod:{
+        hp:220,
+        color:"#ffe900"
+    },
+
+    Inferno:{
+        hp:220,
+        color:"#ff5a16"
+    },
+
+    Laserman:{
+        hp:200,
+        color:"#ff3030"
+    },
+
+    Tanky:{
+        hp:260,
+        color:"#8995a8"
+    },
+
+    Manager:{
+        hp:220,
+        color:"#42dfff"
+    }
+};
+
+const NAMES=Object.keys(CHARS);
+
+let selected1="SupremeForce";
+let selected2="Dragon";
+
+let mode="2p";
+let map="volcano";
+
+let p1;
+let p2;
+
+let running=false;
+let ending=false;
+
+let roundNo=1;
+let wins1=0;
+let wins2=0;
+
+let platforms=[];
+let effects=[];
+let hazards=[];
+
+let desertTime=60;
+let desertClock=0;
+
+let lightning=300;
+let skyLightning=70;
+let hazardClock=35;
+
+
+/* =========================
+   PLATFORMS
+========================= */
+
+function makePlatforms(){
+
+    platforms=[
+
+        {
+            x:W*.08,
+            y:H*.62,
+            w:230,
+            h:25
+        },
+
+        {
+            x:W*.39,
+            y:H*.44,
+            w:270,
+            h:25
+        },
+
+        {
+            x:W*.72,
+            y:H*.62,
+            w:230,
+            h:25
+        }
+
+    ];
+}
+
+makePlatforms();
+
+
+/* =========================
+   CHARACTER SELECT
+========================= */
+
+function makeCharacters(){
+
+    chars1.innerHTML="";
+    chars2.innerHTML="";
+
+    NAMES.forEach(name=>{
+
+        let b1=document.createElement("button");
+
+        b1.textContent=
+            name==="Dragon" ? "🐉 Dragon":
+            name==="SupremeForce" ? "⚡ Supreme Force":
+            name==="VoidReaper" ? "🌑 Void Reaper":
+            name==="ThunderGod" ? "🌩️ Thunder God":
+            name==="Inferno" ? "🔥 Inferno":
+            name;
+
+        if(name===selected1){
+            b1.classList.add("sel");
+        }
+
+        b1.onclick=()=>{
+            selected1=name;
+            makeCharacters();
+        };
+
+        chars1.appendChild(b1);
+
+
+        let b2=document.createElement("button");
+
+        b2.textContent=b1.textContent;
+
+        if(name===selected2){
+            b2.classList.add("sel");
+        }
+
+        b2.onclick=()=>{
+            selected2=name;
+            makeCharacters();
+        };
+
+        chars2.appendChild(b2);
+
+    });
+}
+
+makeCharacters();
+
+
+/* =========================
+   MODES
+========================= */
+
+mode2.onclick=()=>{
+    setMode("2p");
+};
+
+modeAI.onclick=()=>{
+    setMode("ai");
+};
+
+modeAIAI.onclick=()=>{
+    setMode("aiai");
+};
+
+function setMode(v){
+
+    mode=v;
+
+    mode2.classList.toggle("sel",v==="2p");
+    modeAI.classList.toggle("sel",v==="ai");
+    modeAIAI.classList.toggle("sel",v==="aiai");
+}
+
+
+/* =========================
+   MAP SELECT
+========================= */
+
+document.querySelectorAll("#maps button")
+.forEach(button=>{
+
+    button.onclick=()=>{
+
+        map=button.dataset.map;
+
+        document
+        .querySelectorAll("#maps button")
+        .forEach(x=>x.classList.remove("sel"));
+
+        button.classList.add("sel");
+    };
+
+});
+
+
+/* =========================
+   FIGHTER
+========================= */
+
+class Fighter{
+
+    constructor(x,side,name,ai){
+
+        this.x=x;
+        this.y=H-150;
+
+        this.w=42;
+        this.h=70;
+
+        this.vx=0;
+        this.vy=0;
+
+        this.side=side;
+        this.name=name;
+        this.ai=ai;
+
+        this.max=CHARS[name].hp;
+        this.hp=this.max;
+
+        this.facing=side===1?1:-1;
+
+        this.ground=false;
+
+        this.fly=false;
+
+        this.freeze=0;
+        this.invulnerable=0;
+
+        this.transform=false;
+
+        this.aiTime=0;
+        this.aiAttack="";
+
+        this.spaceTime=0;
+        this.lastSpace=false;
+
+        this.semiTime=0;
+        this.lastSemi=false;
+
+        this.cd={
+            z:0,
+            x:0,
+            c:0,
+            v:0,
+            tp:0
+        };
+
+        this.lastJump=false;
+    }
+
+
+    label(){
+
+        if(this.name==="SupremeForce")
+            return "Supreme Force";
+
+        if(this.name==="VoidReaper")
+            return "Void Reaper";
+
+        if(this.name==="ThunderGod")
+            return "Thunder God";
+
+        if(this.name==="HeavenlyForce")
+            return "Heavenly Force";
+
+        if(this.name==="SanguineForce")
+            return "Sanguine Force";
+
+        return this.name;
+    }
+
+
+    color(){
+
+        if(this.name==="HeavenlyForce")
+            return "#fff176";
+
+        if(this.name==="SanguineForce")
+            return "#ff174f";
+
+        return CHARS[this.name]?.color || "#fff";
+    }
+
+
+    left(){
+
+        if(this.ai){
+            return this.x>this.enemy.x+80;
+        }
+
+        return this.side===1
+            ? !!held.a
+            : !!held.ArrowLeft;
+    }
+
+
+    right(){
+
+        if(this.ai){
+            return this.x<this.enemy.x-80;
+        }
+
+        return this.side===1
+            ? !!held.d
+            : !!held.ArrowRight;
+    }
+
+
+    jump(){
+
+        if(this.ai){
+            return Math.random()<.015;
+        }
+
+        return this.side===1
+            ? !!held.w
+            : !!held.ArrowUp;
+    }
+
+
+    abilityHeld(type){
+
+        if(this.ai)return false;
+
+        if(this.side===1){
+
+            if(type==="z")return !!held.z;
+            if(type==="x")return !!held.x;
+            if(type==="c")return !!held.c;
+            if(type==="v")return !!held.v;
+
+        }else{
+
+            if(type==="z")return !!held.n;
+            if(type==="x")return !!held.m;
+            if(type==="c")return !!held[","];
+            if(type==="v")return !!held["."];
+
+        }
+
+        return false;
+    }
+
+
+    abilityPressed(type){
+
+        if(this.ai)return false;
+
+        if(this.side===1){
+
+            if(type==="z")return press("z");
+            if(type==="x")return press("x");
+            if(type==="c")return press("c");
+            if(type==="v")return press("v");
+
+        }else{
+
+            if(type==="z")return press("n");
+            if(type==="x")return press("m");
+            if(type==="c")return press(",");
+            if(type==="v")return press(".");
+
+        }
+
+        return false;
+    }
+
+
+    teleport(){
+
+        if(this.cd.tp>0)return;
+
+        let oldX=this.x;
+        let oldY=this.y;
+
+        this.x=Math.max(
+            0,
+            Math.min(
+                W-this.w,
+                mouse.x-this.w/2
+            )
+        );
+
+        this.y=Math.max(
+            10,
+            Math.min(
+                H-this.h-80,
+                mouse.y-this.h/2
+            )
+        );
+
+        teleportEffect(
+            oldX+21,
+            oldY+35,
+            this
+        );
+
+        teleportEffect(
+            this.x+21,
+            this.y+35,
+            this
+        );
+
+        this.cd.tp=70;
+
+        msg.textContent="🌀 TELEPORT!";
+    }
+
+
+    damage(amount,knock=0){
+
+        if(
+            !running ||
+            this.freeze>0 ||
+            this.invulnerable>0
+        ){
+            return;
+        }
+
+        this.hp-=amount;
+
+        this.vx+=knock;
+
+        burst(
+            this.x+21,
+            this.y+35,
+            this.color()
+        );
+
+        if(this.hp<=0){
+
+            this.hp=0;
+
+            this.die();
+        }
+    }
+
+
+    resetForm(){
+
+        this.vx=0;
+        this.vy=-5;
+
+        this.freeze=0;
+        this.invulnerable=60;
+
+        this.fly=false;
+        this.transform=false;
+
+        this.cd={
+            z:0,
+            x:0,
+            c:0,
+            v:0,
+            tp:0
+        };
+    }
+
+
+    die(){
+
+        if(ending)return;
+
+
+        /* Supreme Force transforms instead of ending the round */
+
+        if(this.name==="SupremeForce"){
+
+            this.name="HeavenlyForce";
+
+            this.max=240;
+            this.hp=240;
+
+            this.resetForm();
+
+            big(
+                this.x+21,
+                this.y+35,
+                "#fff176"
+            );
+
+            msg.textContent=
+                "⚡ SUPREME FORCE → 🌟 HEAVENLY FORCE!";
+
+            return;
+        }
+
+
+        /* Heavenly transforms into Sanguine */
+
+        if(this.name==="HeavenlyForce"){
+
+            this.name="SanguineForce";
+
+            this.max=260;
+            this.hp=260;
+
+            this.resetForm();
+
+            big(
+                this.x+21,
+                this.y+35,
+                "#ff174f"
+            );
+
+            msg.textContent=
+                "🌟 HEAVENLY FORCE → 🩸 SANGUINE FORCE!";
+
+            return;
+        }
+
+
+        ending=true;
+        running=false;
+
+        if(this.side===1){
+
+            wins2++;
+
+            msg.textContent=
+                this.enemy.label()+
+                " WINS ROUND "+
+                roundNo+"!";
+
+        }else{
+
+            wins1++;
+
+            msg.textContent=
+                this.enemy.label()+
+                " WINS ROUND "+
+                roundNo+"!";
+
+        }
+
+
+        setTimeout(()=>{
+
+            if(roundNo>=3){
+
+                returnMenu();
+
+            }else{
+
+                roundNo++;
+
+                startRound();
+
+            }
+
+        },1800);
+    }
+
+
+    aiThink(){
+
+        this.aiTime--;
+
+        if(this.aiTime>0)return;
+
+        this.aiTime=
+            15+
+            Math.random()*30;
+
+        let d=
+            Math.abs(
+                this.x-this.enemy.x
+            );
+
+        if(d<120&&Math.random()<.7)
+            this.aiAttack="z";
+
+        else if(Math.random()<.5)
+            this.aiAttack="x";
+
+        else if(Math.random()<.3)
+            this.aiAttack="c";
+
+        else if(Math.random()<.2)
+            this.aiAttack="v";
+
+        else
+            this.aiAttack="";
+    }
+
+
+    update(enemy){
+
+        this.enemy=enemy;
+
+        if(!running)return;
+
+        if(this.invulnerable>0)
+            this.invulnerable--;
+
+        if(this.freeze>0){
+
+            this.freeze--;
+
+            return;
+        }
+
+        if(this.ai)
+            this.aiThink();
+
+
+        if(this.left()){
+
+            this.vx-=.7;
+
+            this.facing=-1;
+        }
+
+
+        if(this.right()){
+
+            this.vx+=.7;
+
+            this.facing=1;
+        }
+
+
+        this.vx*=.86;
+
+        this.x+=this.vx;
+
+
+        let j=this.jump();
+
+        if(
+            j &&
+            !this.lastJump &&
+            this.ground
+        ){
+
+            this.vy=-11;
+
+            this.ground=false;
+        }
+
+        this.lastJump=j;
+
+
+        const wingChar=[
+            "Dragon",
+            "SupremeForce",
+            "HeavenlyForce",
+            "SanguineForce",
+            "VoidReaper",
+            "ThunderGod",
+            "Inferno"
+        ].includes(this.name);
+
+
+        if(wingChar&&!this.ai){
+
+            if(this.side===1){
+
+                let s=!!held[" "];
+
+                if(s&&!this.lastSpace){
+
+                    let now=Date.now();
+
+                    if(
+                        now-this.spaceTime<450
+                    ){
+
+                        this.fly=!this.fly;
+
+                        msg.textContent=
+                            this.fly
+                            ? "🪽 P1 FLIGHT ON!"
+                            : "🪽 P1 FLIGHT OFF!";
+                    }
+
+                    this.spaceTime=now;
+                }
+
+                this.lastSpace=s;
+
+            }else{
+
+                let s=!!held[";"];
+
+                if(s&&!this.lastSemi){
+
+                    let now=Date.now();
+
+                    if(
+                        now-this.semiTime<450
+                    ){
+
+                        this.fly=!this.fly;
+
+                        msg.textContent=
+                            this.fly
+                            ? "🪽 P2 FLIGHT ON!"
+                            : "🪽 P2 FLIGHT OFF!";
+                    }
+
+                    this.semiTime=now;
+                }
+
+                this.lastSemi=s;
+            }
+        }
+
+
+        if(this.ai&&wingChar){
+
+            if(Math.random()<.003)
+                this.fly=!this.fly;
+        }
+
+
+        if(!this.ai){
+
+            if(
+                this.side===1 &&
+                press("b") &&
+                wingChar
+            ){
+                this.teleport();
+            }
+
+            if(
+                this.side===2 &&
+                press("l") &&
+                wingChar
+            ){
+                this.teleport();
+            }
+        }
+
+
+        if(this.fly){
+
+            this.vy=0;
+
+            if(this.side===1){
+
+                if(held.w)
+                    this.y-=3;
+
+                if(held.s)
+                    this.y+=3;
+
+            }else{
+
+                if(held.ArrowUp)
+                    this.y-=3;
+
+                if(held.ArrowDown)
+                    this.y+=3;
+            }
+
+        }else{
+
+            this.vy+=.45;
+
+            this.y+=this.vy;
+        }
+
+
+        this.ground=false;
+
+
+        if(
+            this.y+this.h>=H-80 &&
+            this.vy>=0
+        ){
+
+            this.y=
+                H-80-this.h;
+
+            this.vy=0;
+
+            this.ground=true;
+        }
+
+
+        platforms.forEach(p=>{
+
+            if(
+                this.x+this.w>p.x &&
+                this.x<p.x+p.w &&
+                this.y+this.h>=p.y &&
+                this.y+this.h<=p.y+30 &&
+                this.vy>=0
+            ){
+
+                this.y=p.y-this.h;
+
+                this.vy=0;
+
+                this.ground=true;
+            }
+
+        });
+
+
+        this.x=Math.max(
+            0,
+            Math.min(
+                W-this.w,
+                this.x
+            )
+        );
+
+        this.y=Math.max(
+            5,
+            Math.min(
+                H-this.h-80,
+                this.y
+            )
+        );
+
+
+        for(let k in this.cd){
+
+            if(this.cd[k]>0)
+                this.cd[k]--;
+        }
+
+
+        let attack=
+            this.ai
+            ? this.aiAttack
+            : null;
+
+
+        if(
+            (this.ai&&attack==="z") ||
+            (!this.ai&&this.abilityPressed("z"))
+        ){
+
+            if(this.cd.z<=0){
+
+                Z(this,enemy);
+
+                this.cd.z=24;
+            }
+        }
+
+
+        if(
+            (this.ai&&attack==="x") ||
+            (!this.ai&&this.abilityHeld("x"))
+        ){
+
+            if(this.cd.x<=0){
+
+                X(this,enemy);
+            }
+        }
+
+
+        if(
+            (this.ai&&attack==="c") ||
+            (!this.ai&&this.abilityPressed("c"))
+        ){
+
+            if(this.cd.c<=0){
+
+                C(this,enemy);
+
+                this.cd.c=55;
+            }
+        }
+
+
+        if(
+            (this.ai&&attack==="v") ||
+            (!this.ai&&this.abilityPressed("v"))
+        ){
+
+            if(this.cd.v<=0){
+
+                V(this,enemy);
+
+                this.cd.v=120;
+            }
+        }
+    }
+
+
+    draw(){
+
+        ctx.save();
+
+        if(this.fly){
+
+            let wingColor=
+                this.name==="Dragon" ||
+                this.name==="Inferno"
+                ? "#ff4b18":
+
+                this.name==="SanguineForce" ||
+                this.name==="VoidReaper"
+                ? "#ff174f":
+
+                this.name==="ThunderGod"
+                ? "#ffe900":
+
+                "#fff176";
+
+
+            ctx.strokeStyle=wingColor;
+
+            ctx.lineWidth=7;
+
+            ctx.shadowColor=wingColor;
+
+            ctx.shadowBlur=25;
+
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                this.x+15,
+                this.y+30
+            );
+
+            ctx.lineTo(
+                this.x-65,
+                this.y-15
+            );
+
+            ctx.lineTo(
+                this.x-30,
+                this.y+50
+            );
+
+            ctx.stroke();
+
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                this.x+27,
+                this.y+30
+            );
+
+            ctx.lineTo(
+                this.x+107,
+                this.y-15
+            );
+
+            ctx.lineTo(
+                this.x+72,
+                this.y+50
+            );
+
+            ctx.stroke();
+        }
+
+
+        ctx.strokeStyle=this.color();
+
+        ctx.lineWidth=6;
+
+        ctx.lineCap="round";
+
+        ctx.shadowColor=this.color();
+
+        ctx.shadowBlur=
+            this.name==="SanguineForce"
+            ? 20
+            : 0;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            this.x+21,
+            this.y+10,
+            10,
+            0,
+            Math.PI*2
+        );
+
+        ctx.stroke();
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            this.x+21,
+            this.y+20
+        );
+
+        ctx.lineTo(
+            this.x+21,
+            this.y+49
+        );
+
+        ctx.moveTo(
+            this.x+21,
+            this.y+28
+        );
+
+        ctx.lineTo(
+            this.x+3,
+            this.y+40
+        );
+
+        ctx.moveTo(
+            this.x+21,
+            this.y+28
+        );
+
+        ctx.lineTo(
+            this.x+39,
+            this.y+40
+        );
+
+        ctx.moveTo(
+            this.x+21,
+            this.y+49
+        );
+
+        ctx.lineTo(
+            this.x+7,
+            this.y+70
+        );
+
+        ctx.moveTo(
+            this.x+21,
+            this.y+49
+        );
+
+        ctx.lineTo(
+            this.x+35,
+            this.y+70
+        );
+
+        ctx.stroke();
+
+
+        if(this.name==="Dragon"){
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                this.x+14,
+                this.y+3
+            );
+
+            ctx.lineTo(
+                this.x+7,
+                this.y-9
+            );
+
+            ctx.moveTo(
+                this.x+28,
+                this.y+3
+            );
+
+            ctx.lineTo(
+                this.x+35,
+                this.y-9
+            );
+
+            ctx.stroke();
+        }
+
+
+        ctx.shadowBlur=0;
+
+        ctx.fillStyle="#fff";
+
+        ctx.font="12px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            this.label(),
+            this.x+21,
+            this.y-40
+        );
+
+
+        ctx.fillStyle="#111";
+
+        ctx.fillRect(
+            this.x-15,
+            this.y-28,
+            72,
+            8
+        );
+
+
+        ctx.fillStyle="#35df59";
+
+        ctx.fillRect(
+            this.x-15,
+            this.y-28,
+            72*Math.max(
+                0,
+                this.hp/this.max
+            ),
+            8
+        );
+
+
+        ctx.restore();
+    }
+}
+
+
+/* =========================
+   BALANCED ABILITIES
+========================= */
+
+
+/*
+    BALANCED DAMAGE VALUES
+
+    Normal melee:
+    5-10
+
+    Lasers:
+    2-5 per hit/tick
+
+    Specials:
+    8-18
+
+    Ultimates:
+    15-25
+*/
+
+
+function Z(a,b){
+
+    let d=
+        Math.abs(
+            a.x-b.x
+        );
+
+
+    /* DRAGON */
+
+    if(a.name==="Dragon"){
+
+        if(d<120){
+
+            let damage=
+                a.transform
+                ? 16
+                : 8;
+
+            b.damage(
+                damage,
+                b.x>a.x
+                ? 12
+                : -12
+            );
+
+            clawEffect(
+                a,
+                "#ff4b18"
+            );
+
+            msg.textContent=
+                "🐉🔥 FIRE CLAW!";
+        }
+
+        return;
+    }
+
+
+    /* VOID REAPER */
+
+    if(a.name==="VoidReaper"){
+
+        if(d<120){
+
+            b.damage(
+                a.transform?16:8,
+                b.x>a.x?12:-12
+            );
+
+            clawEffect(
+                a,
+                "#9b4dff"
+            );
+
+            msg.textContent=
+                "🌑 VOID SLASH!";
+        }
+
+        return;
+    }
+
+
+    /* THUNDER GOD */
+
+    if(a.name==="ThunderGod"){
+
+        if(d<125){
+
+            b.damage(
+                a.transform?18:9,
+                b.x>a.x?13:-13
+            );
+
+            punchEffect(
+                a,
+                "#ffe900"
+            );
+
+            msg.textContent=
+                "🌩️ THUNDER PUNCH!";
+        }
+
+        return;
+    }
+
+
+    /* INFERNO */
+
+    if(a.name==="Inferno"){
+
+        if(d<120){
+
+            b.damage(
+                a.transform?18:9,
+                b.x>a.x?12:-12
+            );
+
+            clawEffect(
+                a,
+                "#ff5a16"
+            );
+
+            msg.textContent=
+                "🔥 INFERNO CLAW!";
+        }
+
+        return;
+    }
+
+
+    /* SUPREME / TRANSFORMATIONS */
+
+    if(
+        [
+            "SupremeForce",
+            "HeavenlyForce",
+            "SanguineForce"
+        ].includes(a.name)
+    ){
+
+        if(d<130){
+
+            let damage=
+                a.name==="SanguineForce"
+                ? 15
+                : a.name==="HeavenlyForce"
+                ? 12
+                : 10;
+
+            b.damage(
+                damage,
+                b.x>a.x?12:-12
+            );
+
+            punchEffect(
+                a,
+                a.color()
+            );
+        }
+
+        return;
+    }
+
+
+    /* BASIC CHARACTERS */
+
+    if(d<100){
+
+        b.damage(
+            a.name==="Laserman"
+            ? 8
+            : 5,
+            b.x>a.x?10:-10
+        );
+    }
+}
+
+
+/* =========================
+   BALANCED LASERS
+========================= */
+
+function X(a,b){
+
+    const laserChars=[
+
+        "SupremeForce",
+        "HeavenlyForce",
+        "SanguineForce",
+        "Dragon",
+        "VoidReaper",
+        "ThunderGod",
+        "Inferno",
+        "Laserman"
+
+    ];
+
+
+    if(!laserChars.includes(a.name))
+        return;
+
+
+    let direction=
+        a.facing||1;
+
+    let start=
+        a.x+
+        (
+            direction>0
+            ? a.w
+            : 0
+        );
+
+    let end=
+        start+
+        direction*1400;
+
+
+    let color=
+
+        a.name==="Dragon"
+        ? "#ff4b18":
+
+        a.name==="VoidReaper"
+        ? "#9b4dff":
+
+        a.name==="ThunderGod"
+        ? "#ffe900":
+
+        a.name==="Inferno"
+        ? "#ff5a16":
+
+        a.name==="SanguineForce"
+        ? "#ff174f":
+
+        a.name==="HeavenlyForce"
+        ? "#fff176":
+
+        a.name==="Laserman"
+        ? "#ff3030":
+
+        "#20dfff";
+
+
+    /*
+        IMPORTANT:
+        Laser damage is now very low.
+    */
+
+    let damage=
+
+        a.name==="SanguineForce"
+        ? 4:
+
+        a.name==="HeavenlyForce"
+        ? 3:
+
+        a.name==="SupremeForce"
+        ? 2:
+
+        a.name==="Dragon"
+        ? (
+            a.transform
+            ? 10
+            : 5
+          ):
+
+        a.name==="VoidReaper"
+        ? 4:
+
+        a.name==="ThunderGod"
+        ? 4:
+
+        a.name==="Inferno"
+        ? 4:
+
+        3;
+
+
+    if(
+        b.x+b.w>
+            Math.min(start,end) &&
+
+        b.x<
+            Math.max(start,end) &&
+
+        b.y+b.h>
+            a.y+5 &&
+
+        b.y<
+            a.y+65
+    ){
+
+        b.damage(
+            damage,
+            direction*3
+        );
+    }
+
+
+    drawLaser(
+        start,
+        end,
+        a.y+35,
+        color,
+        a.name
+    );
+
+
+    /*
+        Very short cooldown prevents
+        the laser from dealing huge damage
+        every single frame.
+    */
+
+    a.cd.x=
+        a.name==="Dragon"
+        ? 7
+        : 5;
+}
+
+
+/* =========================
+   SPECIALS
+========================= */
+
+function C(a,b){
+
+    /* DRAGON GRAB */
+
+    if(a.name==="Dragon"){
+
+        if(
+            Math.abs(a.x-b.x)<130
+        ){
+
+            b.damage(
+                a.transform
+                ? 16
+                : 10,
+                b.x>a.x
+                ? 7
+                : -7
+            );
+
+            b.vy=-15;
+
+            grabEffect(
+                b,
+                "#ff4b18"
+            );
+
+            msg.textContent=
+                "🐉 DRAGON GRAB!";
+        }
+
+        return;
+    }
+
+
+    /* VOID BLACK HOLE */
+
+    if(a.name==="VoidReaper"){
+
+        effects.push({
+
+            type:"blackhole",
+
+            x:b.x+21,
+
+            y:b.y+35,
+
+            r:10,
+
+            life:80,
+
+            max:80
+        });
+
+        b.vx+=
+            b.x>a.x
+            ? -7
+            : 7;
+
+        b.damage(
+            12,
+            b.x>a.x?-8:8
+        );
+
+        msg.textContent=
+            "🌑 BLACK HOLE!";
+
+        return;
+    }
+
+
+    /* THUNDERSTORM */
+
+    if(a.name==="ThunderGod"){
+
+        for(let i=0;i<5;i++){
+
+            setTimeout(()=>{
+
+                if(b.hp>0){
+
+                    b.damage(
+                        7,
+                        0
+                    );
+
+                    lightningEffect(
+                        b.x+21
+                    );
+                }
+
+            },i*180);
+        }
+
+        msg.textContent=
+            "🌩️ THUNDERSTORM!";
+
+        return;
+    }
+
+
+    /* METEOR RAIN */
+
+    if(a.name==="Inferno"){
+
+        for(let i=0;i<6;i++){
+
+            setTimeout(()=>{
+
+                if(b.hp>0){
+
+                    b.damage(
+                        7,
+                        0
+                    );
+
+                    meteorEffect(
+                        b.x+21
+                    );
+                }
+
+            },i*140);
+        }
+
+        msg.textContent=
+            "🔥 METEOR RAIN!";
+
+        return;
+    }
+
+
+    /* SANGUINE WAVE */
+
+    if(a.name==="SanguineForce"){
+
+        sanguineWave(
+            a,
+            b
+        );
+
+        return;
+    }
+
+
+    /* MANAGER */
+
+    if(a.name==="Manager"){
+
+        b.freeze=110;
+
+        freezeEffect(b);
+
+        return;
+    }
+
+
+    /* SUPREME / HEAVENLY */
+
+    if(
+        [
+            "SupremeForce",
+            "HeavenlyForce"
+        ].includes(a.name)
+    ){
+
+        if(
+            Math.abs(a.x-b.x)<250
+        ){
+
+            b.damage(
+                a.name==="HeavenlyForce"
+                ? 18
+                : 14,
+                b.x>a.x
+                ? 12
+                : -12
+            );
+
+            blastEffect(
+                a,
+                a.color()
+            );
+        }
+    }
+}
+
+
+/* =========================
+   ULTIMATES
+========================= */
+
+function V(a,b){
+
+    /* DRAGON */
+
+    if(a.name==="Dragon"){
+
+        a.transform=!a.transform;
+
+        big(
+            a.x+21,
+            a.y+35,
+            "#ff4b18"
+        );
+
+        msg.textContent=
+            a.transform
+            ? "🐉🔥 DRAGON FORM — 2X DAMAGE!"
+            : "🐉 NORMAL FORM!";
+
+        return;
+    }
+
+
+    /* VOID */
+
+    if(a.name==="VoidReaper"){
+
+        a.transform=true;
+
+        a.invulnerable=80;
+
+        big(
+            a.x+21,
+            a.y+35,
+            "#9b4dff"
+        );
+
+        msg.textContent=
+            "🌑 REAPER MODE!";
+
+        setTimeout(()=>{
+            a.transform=false;
+        },5000);
+
+        return;
+    }
+
+
+    /* THUNDER */
+
+    if(a.name==="ThunderGod"){
+
+        a.transform=true;
+
+        a.invulnerable=70;
+
+        big(
+            a.x+21,
+            a.y+35,
+            "#ffe900"
+        );
+
+        msg.textContent=
+            "🌩️ GOD MODE!";
+
+        setTimeout(()=>{
+            a.transform=false;
+        },5000);
+
+        return;
+    }
+
+
+    /* INFERNO */
+
+    if(a.name==="Inferno"){
+
+        a.transform=true;
+
+        a.invulnerable=70;
+
+        big(
+            a.x+21,
+            a.y+35,
+            "#ff5a16"
+        );
+
+        msg.textContent=
+            "🔥 INFERNO RAGE!";
+
+        setTimeout(()=>{
+            a.transform=false;
+        },5000);
+
+        return;
+    }
+
+
+    /* SUPREME */
+
+    if(a.name==="SupremeForce"){
+
+        smash(
+            a,
+            b,
+            "#20dfff",
+            20
+        );
+
+        msg.textContent=
+            "⚡ SUPREME SMASH!";
+
+        return;
+    }
+
+
+    /* HEAVENLY */
+
+    if(a.name==="HeavenlyForce"){
+
+        smash(
+            a,
+            b,
+            "#fff176",
+            23
+        );
+
+        return;
+    }
+
+
+    /* SANGUINE */
+
+    if(a.name==="SanguineForce"){
+
+        smash(
+            a,
+            b,
+            "#ff174f",
+            25
+        );
+
+        sanguineWave(
+            a,
+            b
+        );
+    }
+}
+
+
+/* =========================
+   SMASH
+========================= */
+
+function smash(a,b,color,dmg){
+
+    if(
+        Math.abs(a.x-b.x)<320
+    ){
+
+        b.damage(
+            dmg,
+            b.x>a.x
+            ? 20
+            : -20
+        );
+
+        b.vy=-14;
+    }
+
+    big(
+        a.x+21,
+        a.y+60,
+        color
+    );
+}
+
+
+/* =========================
+   SANGUINE WAVE
+========================= */
+
+function sanguineWave(a,b){
+
+    effects.push({
+
+        type:"wave",
+
+        x:a.x+21,
+
+        y:a.y+35,
+
+        direction:a.facing,
+
+        color:"#ff174f",
+
+        r:20,
+
+        life:45,
+
+        max:45
+    });
+
+
+    if(
+        Math.abs(a.x-b.x)<650
+    ){
+
+        b.damage(
+            15,
+            a.facing*12
+        );
+    }
+
+    msg.textContent=
+        "🩸 SANGUINE WAVE!";
+}
+
+
+/* =========================
+   EFFECTS
+========================= */
+
+function burst(x,y,color){
+
+    effects.push({
+
+        type:"burst",
+
+        x:x,
+
+        y:y,
+
+        color:color,
+
+        life:12,
+
+        max:12
+    });
+}
+
+
+function big(x,y,color){
+
+    for(let i=0;i<28;i++){
+
+        let ang=
+            Math.random()*
+            Math.PI*2;
+
+        let speed=
+            2+
+            Math.random()*6;
+
+        effects.push({
+
+            type:"particle",
+
+            x:x,
+
+            y:y,
+
+            vx:Math.cos(ang)*speed,
+
+            vy:Math.sin(ang)*speed,
+
+            color:color,
+
+            life:40,
+
+            max:40,
+
+            r:
+                3+
+                Math.random()*4
+        });
+    }
+}
+
+
+function teleportEffect(x,y,f){
+
+    let color=
+
+        f.name==="Dragon" ||
+        f.name==="Inferno"
+        ? "#ff4b18":
+
+        f.name==="VoidReaper" ||
+        f.name==="SanguineForce"
+        ? "#9b4dff":
+
+        f.name==="ThunderGod"
+        ? "#ffe900":
+
+        "#20dfff";
+
+
+    effects.push({
+
+        type:"teleport",
+
+        x:x,
+
+        y:y,
+
+        color:color,
+
+        r:10,
+
+        life:30,
+
+        max:30
+    });
+
+
+    for(let i=0;i<30;i++){
+
+        let ang=
+            Math.random()*
+            Math.PI*2;
+
+        let speed=
+            2+
+            Math.random()*6;
+
+        effects.push({
+
+            type:"particle",
+
+            x:x,
+
+            y:y,
+
+            vx:
+                Math.cos(ang)*speed,
+
+            vy:
+                Math.sin(ang)*speed,
+
+            color:color,
+
+            life:35,
+
+            max:35,
+
+            r:3
+        });
+    }
+}
+
+
+function punchEffect(a,color){
+
+    effects.push({
+
+        type:"punch",
+
+        x:a.x+21,
+
+        y:a.y+35,
+
+        direction:a.facing,
+
+        color:color||a.color(),
+
+        life:18,
+
+        max:18
+    });
+}
+
+
+function clawEffect(a,color){
+
+    effects.push({
+
+        type:"claw",
+
+        x:
+            a.x+
+            21+
+            a.facing*35,
+
+        y:a.y+30,
+
+        color:color||a.color(),
+
+        life:18,
+
+        max:18
+    });
+}
+
+
+function grabEffect(b,color){
+
+    effects.push({
+
+        type:"grab",
+
+        x:b.x+21,
+
+        y:b.y+35,
+
+        color:color||"#ff4b18",
+
+        life:30,
+
+        max:30
+    });
+}
+
+
+function freezeEffect(b){
+
+    effects.push({
+
+        type:"freeze",
+
+        x:b.x+21,
+
+        y:b.y+35,
+
+        color:"#72dfff",
+
+        life:100,
+
+        max:100
+    });
+}
+
+
+function blastEffect(a,color){
+
+    effects.push({
+
+        type:"blast",
+
+        x:a.x+21,
+
+        y:a.y+35,
+
+        color:color,
+
+        r:20,
+
+        life:25,
+
+        max:25
+    });
+
+    big(
+        a.x+21,
+        a.y+35,
+        color
+    );
+}
+
+
+function lightningEffect(x){
+
+    effects.push({
+
+        type:"light",
+
+        x:x,
+
+        life:22,
+
+        max:22
+    });
+}
+
+
+function meteorEffect(x){
+
+    effects.push({
+
+        type:"meteor",
+
+        x:x,
+
+        y:0,
+
+        life:30,
+
+        max:30
+    });
+}
+
+
+/* =========================
+   EFFECT UPDATE/DRAW
+========================= */
+
+function updateEffects(){
+
+    for(
+        let i=effects.length-1;
+        i>=0;
+        i--
+    ){
+
+        let e=effects[i];
+
+
+        if(e.type==="particle"){
+
+            e.x+=e.vx;
+            e.y+=e.vy;
+
+            e.vy+=.05;
+        }
+
+
+        if(e.type==="wave"){
+
+            e.x+=
+                e.direction*13;
+        }
+
+
+        if(e.type==="meteor"){
+
+            e.y+=15;
+        }
+
+
+        e.life--;
+
+
+        if(e.life<=0){
+
+            effects.splice(i,1);
+
+            continue;
+        }
+
+
+        ctx.save();
+
+        ctx.globalAlpha=
+            e.life/e.max;
+
+
+        if(e.type==="particle"){
+
+            ctx.fillStyle=e.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+
+
+        if(e.type==="burst"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.lineWidth=5;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                (e.max-e.life)*4+5,
+                0,
+                Math.PI*2
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="teleport"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.shadowColor=e.color;
+
+            ctx.shadowBlur=30;
+
+            ctx.lineWidth=7;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r+
+                (e.max-e.life)*5,
+                0,
+                Math.PI*2
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="punch"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.shadowColor=e.color;
+
+            ctx.shadowBlur=25;
+
+            ctx.lineWidth=10;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x+
+                e.direction*35,
+                e.y,
+                35,
+                e.direction>0?-1.2:1.9,
+                e.direction>0?1.2:4.3
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="claw"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.shadowColor=e.color;
+
+            ctx.shadowBlur=25;
+
+            ctx.lineWidth=8;
+
+            for(let j=0;j<3;j++){
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    e.x,
+                    e.y,
+                    25+j*10,
+                    -1.3+j*.1,
+                    .4+j*.1
+                );
+
+                ctx.stroke();
+            }
+        }
+
+
+        if(e.type==="grab"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.lineWidth=7;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                30+
+                Math.sin(
+                    Date.now()/60
+                )*7,
+                0,
+                Math.PI*2
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="blast"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.shadowColor=e.color;
+
+            ctx.shadowBlur=30;
+
+            ctx.lineWidth=7;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r+
+                (e.max-e.life)*6,
+                0,
+                Math.PI*2
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="freeze"){
+
+            ctx.strokeStyle=e.color;
+
+            ctx.lineWidth=5;
+
+            for(let j=0;j<6;j++){
+
+                let angle=
+                    j*Math.PI/3;
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    e.x,
+                    e.y
+                );
+
+                ctx.lineTo(
+                    e.x+
+                    Math.cos(angle)*40,
+                    e.y+
+                    Math.sin(angle)*40
+                );
+
+                ctx.stroke();
+            }
+        }
+
+
+        if(e.type==="wave"){
+
+            ctx.strokeStyle="#ff174f";
+
+            ctx.shadowColor="#ff174f";
+
+            ctx.shadowBlur=35;
+
+            ctx.lineWidth=12;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r+
+                (e.max-e.life)*7,
+                -1.2,
+                1.2
+            );
+
+            ctx.stroke();
+
+
+            ctx.strokeStyle="#ff8aa0";
+
+            ctx.lineWidth=4;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r+
+                (e.max-e.life)*7+
+                15,
+                -1.2,
+                1.2
+            );
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="blackhole"){
+
+            ctx.fillStyle="#08000f";
+
+            ctx.strokeStyle="#9b4dff";
+
+            ctx.shadowColor="#9b4dff";
+
+            ctx.shadowBlur=30;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                e.r+
+                (e.max-e.life)*2,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="light"){
+
+            ctx.strokeStyle="#ffff55";
+
+            ctx.shadowColor="#ffff55";
+
+            ctx.shadowBlur=30;
+
+            ctx.lineWidth=7;
+
+            ctx.beginPath();
+
+            let x=e.x;
+            let y=0;
+
+            ctx.moveTo(x,y);
+
+            for(let j=0;j<7;j++){
+
+                x+=
+                    Math.random()*35-17;
+
+                y+=(H-80)/7;
+
+                ctx.lineTo(x,y);
+            }
+
+            ctx.stroke();
+        }
+
+
+        if(e.type==="meteor"){
+
+            ctx.fillStyle="#ff5a16";
+
+            ctx.shadowColor="#ff2a00";
+
+            ctx.shadowBlur=30;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                e.x,
+                e.y,
+                15,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+
+
+        ctx.restore();
+    }
+}
+
+
+/* =========================
+   LASER DRAW
+========================= */
+
+function drawLaser(
+    start,
+    end,
+    y,
+    color,
+    type
+){
+
+    ctx.save();
+
+    let pulse=
+        Math.sin(
+            Date.now()/55
+        )*4;
+
+
+    ctx.strokeStyle=color;
+
+    ctx.shadowColor=color;
+
+    ctx.shadowBlur=35;
+
+    ctx.lineWidth=
+        type==="Dragon"
+        ? 25+pulse
+        : 19+pulse;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        start,
+        y
+    );
+
+    ctx.lineTo(
+        end,
+        y
+    );
+
+    ctx.stroke();
+
+
+    ctx.strokeStyle="#fff";
+
+    ctx.shadowBlur=15;
+
+    ctx.lineWidth=
+        type==="Dragon"
+        ? 8
+        : 5;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        start,
+        y
+    );
+
+    ctx.lineTo(
+        end,
+        y
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+}
+
+
+/* =========================
+   MAP
+========================= */
+
+function drawMap(){
+
+    if(map==="volcano"){
+
+        ctx.fillStyle="#260909";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle="#641313";
+
+        for(
+            let x=0;
+            x<W;
+            x+=130
+        ){
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                x,
+                H-80
+            );
+
+            ctx.lineTo(
+                x+65,
+                H-260
+            );
+
+            ctx.lineTo(
+                x+130,
+                H-80
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    if(map==="sky"){
+
+        ctx.fillStyle="#67a8ff";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle="#fff";
+
+        for(
+            let x=-50;
+            x<W+100;
+            x+=110
+        ){
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                H-55,
+                55,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    if(map==="ai"){
+
+        ctx.fillStyle="#09000f";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle="#ff00ff";
+
+        for(let i=0;i<140;i++){
+
+            ctx.fillRect(
+                (i*83)%W,
+                (i*47)%(H-100),
+                2,
+                2
+            );
+        }
+    }
+
+
+    if(map==="supreme"){
+
+        ctx.fillStyle="#080019";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle="#7c40d9";
+
+        for(let i=0;i<100;i++){
+
+            ctx.beginPath();
+
+            ctx.arc(
+                (i*117)%W,
+                (i*71)%(H-100),
+                2,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+    }
+
+
+    if(map==="desert"){
+
+        ctx.fillStyle="#c88938";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.fillStyle="#e1aa58";
+
+        for(
+            let x=-100;
+            x<W+100;
+            x+=150
+        ){
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                H-70,
+                100,
+                Math.PI,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+
+        ctx.fillStyle="#e4b96b55";
+
+        for(let i=0;i<50;i++){
+
+            ctx.fillRect(
+                (i*130+Date.now()/7)%W,
+                (i*57)%(H-100),
+                80,
+                2
+            );
+        }
+    }
+
+
+    ctx.fillStyle=
+        map==="sky"
+        ? "#fff"
+        : "#172235";
+
+    ctx.fillRect(
+        0,
+        H-80,
+        W,
+        80
+    );
+
+
+    platforms.forEach(p=>{
+
+        ctx.fillStyle=
+            map==="sky"
+            ? "#fff"
+            : map==="ai"
+            ? "#572568"
+            : map==="supreme"
+            ? "#533578"
+            : map==="desert"
+            ? "#a76a2c"
+            : "#662018";
+
+        ctx.fillRect(
+            p.x,
+            p.y,
+            p.w,
+            p.h
+        );
+    });
+}
+
+
+/* =========================
+   HAZARDS
+========================= */
+
+function rectHit(a,b){
+
+    return a &&
+        b &&
+        a.x<b.x+b.w &&
+        a.x+a.w>b.x &&
+        a.y<b.y+b.h &&
+        a.y+a.h>b.y;
+}
+
+
+function spawnHazard(){
+
+    if(map==="volcano"){
+
+        hazards.push({
+
+            type:"magma",
+
+            x:Math.random()*W,
+
+            y:-40,
+
+            vy:
+                3+
+                Math.random()*2,
+
+            size:
+                12+
+                Math.random()*12
+        });
+    }
+
+
+    if(map==="ai"){
+
+        hazards.push({
+
+            type:"laser",
+
+            x:Math.random()*W,
+
+            y:
+                Math.random()*
+                (H-150),
+
+            angle:
+                Math.random()*
+                Math.PI*2,
+
+            life:80
+        });
+    }
+}
+
+
+function updateHazards(){
+
+    for(
+        let i=hazards.length-1;
+        i>=0;
+        i--
+    ){
+
+        let h=hazards[i];
+
+
+        if(h.type==="magma"){
+
+            h.y+=h.vy;
+
+            ctx.fillStyle="#ff5a00";
+
+            ctx.shadowColor="#ff3b00";
+
+            ctx.shadowBlur=20;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                h.x,
+                h.y,
+                h.size,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.shadowBlur=0;
+
+
+            let q={
+
+                x:h.x-h.size,
+
+                y:h.y-h.size,
+
+                w:h.size*2,
+
+                h:h.size*2
+            };
+
+
+            if(rectHit(q,p1))
+                p1.damage(7);
+
+            if(rectHit(q,p2))
+                p2.damage(7);
+
+
+            if(h.y>H+60)
+                hazards.splice(i,1);
+        }
+
+
+        if(h.type==="laser"){
+
+            h.life--;
+
+            ctx.save();
+
+            ctx.translate(
+                h.x,
+                h.y
+            );
+
+            ctx.rotate(h.angle);
+
+            ctx.strokeStyle="#ff00ff";
+
+            ctx.shadowColor="#ff00ff";
+
+            ctx.shadowBlur=20;
+
+            ctx.lineWidth=10;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                -800,
+                0
+            );
+
+            ctx.lineTo(
+                800,
+                0
+            );
+
+            ctx.stroke();
+
+            ctx.restore();
+
+
+            function lineHit(f){
+
+                if(!f)return false;
+
+                let dx=
+                    Math.cos(h.angle);
+
+                let dy=
+                    Math.sin(h.angle);
+
+                let px=
+                    f.x+
+                    f.w/2;
+
+                let py=
+                    f.y+
+                    f.h/2;
+
+                return Math.abs(
+                    dy*(px-h.x)-
+                    dx*(py-h.y)
+                )<18;
+            }
+
+
+            if(lineHit(p1))
+                p1.damage(5);
+
+            if(lineHit(p2))
+                p2.damage(5);
+
+
+            if(h.life<=0)
+                hazards.splice(i,1);
+        }
+    }
+}
+
+
+/* =========================
+   LIGHTNING
+========================= */
+
+function strike(){
+
+    let x=
+        Math.random()*W;
+
+    effects.push({
+
+        type:"light",
+
+        x:x,
+
+        life:25,
+
+        max:25
+    });
+
+
+    let q={
+
+        x:x-30,
+
+        y:0,
+
+        w:60,
+
+        h:H-80
+    };
+
+
+    if(rectHit(q,p1))
+        p1.damage(8);
+
+    if(rectHit(q,p2))
+        p2.damage(8);
+}
+
+
+/* =========================
+   MAP EVENTS
+========================= */
+
+function mapEvents(){
+
+    if(map==="sky"){
+
+        skyLightning--;
+
+        if(skyLightning<=0){
+
+            skyLightning=
+                80+
+                Math.random()*100;
+
+            strike();
+
+            msg.textContent=
+                "☁️⚡ LIGHTNING!";
+        }
+    }
+
+
+    if(map==="supreme"){
+
+        lightning--;
+
+        if(lightning<=0){
+
+            lightning=300;
+
+            strike();
+
+            msg.textContent=
+                "⚡ SUPREME ARENA LIGHTNING!";
+        }
+    }
+
+
+    if(map==="desert"){
+
+        if(
+            Date.now()-desertClock>=1000
+        ){
+
+            desertClock=
+                Date.now();
+
+            desertTime--;
+        }
+
+        timer.textContent=
+            "🏜️ TIME: "+
+            desertTime;
+
+
+        if(desertTime<=0){
+
+            running=false;
+
+            ending=true;
+
+
+            if(p1.hp>=p2.hp){
+
+                wins1++;
+
+                msg.textContent=
+                    "🏜️ TIME! PLAYER 1 WINS!";
+
+            }else{
+
+                wins2++;
+
+                msg.textContent=
+                    "🏜️ TIME! PLAYER 2 WINS!";
+            }
+
+
+            setTimeout(()=>{
+
+                if(roundNo>=3){
+
+                    returnMenu();
+
+                }else{
+
+                    roundNo++;
+
+                    startRound();
+                }
+
+            },1800);
+        }
+    }
+}
+
+
+/* =========================
+   ROUND
+========================= */
+
+function startRound(){
+
+    makePlatforms();
+
+    effects=[];
+    hazards=[];
+
+    ending=false;
+
+    desertTime=60;
+
+    desertClock=
+        Date.now();
+
+    lightning=300;
+    skyLightning=70;
+
+    hazardClock=35;
+
+
+    p1=new Fighter(
+        W*.18,
+        1,
+        selected1,
+        mode==="aiai"
+    );
+
+
+    p2=new Fighter(
+        W*.75,
+        2,
+        selected2,
+        mode==="ai" ||
+        mode==="aiai"
+    );
+
+
+    p1.enemy=p2;
+    p2.enemy=p1;
+
+
+    running=true;
+
+
+    menu.classList.add(
+        "hidden"
+    );
+
+    hud.classList.remove(
+        "hidden"
+    );
+
+    cursor.style.display="block";
+
+    round.classList.remove(
+        "hidden"
+    );
+
+
+    round.textContent=
+        "ROUND "+
+        roundNo+
+        " / 3";
+
+
+    timer.classList.toggle(
+        "hidden",
+        map!=="desert"
+    );
+
+
+    msg.textContent=
+        "⚔️ FIGHT!";
+}
+
+
+/* =========================
+   MENU
+========================= */
+
+play.onclick=()=>{
+
+    roundNo=1;
+
+    wins1=0;
+    wins2=0;
+
+    startRound();
+};
+
+
+function returnMenu(){
+
+    running=false;
+
+    p1=null;
+    p2=null;
+
+    roundNo=1;
+
+    wins1=0;
+    wins2=0;
+
+    effects=[];
+    hazards=[];
+
+
+    hud.classList.add(
+        "hidden"
+    );
+
+    round.classList.add(
+        "hidden"
+    );
+
+    timer.classList.add(
+        "hidden"
+    );
+
+    cursor.style.display="none";
+
+    menu.classList.remove(
+        "hidden"
+    );
+
+    msg.textContent=
+        "🏆 MATCH COMPLETE!";
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function updateHUD(){
+
+    if(!p1||!p2)
+        return;
+
+
+    p1name.textContent=
+        "P1 — "+
+        p1.label();
+
+
+    p2name.textContent=
+        p2.ai
+        ? "🤖 AI — "+
+          p2.label()
+        : "P2 — "+
+          p2.label();
+
+
+    p1hp.style.width=
+        Math.max(
+            0,
+            p1.hp/p1.max*100
+        )+"%";
+
+
+    p2hp.style.width=
+        Math.max(
+            0,
+            p2.hp/p2.max*100
+        )+"%";
+
+
+    p1score.textContent=
+        "Rounds: "+
+        wins1;
+
+
+    p2score.textContent=
+        "Rounds: "+
+        wins2;
+}
+
+
+/* =========================
+   DRAW
+========================= */
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    if(!p1||!p2){
+
+        ctx.fillStyle="#050812";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        return;
+    }
+
+
+    drawMap();
+
+    updateHazards();
+
+    p1.draw();
+    p2.draw();
+
+    updateEffects();
+}
+
+
+/* =========================
+   MAIN LOOP
+========================= */
+
+function loop(){
+
+    draw();
+
+
+    if(
+        p1 &&
+        p2 &&
+        running
+    ){
+
+        p1.update(p2);
+
+        p2.update(p1);
+
+        mapEvents();
+
+        hazardClock--;
+
+
+        if(hazardClock<=0){
+
+            hazardClock=
+                map==="volcano"
+                ? 35
+                : map==="ai"
+                ? 45
+                : 100;
+
+            spawnHazard();
+        }
+
+
+        updateHUD();
+    }
+
+
+    requestAnimationFrame(loop);
+}
+
+
+loop();
+
+</script>
+
+</body>
+</html>
