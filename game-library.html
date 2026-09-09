@@ -140,6 +140,49 @@
     box-shadow:0 0 14px rgba(255,224,138,0.9);
   }
 
+  .game-preview.farm{
+    background:linear-gradient(180deg, #86A9C4 0%, #86A9C4 45%, #6B8F4E 45%, #6B8F4E 100%);
+  }
+  .farm-field{
+    position:absolute;left:0;right:0;bottom:0;height:22%;
+    background:#D9A441;
+  }
+  .farm-roof{
+    position:absolute;left:50%;bottom:calc(24% + 50px);transform:translateX(-50%);
+    width:0;height:0;
+    border-left:45px solid transparent;
+    border-right:45px solid transparent;
+    border-bottom:32px solid #4A3728;
+  }
+  .farm-barn{
+    position:absolute;left:50%;bottom:24%;transform:translateX(-50%);
+    width:70px;height:50px;
+    background:#9C4A38;
+  }
+  .farm-door{
+    position:absolute;left:50%;bottom:24%;transform:translateX(-50%);
+    width:16px;height:26px;
+    background:#4A3728;
+  }
+
+  .game-preview.arena{
+    background:radial-gradient(ellipse at 50% 60%, #16213a 0%, #050812 70%);
+  }
+  .arena-vs{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:26px;font-weight:800;color:#ffffff;letter-spacing:2px;
+  }
+  .arena-fighter{
+    position:absolute;bottom:18%;width:26px;height:46px;border-radius:13px 13px 4px 4px;
+  }
+  .arena-fighter.left{left:32%;background:#1769ff;}
+  .arena-fighter.right{right:32%;background:#df3535;}
+  .arena-glow{
+    position:absolute;left:50%;bottom:12%;transform:translateX(-50%);
+    width:140px;height:20px;border-radius:50%;
+    background:rgba(23,105,255,0.25);
+  }
+
   .game-body{padding:24px 26px;display:flex;flex-direction:column;flex:1;min-width:0;}
   .game-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-tag{
@@ -238,6 +281,52 @@
         </div>
         <div class="game-name">Cozy Cottage Collect</div>
         <div class="game-desc">Build your dream cottage, then play mini-games to earn more furniture and keep decorating.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- HARVEST HOLLOW 3D -->
+    <a class="game-card" href="aussie-farm-sim.html" target="_blank">
+      <div class="game-preview farm">
+        <div class="farm-field"></div>
+        <div class="farm-roof"></div>
+        <div class="farm-barn"></div>
+        <div class="farm-door"></div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">3D</span>
+          <span class="game-tag">Farming</span>
+          <span class="game-tag">Sim</span>
+        </div>
+        <div class="game-name">Aussie Farm Sim</div>
+        <div class="game-desc">A cozy 3D farming sim — till paddocks, grow crops through the seasons, and build up your own Aussie farm.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- FORCE ARENA -->
+    <a class="game-card" href="force-arena.html" target="_blank">
+      <div class="game-preview arena">
+        <div class="arena-glow"></div>
+        <div class="arena-fighter left"></div>
+        <div class="arena-fighter right"></div>
+        <div class="arena-vs">VS</div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">Arena</span>
+          <span class="game-tag">Combat</span>
+          <span class="game-tag">2-player</span>
+        </div>
+        <div class="game-name">Force Arena</div>
+        <div class="game-desc">Pick your fighter and battle it out in a fast-paced arena brawler, with rounds, hazards, and a balanced damage system.</div>
         <div class="game-footer">
           <span class="game-status">Live</span>
           <span class="play-btn">Play ▸</span>

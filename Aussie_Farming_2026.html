@@ -1,0 +1,4033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Harvest Hollow 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+:root{
+  --soil:#4A3728; --wheat:#D9A441; --barn:#9C4A38; --sky:#86A9C4;
+  --meadow:#6B8F4E; --cream:#F3ECDA; --ink:#2E2620; --good:#4f8a4f; --bad:#a6402f;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;overflow:hidden;font-family:'Inter',sans-serif;color:var(--ink);}
+h1,h2,h3{font-family:'Fredoka',sans-serif;margin:0;}
+.mono{font-family:'JetBrains Mono',monospace;}
+#canvasWrap{position:absolute;inset:0;}
+canvas{display:block;}
+
+#hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:5;}
+.hud-card{background:rgba(243,236,218,0.95);border:3px solid var(--soil);border-radius:12px;padding:8px 14px;box-shadow:0 3px 0 rgba(0,0,0,0.2);pointer-events:auto;}
+.stat-row{display:flex;gap:16px;align-items:center;}
+.stat{display:flex;flex-direction:column;align-items:center;min-width:56px;}
+.stat .label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#7a6a55;}
+.stat .value{font-size:15px;font-weight:700;}
+.money{color:var(--good)!important;}
+
+#seasonWheel{width:44px;height:44px;border-radius:50%;background:var(--sky);display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid var(--soil);position:relative;}
+#seasonRing{position:absolute;inset:-6px;border-radius:50%;border:3px solid transparent;border-top-color:var(--wheat);}
+
+#bottomBar{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;z-index:5;pointer-events:none;}
+.panel-btn{
+  font-family:'Fredoka';font-weight:600;font-size:14px;padding:10px 16px;border-radius:10px;
+  border:3px solid var(--soil);background:var(--wheat);cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,0.25);
+  pointer-events:auto;
+}
+.panel-btn:hover{filter:brightness(1.08);}
+.panel-btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,0.25);}
+.panel-btn.barn{background:var(--barn);color:#fff;}
+.panel-btn.small{font-size:12px;padding:8px 12px;}
+
+#actionPrompt{
+  position:absolute;left:50%;bottom:90px;transform:translateX(-50%);
+  background:rgba(46,38,32,0.9);color:#fff;padding:8px 18px;border-radius:20px;
+  font-size:14px;font-weight:600;display:none;z-index:6;pointer-events:none;
+  border:2px solid var(--wheat);
+}
+
+#log{
+  position:absolute;top:70px;left:12px;width:260px;max-height:130px;overflow-y:auto;
+  background:rgba(243,236,218,0.92);border:3px solid var(--soil);border-radius:10px;padding:8px 12px;
+  font-size:11.5px;z-index:5;pointer-events:auto;
+}
+#log div{padding:2px 0;border-bottom:1px dashed #d8cba8;}
+#log div:last-child{border-bottom:none;}
+
+.modal-overlay{
+  position:absolute;inset:0;background:rgba(20,15,10,0.55);display:none;
+  align-items:center;justify-content:center;z-index:20;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--cream);border:4px solid var(--soil);border-radius:16px;padding:20px 24px;
+  max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 0 rgba(0,0,0,0.25);
+}
+.modal h2{color:var(--soil);font-size:20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.modal .close-x{cursor:pointer;font-size:18px;border:2px solid var(--soil);background:#fff;border-radius:8px;padding:2px 9px;}
+.tab-row{display:flex;gap:6px;margin-bottom:12px;}
+.tab-btn{font-family:'Fredoka';font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;border:2px solid var(--soil);background:#fff;cursor:pointer;}
+.tab-btn.active{background:var(--wheat);}
+
+.item-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border:2px solid var(--soil);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:6px;}
+.item-row .name{display:flex;align-items:center;gap:6px;font-weight:600;}
+.price-up{color:var(--good);}
+.price-down{color:var(--bad);}
+.small-btn{font-family:'Inter';font-size:11px;padding:5px 9px;border-radius:6px;border:2px solid var(--soil);background:var(--wheat);cursor:pointer;font-weight:600;}
+.small-btn:hover{filter:brightness(1.08);}
+.small-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.small-btn.ghost{background:#fff;}
+
+.machine-card{background:#fff;border:2px solid var(--soil);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.machine-card .mtitle{font-weight:700;font-size:14px;display:flex;justify-content:space-between;}
+.machine-card .mdesc{font-size:11.5px;color:#5a4c3d;margin:4px 0 8px;}
+
+.empty-note{font-size:12px;color:#7a6a55;font-style:italic;padding:6px 0;}
+
+#soilStatus{position:absolute;top:150px;right:12px;background:rgba(243,236,218,0.95);border:3px solid var(--soil);border-radius:10px;padding:8px 12px;font-size:11px;z-index:5;min-width:190px;box-shadow:0 3px 0 rgba(0,0,0,0.2);}
+#soilStatus .soil-title{font-family:'Fredoka';font-size:14px;font-weight:700;margin-bottom:4px;}
+.soil-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;}
+.soil-good{color:var(--good);font-weight:700;} .soil-bad{color:var(--bad);font-weight:700;}
+#controlsHint{
+  position:absolute;top:70px;right:12px;background:rgba(46,38,32,0.85);color:#fff;
+  border-radius:10px;padding:8px 12px;font-size:11px;z-index:5;pointer-events:none;line-height:1.5;
+}
+
+/* ================= BOOT / TITLE SCREEN ================= */
+#bootScreen{
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(rgba(25,40,20,.30),rgba(15,25,12,.78)), #6b8f4e;
+}
+#bootScreen.hidden{display:none;}
+#bootCard{
+  width:min(700px,92vw); max-height:88vh; overflow:auto; text-align:center;
+  background:rgba(243,236,218,.98); border:5px solid #4A3728; border-radius:22px;
+  padding:30px 32px; box-shadow:0 12px 0 rgba(0,0,0,.28);
+}
+#bootTitle{
+  margin:0; font-family:'Fredoka'; font-size:clamp(42px,8vw,72px); color:#4A3728;
+  letter-spacing:1px; text-shadow:2px 3px 0 #D9A441;
+}
+#bootSub{
+  margin:6px 0 20px; font-family:'Fredoka'; font-size:18px; color:#6d5b47;
+}
+.boot-actions{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+.boot-save{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  text-align:left; background:#fff; border:3px solid #4A3728; border-radius:12px;
+  padding:12px 14px; cursor:pointer; font-family:'Inter'; font-size:13px;
+}
+.boot-save:hover{filter:brightness(1.04); transform:translateY(-1px);}
+.boot-save.empty{cursor:default; opacity:.7;}
+.boot-save .slot-name{font-weight:800; color:#4A3728;}
+.boot-save .slot-info{font-size:11px; color:#6d5b47; margin-top:3px;}
+.boot-save .slot-button{
+  background:#D9A441; border:2px solid #4A3728; border-radius:8px;
+  padding:7px 11px; font-weight:800; white-space:nowrap;
+}
+#newGameBtn{
+  margin-top:18px; width:100%; padding:13px 18px; border-radius:12px;
+  border:3px solid #4A3728; background:#9C4A38; color:#fff;
+  font-family:'Fredoka'; font-size:18px; font-weight:700; cursor:pointer;
+  box-shadow:0 4px 0 rgba(0,0,0,.22);
+}
+#newGameBtn:hover{filter:brightness(1.06);}
+#bootLoading{font-size:12px; color:#7a6a55; margin-top:10px; min-height:16px;}
+
+</style>
+</head>
+<body>
+<div id="canvasWrap"></div>
+
+<!-- BOOT / TITLE SCREEN -->
+<div id="bootScreen">
+  <div id="bootCard">
+    <h1 id="bootTitle">Aussie farming 2026</h1>
+    <div id="bootSub">Harvest Hollow 3D</div>
+    <h2 style="font-family:'Fredoka';color:#4A3728;margin:0 0 10px;">💾 Save Game</h2>
+    <div id="bootSaveList" class="boot-actions">
+      <div id="bootLoading">Checking save games…</div>
+    </div>
+    <button id="newGameBtn">🌱 New Game</button>
+    <div style="font-size:11px;color:#7a6a55;margin-top:10px;">Choose a save game to continue, or start a fresh farm.</div>
+  </div>
+</div>
+
+
+<div id="hud">
+  <div class="hud-card">
+    <div class="stat-row">
+      <div class="stat"><span class="label">Season</span><span class="value" id="seasonLabel">Spring</span></div>
+      <div class="stat"><span class="label">Day</span><span class="value mono" id="dayLabel">1</span></div>
+      <div id="seasonWheel"><div id="seasonRing"></div><span id="weatherIcon">☀️</span></div>
+      <div class="stat"><span class="label">Weather</span><span class="value" id="weatherLabel" style="font-size:12px;">Sunny</span></div>
+      <div class="stat"><span class="label">Money</span><span class="value money mono" id="moneyLabel">$400</span></div>
+    </div>
+  </div>
+  <div class="hud-card">
+    <div class="stat-row">
+      <div class="stat"><span class="label">Vehicle</span><span class="value" id="vehicleLabel" style="font-size:13px;">Tractor</span></div>
+      <div class="stat"><span class="label">Implement</span><span class="value" id="toolLabel" style="font-size:12px;">None (Q to hitch)</span></div>
+      <div class="stat"><span class="label">Tank</span><span class="value mono" id="tankLabel">—</span></div>
+      <div class="stat"><span class="label">Paddock</span><span class="value" id="paddockLabel" style="font-size:12px;">—</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="controlsHint">
+  <b>W/S</b> drive &nbsp; <b>A/D</b> steer<br>
+  <b>Q</b> attach/detach implement (anywhere)<br>
+  <b>SPACE</b> lower/raise attached implement<br>
+  <b>F</b> fold/unfold sprayer booms<br>
+  <b>1/2/3/4</b> pick seed (soy/canola/barley/wheat)<br>
+  <b>R</b> switch spreader: Fertiliser / Lime<br>  <b>Sprayer</b> sprays weeds — refill at the barn<br>
+  <b>Loader:</b> lower it, drive over a bale to pick it up<br>
+  <b>V</b> swap vehicles (pull alongside) &nbsp; <b>Tab</b> cycle vehicles (anywhere)<br>
+  <b>C</b> front/back camera view &nbsp; <b>Scroll</b> zoom &nbsp; <b>M</b> farm overview map<br>
+  <b>E</b> shop/barn/silo (drops off bale too)
+</div>
+
+<div id="mapOverlay" style="display:none; position:absolute; inset:0; z-index:20; background:rgba(20,15,10,0.75); align-items:center; justify-content:center;">
+  <div style="background:var(--cream); border:4px solid var(--soil); border-radius:16px; padding:16px; box-shadow:0 8px 0 rgba(0,0,0,0.25);">
+    <h2 style="color:var(--soil); font-size:20px; margin-bottom:10px; display:flex; justify-content:space-between; gap:30px;">
+      🗺️ Farm Overview <span style="font-size:13px; font-weight:500; color:#7a6a55;">Press M to close</span>
+    </h2>
+    <canvas id="mapCanvas" width="900" height="700" style="display:block; border-radius:10px; border:2px solid var(--soil);"></canvas>
+  </div>
+</div>
+
+<div id="soilStatus"><div class="soil-title">🌱 Paddock Soil</div><div id="soilStatusText">Drive into a paddock</div></div>
+
+<div id="log"></div>
+
+<div id="actionPrompt">Press SPACE to till</div>
+
+<div id="bottomBar">
+  <button class="panel-btn barn" id="openBarnBtn">📦 Barn &amp; Market</button>
+  <button class="panel-btn" id="openShopBtn">🚜 Machinery Shop</button>
+  <button class="panel-btn" id="openUsedBtn">🏷️ Used Equipment</button>
+  <button class="panel-btn" id="openSaveBtn">💾 Save / Load</button>
+  <button class="panel-btn" id="endDayBtn">🌙 End Day</button>
+</div>
+
+<!-- BARN MODAL -->
+<div class="modal-overlay" id="barnModal">
+  <div class="modal">
+    <h2>📦 Barn &amp; Market <span class="close-x" data-close="barnModal">✕</span></h2>
+    <div id="inventoryList"></div>
+  </div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-overlay" id="shopModal">
+  <div class="modal">
+    <h2>🚜 Machinery Shop <span class="close-x" data-close="shopModal">✕</span></h2>
+    <div class="tab-row">
+      <button class="tab-btn active" data-shoptab="machinery">Machinery</button>
+      <button class="tab-btn" data-shoptab="trailers">Trailers</button>
+      <button class="tab-btn" data-shoptab="animals">Animals</button>
+    </div>
+    <div id="machineList"></div>
+  </div>
+</div>
+
+<!-- USED EQUIPMENT MODAL -->
+<div class="modal-overlay" id="usedModal">
+  <div class="modal">
+    <h2>🏷️ Used Equipment <span class="close-x" data-close="usedModal">✕</span></h2>
+    <div id="usedList"></div>
+  </div>
+</div>
+
+<!-- SAVE/LOAD MODAL -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal">
+    <h2>💾 Save / Load Game <span class="close-x" data-close="saveModal">✕</span></h2>
+    <div id="saveSlotList"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ================= CONFIG ================= */
+const CROPS = {
+  soybean:{ color:0x8fae4a, tallColor:0xc7b95a, growDays:4, baseSell:662, nitrogenUse:18, idealPH:6.3, weedPenalty:0.75, unit:'1000L', label:'Soybean', minMult:562/662, maxMult:762/662},
+  canola: { color:0x8fae4a, tallColor:0xe8d14a, growDays:5, baseSell:800, nitrogenUse:24, idealPH:6.5, weedPenalty:0.75, unit:'1000L', label:'Canola', minMult:1, maxMult:1},
+  barley: { color:0x8fae4a, tallColor:0xd6b25a, growDays:5, baseSell:352, unit:'1000L', label:'Barley', minMult:332/352, maxMult:373/352},
+  wheat:  { color:0x9ab35a, tallColor:0xe3c565, growDays:5, baseSell:380, nitrogenUse:22, idealPH:6.4, weedPenalty:0.75, unit:'1000L', label:'Wheat', minMult:358/380, maxMult:402/380}
+};
+// straw isn't a plantable crop — it's the byproduct left behind after reaping, baled up and sold separately
+const STRAW_DEF = {baseSell:400, unit:'bale', label:'Straw', minMult:0.5, maxMult:1.9};
+const EGG_DEF  = {baseSell:8,  unit:'dozen', label:'Eggs', minMult:0.7, maxMult:1.4};
+const MILK_DEF = {baseSell:14, unit:'10L',   label:'Milk', minMult:0.7, maxMult:1.4};
+const WOOL_DEF = {baseSell:22, unit:'bale',  label:'Wool', minMult:0.7, maxMult:1.4};
+function goodDef(name){
+  if(name==='straw') return STRAW_DEF;
+  if(name==='egg') return EGG_DEF;
+  if(name==='milk') return MILK_DEF;
+  if(name==='wool') return WOOL_DEF;
+  return CROPS[name];
+}
+// Animals — bought from the shop's Animals tab, penned near the farmyard, producing
+// automatically each day (no separate feeding minigame) and sold through the barn.
+const ANIMALS = {
+  chicken:{ cost:2000, product:'egg',  interval:1, label:'Chicken'},
+  sheep:  { cost:5000, product:'wool', interval:3, label:'Sheep'},
+  cow:    { cost:8000, product:'milk', interval:1, label:'Cow'}
+};
+const SEASONS = ['Spring','Summer','Fall','Winter'];
+const SEASON_DAYS = 9;
+const WEATHER_TABLE = {
+  Spring:[['Sunny',0.35],['Cloudy',0.25],['Rainy',0.3],['Stormy',0.1]],
+  Summer:[['Sunny',0.55],['Cloudy',0.25],['Rainy',0.15],['Stormy',0.05]],
+  Fall:  [['Sunny',0.3],['Cloudy',0.35],['Rainy',0.25],['Stormy',0.1]],
+  Winter:[['Cloudy',0.4],['Frost',0.4],['Stormy',0.2]]
+};
+const WEATHER_ICON = {Sunny:'☀️',Cloudy:'⛅',Rainy:'🌧️',Stormy:'⛈️',Frost:'❄️'};
+const WEATHER_SKY = {Sunny:0xbfe0f5,Cloudy:0x9fb0b8,Rainy:0x6d8494,Stormy:0x51606d,Frost:0xd7e8ef};
+
+const PLOT_SIZE = 4;      // world units per plot
+const HA_PER_PLOT = 0.25; // each plot represents a quarter-hectare of real paddock
+const PADDOCK_GAP = 14;   // road/laneway gap between paddocks
+
+// twelve paddocks total, laid out in a grid (rows of paddocks) so the world doesn't get
+// absurdly wide, connected by a road network built once the scene exists.
+const PADDOCK_DEFS = [
+  {id:'p62',   name:'62 Ha Paddock',          hectares:62,  cols:10, rows:25},
+  {id:'p116',  name:'116 Ha Paddock',         hectares:116, cols:14, rows:33},
+  {id:'p45',   name:'45 Ha Hay Paddock',      hectares:45,  cols:10, rows:18},
+  {id:'p127a', name:'127 Ha Paddock',         hectares:127, cols:14, rows:36},
+  {id:'p57',   name:'57 Ha Hay Paddock',      hectares:57,  cols:10, rows:23},
+  {id:'p140',  name:'140 Ha Paddock',         hectares:140, cols:14, rows:40},
+  {id:'p97',   name:'97 Ha Unowned Paddock',  hectares:97,  cols:10, rows:39},
+  {id:'p127b', name:'127 Ha Unowned Paddock', hectares:127, cols:14, rows:36}
+];
+const PADDOCK_Z_START = 6; // the first row of paddocks begins just south of the farmyard hub
+const PADDOCKS_PER_ROW = 4;
+
+const paddocks = [];
+{
+  const paddockRows = [];
+  for(let i=0;i<PADDOCK_DEFS.length;i+=PADDOCKS_PER_ROW){
+    paddockRows.push(PADDOCK_DEFS.slice(i,i+PADDOCKS_PER_ROW));
+  }
+  let zCursor = PADDOCK_Z_START;
+  paddockRows.forEach(rowDefs=>{
+    const rowWidth = rowDefs.reduce((s,d)=>s+d.cols*PLOT_SIZE,0) + PADDOCK_GAP*(rowDefs.length-1);
+    let xCursor = -rowWidth/2;
+    let rowDepth = 0;
+    rowDefs.forEach(def=>{
+      const width = def.cols*PLOT_SIZE;
+      const depth = def.rows*PLOT_SIZE;
+      rowDepth = Math.max(rowDepth, depth);
+      const originX = xCursor;
+      xCursor += width + PADDOCK_GAP;
+      const plotsArr = [];
+      for(let x=0;x<def.cols;x++){
+        plotsArr.push([]);
+        for(let z=0;z<def.rows;z++){
+          plotsArr[x].push({status:'empty', crop:null, daysGrown:0, watered:false, hasStraw:false, blocked:false, mesh:null, cropMesh:null, nitrogen:75, ph:6.3, weeds:8});
+        }
+      }
+      paddocks.push({...def, originX, originZ:zCursor, width, depth, plots:plotsArr});
+    });
+    zCursor += rowDepth + PADDOCK_GAP;
+  });
+}
+
+const FARMYARD_X = 0, FARMYARD_Z = -20; // barn/yard/ute hub, north of the paddocks
+
+const MACHINES = [
+  {id:'tractor2', kind:'tractor', category:'machinery', name:'Mid Tractor', cost:30800, desc:'Faster top speed & tighter turning.', speedMul:1.35, turnMul:1.2},
+  {id:'tractor3', kind:'tractor', category:'machinery', name:'Heavy Tractor', cost:32200, desc:'Even faster, and widens tool reach.', speedMul:1.7, turnMul:1.35, reach:2},
+  {id:'extraTractor', kind:'buyTractor', category:'machinery', name:'Buy Another Tractor', desc:'Adds another tractor to your fleet, parked at the yard.'},
+  {id:'extraPlow', kind:'buySpare', category:'machinery', spareType:'plow', name:'Buy Another Plow', desc:'A second plow, parked at the yard, so more than one tractor can till at once.'},
+  {id:'extraSeeder', kind:'buySpare', category:'machinery', spareType:'seeder', name:'Buy Another Seeder', desc:'A second Bourgault air seeder, parked at the yard.'},
+  {id:'planter2', kind:'planter', category:'machinery', name:'Wide Seeder', cost:30600, desc:'Plants a 3-wide strip at once.', width:3},
+  {id:'planter3', kind:'planter', category:'machinery', name:'Precision Seeder', cost:31500, desc:'Plants a 5-wide strip at once.', width:5},
+  {id:'harvester2', kind:'harvester', category:'machinery', name:'Wide Header', cost:31200, desc:"Widens the combine's header to a 3-wide cutting strip.", width:3},
+  {id:'harvester3', kind:'harvester', category:'machinery', name:'Precision Header', cost:32800, desc:"Widens the combine's header to a 5-wide cutting strip.", width:5},
+  {id:'tank2', kind:'tank', category:'machinery', name:'Large Fuel/Seed Tank', cost:30500, desc:'Carry more seed before refilling at the barn.', capacity:80},
+  {id:'baletrailer', kind:'baletrailer', category:'trailers', name:'Bale Trailer', cost:25000, desc:'Flatbed trailer that holds 4 bales — load it with the front-end loader and haul them all in at once instead of one at a time.'},
+  {id:'extraChaserBin', kind:'buySpare', category:'trailers', spareType:'chaserbin', name:'Buy a Chaser Bin', desc:'Field grain cart with an unloading auger — the harvester can dump straight into it out in the paddock.'},
+  {id:'extraGravityWagon', kind:'buySpare', category:'trailers', spareType:'gravitywagon', name:'Buy a Gravity Wagon', desc:'Simple gate-unload grain cart. Smaller capacity than a chaser bin, but cheaper.'}
+];
+
+const IMPLEMENTS = {
+  plow:   {name:'Plow',              color:0x555555, action:'till'},
+  seeder: {name:'Bourgault Air Seeder', color:0xF2F2EE, action:'plant'},
+  baler:  {name:'Round Baler',       color:0xC5231C, action:'bale'},
+  loader: {name:'Front-End Loader',  color:0xC5231C, action:'carry'},
+  chaserbin: {name:'Chaser Bin',     color:0x2f6b2f, action:'haul'},
+  gravitywagon: {name:'Gravity Wagon', color:0xB7BCC0, action:'haul'},
+  baletrailer: {name:'Bale Trailer', color:0x8a3a2c, action:'haul'},
+  spreader: {name:'Marshall 810T Multispread', color:0xE8D9A8, action:'spread'},
+  sprayer: {name:'Field Sprayer', color:0xD6DCE2, action:'spray'}, // built into the combine harvester only — not tractor-towable
+};
+const YARD_POS = {
+  plow:   {x: FARMYARD_X-13, z: FARMYARD_Z - 16 },
+  seeder: {x: FARMYARD_X-1,  z: FARMYARD_Z - 16 },
+  baler:  {x: FARMYARD_X+11, z: FARMYARD_Z - 16 },
+  loader: {x: FARMYARD_X+23, z: FARMYARD_Z - 16 },
+  spreader: {x: FARMYARD_X+35, z: FARMYARD_Z - 16 },
+  sprayer: {x: FARMYARD_X+47, z: FARMYARD_Z - 16 }
+};
+const IMPLEMENT_MOUNT_Z = {plow:-3.2, seeder:-3.2, baler:-3.4, loader:3.7, chaserbin:-4.6, gravitywagon:-3.8, baletrailer:-5.2, spreader:-4.2, sprayer:-4.2}; // loader mounts on the front, not the rear hitch
+const UTE_POS = {x: FARMYARD_X+18, z: FARMYARD_Z + 6 };
+const HARVESTER_POS = {x: FARMYARD_X-22, z: FARMYARD_Z + 6 };
+const TRUCK_POS = {x: FARMYARD_X-22, z: FARMYARD_Z - 16 };
+
+/* ================= STATE ================= */
+let state = {
+  day:1, seasonIndex:0, seasonDay:1, year:1,
+  money:50000,
+  weather:'Sunny',
+  attached:null,     // null, 'plow', 'seeder', 'header'
+  attachedUnitId:null, // 'base' or an extraUnits id — which physical instance is attached
+  lowered:false,     // is the attached implement lowered into the ground?
+  headerFolded:true, // header auger wings start folded in for transport
+  seedCrop:'soybean',
+  spreaderMode:'fertiliser',
+  sprayerFolded:true,
+  sprayTank:40, sprayTankMax:40,
+  owned:{tractor2:false,tractor3:false,planter2:false,planter3:false,harvester2:false,harvester3:false,tank2:false,
+    usedTractor:false,usedTruck:false,usedChaserBin:false,usedGravityWagon:false,baletrailer:false},
+  extraTractorsBought:0,
+  toolWidth:1, // current strip width for the attached implement
+  speedMul:1, turnMul:1,
+  seedTank:40, seedTankMax:40,
+  harvesterLowered:false,
+  loaderCarrying:false,
+  baleTrailerLoad:0, baleTrailerCap:4,
+  animals:[],
+  harvesterGrainL:0, harvesterGrainCapL:25000, harvesterGrainCrop:null, // combine's own grain tank, in litres
+  inventory:{},
+  prices:{},
+  log:[]
+};
+let activeVehicle = 'tractor'; // 'tractor' or 'ute'
+Object.keys(CROPS).forEach(c=>state.prices[c]=1.0);
+state.prices.straw = 1.0;
+state.prices.egg = 1.0; state.prices.milk = 1.0; state.prices.wool = 1.0;
+
+function addLog(msg){
+  state.log.unshift(msg);
+  if(state.log.length>30) state.log.pop();
+  renderLog();
+}
+function currentSeason(){return SEASONS[state.seasonIndex];}
+function isWinter(){return currentSeason()==='Winter';}
+function priceFor(name){return Math.round(goodDef(name).baseSell*state.prices[name]);}
+
+/* ================= THREE.JS SETUP ================= */
+const scene = new THREE.Scene();
+// Static collision obstacles — {x, z, radius} circles in the XZ plane. Buildings, sheds,
+// and scrub clusters register themselves here as they're built; vehicles are blocked from
+// driving through anything on this list (see checkCollision in the vehicle update loop).
+const collisionObstacles = [];
+function registerObstacle(x, z, radius){ collisionObstacles.push({x, z, radius}); }
+scene.fog = new THREE.Fog(0xbfe0f5, 60, 220);
+
+/* ============ CASE IH DECAL TEXTURE (for the header) — created early so the yard preview can use it ============ */
+function createCaseIHDecalTextureCustom(line1, line2){
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 140;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#C5231C';
+  ctx.fillRect(0,0,512,140);
+  // silver diagonal stripe
+  ctx.fillStyle = '#d8d8d8';
+  ctx.beginPath();
+  ctx.moveTo(0,88); ctx.lineTo(512,38); ctx.lineTo(512,48); ctx.lineTo(0,98);
+  ctx.closePath(); ctx.fill();
+  // black accent stripe below it
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.moveTo(0,100); ctx.lineTo(512,50); ctx.lineTo(512,58); ctx.lineTo(0,108);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 44px Arial';
+  ctx.fillText(line1, 20, 55);
+  ctx.font = 'bold 26px Arial';
+  ctx.fillText(line2, 20, 128);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+function createCaseIHDecalTexture(){ return createCaseIHDecalTextureCustom('CASE IH', '7230 AFS'); }
+const CASE_IH_DECAL_TEXTURE = createCaseIHDecalTexture();
+const MAGNUM_DECAL_TEXTURE = createCaseIHDecalTextureCustom('CASE IH', 'MAGNUM 8940');
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.1, 500);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.getElementById('canvasWrap').appendChild(renderer.domElement);
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x6b8f4e, 0.9);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+sun.position.set(60,80,30);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-140; sun.shadow.camera.right=140;
+sun.shadow.camera.top=140; sun.shadow.camera.bottom=-140;
+sun.shadow.camera.far=400;
+scene.add(sun);
+
+// Ground (grass beyond the field)
+const groundGeo = new THREE.PlaneGeometry(800,800);
+const groundMat = new THREE.MeshLambertMaterial({color:0x577a3f});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Paddock plots, fences, and entrance signage — one set per paddock
+const plotGroup = new THREE.Group();
+scene.add(plotGroup);
+const plotGeo = new THREE.BoxGeometry(PLOT_SIZE*0.94, 0.2, PLOT_SIZE*0.94);
+function plotWorldPos(paddock,x,z){
+  return [paddock.originX + x*PLOT_SIZE + PLOT_SIZE/2, 0.1, paddock.originZ + z*PLOT_SIZE + PLOT_SIZE/2];
+}
+function createLabelTexture(name, hectares){
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 160;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(243,236,218,0.95)';
+  ctx.fillRect(0,0,512,160);
+  ctx.strokeStyle = '#4A3728'; ctx.lineWidth = 10;
+  ctx.strokeRect(5,5,502,150);
+  ctx.fillStyle = '#2E2620';
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 46px Arial';
+  ctx.fillText(name, 256, 70);
+  ctx.font = 'bold 34px Arial';
+  ctx.fillStyle = '#4f8a4f';
+  ctx.fillText(hectares+' ha', 256, 122);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+const fenceMat = new THREE.MeshLambertMaterial({color:0x4A3728});
+paddocks.forEach(paddock=>{
+  for(let x=0;x<paddock.cols;x++){
+    for(let z=0;z<paddock.rows;z++){
+      const mat = new THREE.MeshLambertMaterial({color:0x6b8f4e});
+      const mesh = new THREE.Mesh(plotGeo, mat);
+      const [px,py,pz] = plotWorldPos(paddock,x,z);
+      mesh.position.set(px,py,pz);
+      mesh.receiveShadow = true;
+      plotGroup.add(mesh);
+      paddock.plots[x][z].mesh = mesh;
+    }
+  }
+  // fence around this paddock's perimeter
+  const cx = paddock.originX + paddock.width/2, cz = paddock.originZ + paddock.depth/2;
+  [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dz])=>{
+    const len = (dx!==0 ? paddock.depth : paddock.width) + 2;
+    const geo = new THREE.BoxGeometry(dx!==0?1:len, 1.2, dz!==0?1:len);
+    const mesh = new THREE.Mesh(geo, fenceMat);
+    mesh.position.set(cx+dx*(paddock.width/2+1), 0.6, cz+dz*(paddock.depth/2+1));
+    mesh.castShadow = true;
+    scene.add(mesh);
+  });
+  // entrance sign facing back toward the farmyard so it reads clearly on approach
+  const labelTex = createLabelTexture(paddock.name, paddock.hectares);
+  const labelPlane = new THREE.Mesh(new THREE.PlaneGeometry(6,1.9), new THREE.MeshBasicMaterial({map:labelTex, transparent:true}));
+  labelPlane.position.set(cx, 3, paddock.originZ - 1.3);
+  labelPlane.rotation.y = Math.PI;
+  scene.add(labelPlane);
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.25,3,0.25), new THREE.MeshLambertMaterial({color:0x4A3728}));
+  post.position.set(cx,1.5,paddock.originZ-1.3);
+  scene.add(post);
+});
+
+// world travel bounds now span all three paddocks plus the farmyard hub
+const worldMinX = Math.min(...paddocks.map(p=>p.originX)) - 20;
+const worldMaxX = Math.max(...paddocks.map(p=>p.originX+p.width)) + 20;
+const worldMinZ = FARMYARD_Z - 30;
+const worldMaxZ = Math.max(...paddocks.map(p=>p.originZ+p.depth)) + 20;
+
+// Road network — gravel/asphalt strips filling the laneway gaps between paddocks, the gaps
+// between paddock rows, and a main access road running from the farmyard down through them.
+function buildRoadNetwork(){
+  const roadMat = new THREE.MeshLambertMaterial({color:0x8a6b45});
+  const lineMat = new THREE.MeshLambertMaterial({color:0x6b5233});
+  const roadGroup = new THREE.Group();
+  function addRoad(cx, cz, w, d){
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,0.06,d), roadMat);
+    mesh.position.set(cx,0.03,cz);
+    mesh.receiveShadow = true;
+    roadGroup.add(mesh);
+    // a pair of darker worn tire-track ruts instead of a painted centre line, for a dirt-path look
+    const rutLen = Math.max(w,d)*0.94;
+    [-0.35,0.35].forEach(off=>{
+      const rut = new THREE.Mesh(new THREE.BoxGeometry(w>d?rutLen:0.35, 0.07, w>d?0.35:rutLen), lineMat);
+      rut.position.set(w>d?cx:cx+off, 0.045, w>d?cz+off:cz);
+      roadGroup.add(rut);
+    });
+  }
+
+  // group paddocks by their row (shared originZ) to find the lane gaps within each row
+  const rowsByZ = {};
+  paddocks.forEach(p=>{
+    if(!rowsByZ[p.originZ]) rowsByZ[p.originZ] = [];
+    rowsByZ[p.originZ].push(p);
+  });
+  const rowZs = Object.keys(rowsByZ).map(Number).sort((a,b)=>a-b);
+  rowZs.forEach(z=>{
+    const rowPaddocks = rowsByZ[z].slice().sort((a,b)=>a.originX-b.originX);
+    const rowDepth = Math.max(...rowPaddocks.map(p=>p.depth));
+    for(let i=0;i<rowPaddocks.length-1;i++){
+      const gapStartX = rowPaddocks[i].originX + rowPaddocks[i].width;
+      const gapEndX = rowPaddocks[i+1].originX;
+      addRoad((gapStartX+gapEndX)/2, z+rowDepth/2, gapEndX-gapStartX, rowDepth+6);
+    }
+  });
+  // cross-roads filling the gaps between paddock rows
+  for(let i=0;i<rowZs.length-1;i++){
+    const rowADepth = Math.max(...rowsByZ[rowZs[i]].map(p=>p.depth));
+    const gapStartZ = rowZs[i] + rowADepth;
+    const gapEndZ = rowZs[i+1];
+    addRoad(0, (gapStartZ+gapEndZ)/2, worldMaxX-worldMinX-16, gapEndZ-gapStartZ);
+  }
+  // main access road running from the farmyard hub down to the first paddock row
+  const firstRowZ = rowZs[0];
+  addRoad(0, (FARMYARD_Z+firstRowZ)/2, 6, firstRowZ-FARMYARD_Z+6);
+  // and continuing south from the last paddock row down to the silo bank
+  const lastRowZ = rowZs[rowZs.length-1];
+  const lastRowDepth = Math.max(...rowsByZ[lastRowZ].map(p=>p.depth));
+  const lastRowEndZ = lastRowZ + lastRowDepth;
+  addRoad(0, lastRowEndZ+8, 6, 16);
+
+  scene.add(roadGroup);
+}
+buildRoadNetwork();
+
+// A meandering river running north-south through the paddocks, from behind the farmyard
+// down past the last row — purely visual, vehicles drive straight over it.
+let riverPathPoints = [];
+let riverWaterWidth = 6;
+function buildRiver(){
+  const waterMat = new THREE.MeshLambertMaterial({color:0x4a7fa5, transparent:true, opacity:0.88, side:THREE.DoubleSide});
+  const bankMat = new THREE.MeshLambertMaterial({color:0x6b5233, side:THREE.DoubleSide});
+  // paddock plot tiles sit at y 0..0.2, so the river needs to render above that everywhere,
+  // not just in the gaps between paddocks, or the tiles hide it wherever it crosses one
+  const bankY = 0.22, waterY = 0.26;
+
+  // sample a smooth, gently winding centreline down through the paddocks
+  const startZ = FARMYARD_Z - 25;
+  const endZ = worldMaxZ - 10;
+  const stepZ = 2.5; // fine sampling so the curve reads as smooth, not faceted
+  const pts = [];
+  for(let z=startZ; z<=endZ; z+=stepZ){
+    const t = z - startZ;
+    const x = Math.sin(t*0.045)*22 + Math.sin(t*0.013)*10; // gentle double-frequency meander
+    pts.push({x, z});
+  }
+  riverPathPoints = pts;
+
+  // builds a single continuous quad-strip ribbon of the given width following the path —
+  // real connected geometry, not a row of separate boxes, so there are no seams or gaps
+  function buildRibbon(width, y){
+    const positions = [];
+    for(let i=0;i<pts.length;i++){
+      const prev = pts[Math.max(0,i-1)];
+      const next = pts[Math.min(pts.length-1,i+1)];
+      let dx = next.x-prev.x, dz = next.z-prev.z;
+      const len = Math.hypot(dx,dz) || 1;
+      dx/=len; dz/=len;
+      const px = -dz*width/2, pz = dx*width/2; // perpendicular to travel direction
+      positions.push(pts[i].x+px, y, pts[i].z+pz); // left edge vertex
+      positions.push(pts[i].x-px, y, pts[i].z-pz); // right edge vertex
+    }
+    const indices = [];
+    for(let i=0;i<pts.length-1;i++){
+      const a=i*2, b=i*2+1, c=i*2+2, d=i*2+3;
+      indices.push(a,b,c, b,d,c);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  const bankMesh = new THREE.Mesh(buildRibbon(8.4, bankY), bankMat);
+  const waterMesh = new THREE.Mesh(buildRibbon(6, waterY), waterMat);
+  bankMesh.receiveShadow = true;
+  scene.add(bankMesh, waterMesh);
+}
+buildRiver();
+
+// Scrub — clusters of uncultivated bush/tree cover, matching the rough patches marked
+// "Scrub" on the hand-drawn map: along a paddock edge, as islands, and near the silos.
+function buildScrubPatch(cx, cz, spreadX, spreadZ, count){
+  const group = new THREE.Group();
+  const trunkMat = new THREE.MeshLambertMaterial({color:0x5b4a35});
+  const leafMats = [
+    new THREE.MeshLambertMaterial({color:0x4f6b39}),
+    new THREE.MeshLambertMaterial({color:0x5c7a42}),
+    new THREE.MeshLambertMaterial({color:0x46603a})
+  ];
+  for(let i=0;i<count;i++){
+    const x = cx + (Math.random()-0.5)*spreadX;
+    const z = cz + (Math.random()-0.5)*spreadZ;
+    const scale = 0.7 + Math.random()*0.9;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12*scale,0.16*scale,0.9*scale,6), trunkMat);
+    trunk.position.set(x, 0.45*scale, z);
+    trunk.castShadow = true;
+    const leafMat = leafMats[Math.floor(Math.random()*leafMats.length)];
+    const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.75*scale,7,6), leafMat);
+    leaves.position.set(x, 1.05*scale, z);
+    leaves.castShadow = true;
+    group.add(trunk, leaves);
+  }
+  scene.add(group);
+}
+// scatters scrub trees across a rectangular block of a paddock's own plot cells (guaranteed
+// to sit inside the paddock, never on a road or lane) and marks every one of those cells
+// blocked — you can't till or plant over scrub, same as you can't over the river
+function scrubBlockCells(paddock, xStart, xEnd, zStart, zEnd){
+  xEnd = Math.min(xEnd, paddock.cols-1);
+  zEnd = Math.min(zEnd, paddock.rows-1);
+  for(let x=xStart;x<=xEnd;x++){
+    for(let z=zStart;z<=zEnd;z++){
+      const cell = paddock.plots[x][z];
+      cell.blocked = true;
+      cell.mesh.material.color.set(0x5a6b45);
+      if(Math.random()<0.55){
+        const [px,,pz] = plotWorldPos(paddock,x,z);
+        buildScrubPatch(px, pz, 2.6, 2.6, 2+Math.floor(Math.random()*2));
+        registerObstacle(px, pz, 1.8);
+      }
+    }
+  }
+}
+// scrub along the top edge of the 62ha paddock
+{
+  const p = paddocks.find(pd=>pd.id==='p62');
+  if(p) scrubBlockCells(p, 0, Math.floor(p.cols/2), 0, 1);
+}
+// a scrub strip inside the 116ha paddock, along one side
+{
+  const p = paddocks.find(pd=>pd.id==='p116');
+  if(p) scrubBlockCells(p, p.cols-2, p.cols-1, 5, Math.min(p.rows-1, 20));
+}
+
+// River and scrub both make ground unusable — block any plot cell whose centre falls
+// within the river's water width of the river's path, across every paddock.
+function blockRiverCrossingCells(){
+  paddocks.forEach(paddock=>{
+    for(let x=0;x<paddock.cols;x++){
+      for(let z=0;z<paddock.rows;z++){
+        const cell = paddock.plots[x][z];
+        if(cell.blocked) continue;
+        const [px,,pz] = plotWorldPos(paddock,x,z);
+        const nearRiver = riverPathPoints.some(pt => Math.hypot(pt.x-px, pt.z-pz) < riverWaterWidth/2+1.5);
+        if(nearRiver){
+          cell.blocked = true;
+          cell.mesh.material.color.set(0x3f6f8a); // waterlogged ground tint
+        }
+      }
+    }
+  });
+}
+blockRiverCrossingCells();
+
+
+// Physical rain — falling particles during Rainy/Stormy weather, following whichever vehicle is active
+const RAIN_COUNT = 900;
+const rainPositions = new Float32Array(RAIN_COUNT*3);
+for(let i=0;i<RAIN_COUNT;i++){
+  rainPositions[i*3+0] = (Math.random()-0.5)*90;
+  rainPositions[i*3+1] = Math.random()*40;
+  rainPositions[i*3+2] = (Math.random()-0.5)*90;
+}
+const rainGeo = new THREE.BufferGeometry();
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions,3));
+const rainMat = new THREE.PointsMaterial({color:0xaac9e0, size:0.15, transparent:true, opacity:0.75});
+const rainSystem = new THREE.Points(rainGeo, rainMat);
+rainSystem.visible = false;
+scene.add(rainSystem);
+function updateRain(dt){
+  const isRaining = (state.weather==='Rainy' || state.weather==='Stormy');
+  rainSystem.visible = isRaining;
+  if(!isRaining) return;
+  const posAttr = rainSystem.geometry.attributes.position;
+  const speed = state.weather==='Stormy' ? 55 : 34;
+  const center = getActiveMesh().position;
+  for(let i=0;i<RAIN_COUNT;i++){
+    let y = posAttr.getY(i) - speed*dt;
+    if(y<0){
+      y = 40;
+      posAttr.setX(i, center.x + (Math.random()-0.5)*90);
+      posAttr.setZ(i, center.z + (Math.random()-0.5)*90);
+    }
+    posAttr.setY(i,y);
+  }
+  posAttr.needsUpdate = true;
+}
+
+// Barn (shop/inventory building) placed north of field
+const barnGroup = new THREE.Group();
+const barnBody = new THREE.Mesh(new THREE.BoxGeometry(10,6,8), new THREE.MeshLambertMaterial({color:0x9C4A38}));
+barnBody.position.y=3; barnBody.castShadow=true;
+const barnRoof = new THREE.Mesh(new THREE.ConeGeometry(8,4,4), new THREE.MeshLambertMaterial({color:0x6b3a2c}));
+barnRoof.position.y=8; barnRoof.rotation.y=Math.PI/4; barnRoof.castShadow=true;
+barnGroup.add(barnBody, barnRoof);
+const barnPos = new THREE.Vector3(FARMYARD_X, 0, FARMYARD_Z);
+barnGroup.position.copy(barnPos);
+scene.add(barnGroup);
+registerObstacle(barnPos.x, barnPos.z, 5.3);
+
+// Farmhouse — a proper home base near the barn, distinct from the machinery sheds
+function buildHouse(){
+  const group = new THREE.Group();
+  const wallMat = new THREE.MeshLambertMaterial({color:0xEDE6D6});
+  const roofMat = new THREE.MeshLambertMaterial({color:0x6b3a2c});
+  const trimMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+  const glassMat = new THREE.MeshLambertMaterial({color:0x8fb4c9});
+  const body = new THREE.Mesh(new THREE.BoxGeometry(7,3.4,6), wallMat);
+  body.position.y=1.7; body.castShadow=true;
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(5.6,2.4,4), roofMat);
+  roof.position.y=4.6; roof.rotation.y=Math.PI/4; roof.castShadow=true;
+  const porch = new THREE.Mesh(new THREE.BoxGeometry(3,0.2,2), trimMat);
+  porch.position.set(0,0.6,3.6); porch.castShadow=true;
+  const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(3.2,0.15,2.2), roofMat);
+  porchRoof.position.set(0,2.6,3.6); porchRoof.castShadow=true;
+  [-1,1].forEach(dx=>{
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,2,8), trimMat);
+    post.position.set(dx*1.3,1.6,4.4); post.castShadow=true;
+    group.add(post);
+  });
+  const doorway = new THREE.Mesh(new THREE.BoxGeometry(1.1,2.0,0.1), trimMat);
+  doorway.position.set(0,1.0,3.05);
+  const windowL = new THREE.Mesh(new THREE.BoxGeometry(1.1,1.1,0.1), glassMat);
+  windowL.position.set(-2.2,1.9,3.05);
+  const windowR = windowL.clone(); windowR.position.x=2.2;
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.5,1.6,0.5), new THREE.MeshLambertMaterial({color:0x8a3a2c}));
+  chimney.position.set(2,4.6,-1); chimney.castShadow=true;
+  group.add(body, roof, porch, porchRoof, doorway, windowL, windowR, chimney);
+  return group;
+}
+const housePos = {x: FARMYARD_X+38, z: FARMYARD_Z-30};
+const house = buildHouse();
+house.position.set(housePos.x, 0, housePos.z);
+scene.add(house);
+registerObstacle(housePos.x, housePos.z, 4.5);
+
+// Grain silos — a second sell point next to the barn, three steel silos with conical caps,
+// ladders, and a linking auger, matching the classic farm silo bank look.
+const SILO_POS = {x: FARMYARD_X, z: Math.max(...paddocks.map(p=>p.originZ+p.depth)) + 16};
+function buildSiloBank(){
+  const group = new THREE.Group();
+  const siloMat = new THREE.MeshLambertMaterial({color:0xc9ccce});
+  const capMat = new THREE.MeshLambertMaterial({color:0x8a3a2c});
+  const darkMat = new THREE.MeshLambertMaterial({color:0x2b2b2b});
+  [-3.2, 0, 3.2].forEach((xOff,i)=>{
+    const radius = 1.8 + (i===1?0.3:0);
+    const height = 9 + (i===1?2:0);
+    const silo = new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,20), siloMat);
+    silo.position.set(xOff, height/2, 0);
+    silo.castShadow = true;
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(radius+0.15,1.6,20), capMat);
+    cap.position.set(xOff, height+0.8, 0);
+    cap.castShadow = true;
+    // corrugation ribs for a bit of surface detail
+    for(let r=0;r<3;r++){
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(radius+0.02,0.05,6,20), darkMat);
+      ring.rotation.x = Math.PI/2;
+      ring.position.set(xOff, height*0.25+r*height*0.25, 0);
+      group.add(ring);
+    }
+    const ladder = new THREE.Mesh(new THREE.BoxGeometry(0.1,height*0.9,0.4), darkMat);
+    ladder.position.set(xOff, height*0.45, radius+0.05);
+    group.add(silo, cap, ladder);
+  });
+  // linking auger tube between the silos, feeding grain in from ground level
+  const feedAuger = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,7.2,12), darkMat);
+  feedAuger.rotation.z = Math.PI/2;
+  feedAuger.position.set(0, 1.6, 1.6);
+  group.add(feedAuger);
+
+  // grain bunkers — long low tarped mounds off to the side, like the sketch's "Bunker" row
+  const bunkerMat = new THREE.MeshLambertMaterial({color:0xcfc9a8});
+  [-9,-5,-1].forEach(bx=>{
+    const bunker = new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,5.5,12,1,false,0,Math.PI), bunkerMat);
+    bunker.rotation.z = Math.PI/2;
+    bunker.rotation.y = Math.PI/2;
+    bunker.position.set(bx, 0, -9);
+    bunker.castShadow = true;
+    group.add(bunker);
+  });
+
+  // small site office near the bunkers
+  const office = new THREE.Group();
+  const officeBody = new THREE.Mesh(new THREE.BoxGeometry(2.2,2.2,2.6), new THREE.MeshLambertMaterial({color:0xEDE6D6}));
+  officeBody.position.y=1.1; officeBody.castShadow=true;
+  const officeRoof = new THREE.Mesh(new THREE.BoxGeometry(2.4,0.15,2.8), darkMat);
+  officeRoof.position.y=2.28; officeRoof.castShadow=true;
+  const officeSteps = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.3,0.6), darkMat);
+  officeSteps.position.set(0,0.15,1.6);
+  office.add(officeBody, officeRoof, officeSteps);
+  office.position.set(-9, 0, -4);
+  group.add(office);
+
+  group.position.set(SILO_POS.x, 0, SILO_POS.z);
+  return group;
+}
+scene.add(buildSiloBank());
+registerObstacle(SILO_POS.x, SILO_POS.z, 10.5);
+
+// Animal pen — a fenced yard near the barn where purchased animals show up.
+const PEN_POS = {x: FARMYARD_X-22, z: FARMYARD_Z+18};
+const penFenceMat = new THREE.MeshLambertMaterial({color:0x4A3728});
+const penGroup = new THREE.Group();
+const PEN_SIZE = 14;
+[[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dz])=>{
+  const len = PEN_SIZE+1;
+  const geo = new THREE.BoxGeometry(dx!==0?0.3:len, 1.0, dz!==0?0.3:len);
+  const mesh = new THREE.Mesh(geo, penFenceMat);
+  mesh.position.set(dx*(PEN_SIZE/2), 0.5, dz*(PEN_SIZE/2));
+  mesh.castShadow = true;
+  penGroup.add(mesh);
+});
+penGroup.position.set(PEN_POS.x, 0, PEN_POS.z);
+scene.add(penGroup);
+
+function buildAnimalMesh(type){
+  const group = new THREE.Group();
+  if(type==='chicken'){
+    const bodyMat = new THREE.MeshLambertMaterial({color:0xF2EDE0});
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.35,10,8), bodyMat);
+    body.position.y=0.4; body.scale.set(1,0.9,1.3); body.castShadow=true;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18,8,8), bodyMat);
+    head.position.set(0,0.65,0.35); head.castShadow=true;
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.06,0.14,6), new THREE.MeshLambertMaterial({color:0xE8A93A}));
+    beak.rotation.x = Math.PI/2; beak.position.set(0,0.63,0.55);
+    const comb = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.1,0.15), new THREE.MeshLambertMaterial({color:0xC5231C}));
+    comb.position.set(0,0.8,0.35);
+    group.add(body, head, beak, comb);
+  } else if(type==='sheep'){
+    const woolMat = new THREE.MeshLambertMaterial({color:0xEDE8DA});
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.55,10,8), woolMat);
+    body.position.y=0.6; body.scale.set(1.2,1,1); body.castShadow=true;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.22,8,8), new THREE.MeshLambertMaterial({color:0x3a3a3a}));
+    head.position.set(0,0.6,0.65); head.castShadow=true;
+    const legGeo = new THREE.CylinderGeometry(0.07,0.07,0.4,6);
+    const legMat = new THREE.MeshLambertMaterial({color:0x3a3a3a});
+    [[-0.3,0.3],[0.3,0.3],[-0.3,-0.3],[0.3,-0.3]].forEach(([x,z])=>{
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(x,0.2,z); leg.castShadow=true;
+      group.add(leg);
+    });
+    group.add(body, head);
+  } else { // cow
+    const hideMat = new THREE.MeshLambertMaterial({color:0xEDE6D6});
+    const spotMat = new THREE.MeshLambertMaterial({color:0x2b2b2b});
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.75,0.65,1.5), hideMat);
+    body.position.y=0.75; body.castShadow=true;
+    const spot = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.3,0.5), spotMat);
+    spot.position.set(0.15,0.95,0.2);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.5), hideMat);
+    head.position.set(0,0.8,0.95); head.castShadow=true;
+    const legGeo = new THREE.CylinderGeometry(0.09,0.09,0.55,6);
+    const legMat = new THREE.MeshLambertMaterial({color:0x3a3a3a});
+    [[-0.28,0.55],[0.28,0.55],[-0.28,-0.55],[0.28,-0.55]].forEach(([x,z])=>{
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(x,0.28,z); leg.castShadow=true;
+      group.add(leg);
+    });
+    group.add(body, spot, head);
+  }
+  return group;
+}
+
+function buyAnimal(type){
+  const cfg = ANIMALS[type];
+  if(state.money<cfg.cost) return;
+  state.money -= cfg.cost;
+  const id = 'animal'+state.animals.length+'_'+Date.now();
+  const mesh = buildAnimalMesh(type);
+  const ax = PEN_POS.x + (Math.random()-0.5)*(PEN_SIZE-2);
+  const az = PEN_POS.z + (Math.random()-0.5)*(PEN_SIZE-2);
+  mesh.position.set(ax,0,az);
+  mesh.rotation.y = Math.random()*Math.PI*2;
+  scene.add(mesh);
+  state.animals.push({id, type, mesh, daysSinceProduct:0});
+  addLog(`Bought a ${cfg.label.toLowerCase()} for the pen!`);
+  updateHud();
+}
+
+// scrub between the paddocks and the silo bank, as sketched
+buildScrubPatch(SILO_POS.x-18, SILO_POS.z-2, 12, 10, 24);
+registerObstacle(SILO_POS.x-18, SILO_POS.z-2, 7);
+
+// Machinery sheds — open-fronted steel-frame sheds with a gable roof and corrugated look,
+// for parking equipment under cover. Purely scenery (vehicles still park visibly outside).
+function buildShed(width, depth, height){
+  const group = new THREE.Group();
+  const wallMat = new THREE.MeshLambertMaterial({color:0xB7BCC0});
+  const roofMat = new THREE.MeshLambertMaterial({color:0x5B4A3A});
+  const frameMat = new THREE.MeshLambertMaterial({color:0x2b2b2b});
+  const trimMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+
+  // back and two side walls; front stays open like a real machinery shed bay
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(width,height,0.15), wallMat);
+  backWall.position.set(0,height/2,-depth/2); backWall.castShadow=true; backWall.receiveShadow=true;
+  const sideWallL = new THREE.Mesh(new THREE.BoxGeometry(0.15,height,depth), wallMat);
+  sideWallL.position.set(-width/2,height/2,0); sideWallL.castShadow=true;
+  const sideWallR = sideWallL.clone(); sideWallR.position.x = width/2;
+  group.add(backWall, sideWallL, sideWallR);
+
+  // gable roof — two sloped panels meeting at a ridge
+  const roofSlopeLen = Math.sqrt(Math.pow(width/2,2)+Math.pow(height*0.35,2));
+  const roofPanelL = new THREE.Mesh(new THREE.BoxGeometry(roofSlopeLen,0.12,depth+0.6), roofMat);
+  roofPanelL.position.set(-width/4, height+height*0.18, 0);
+  roofPanelL.rotation.z = Math.atan2(height*0.35, width/2);
+  roofPanelL.castShadow = true;
+  const roofPanelR = roofPanelL.clone();
+  roofPanelR.position.x = width/4;
+  roofPanelR.rotation.z = -roofPanelL.rotation.z;
+  group.add(roofPanelL, roofPanelR);
+
+  // open-bay front posts + a red header beam across the top of the opening
+  [-width/2+0.15, width/2-0.15].forEach(xPost=>{
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.22,height,0.22), frameMat);
+    post.position.set(xPost,height/2,depth/2); post.castShadow=true;
+    group.add(post);
+  });
+  const headerBeam = new THREE.Mesh(new THREE.BoxGeometry(width,0.3,0.25), trimMat);
+  headerBeam.position.set(0,height-0.15,depth/2); headerBeam.castShadow=true;
+  group.add(headerBeam);
+
+  return group;
+}
+// Registers a shed's three solid walls (back + two sides) as tight collision segments,
+// leaving the open front bay completely clear to drive into — several small circles
+// hugging each wall rather than one big circle covering the whole footprint.
+function registerShedWalls(shed, width, depth){
+  const rot = shed.rotation.y;
+  const toWorld = (lx, lz)=>{
+    const wx = lx*Math.cos(rot) + lz*Math.sin(rot);
+    const wz = -lx*Math.sin(rot) + lz*Math.cos(rot);
+    return {x: shed.position.x+wx, z: shed.position.z+wz};
+  };
+  const wallR = 0.6; // tight radius hugging the wall thickness
+  // back wall — several circles spaced along its width
+  const backSteps = Math.max(2, Math.round(width/3));
+  for(let i=0;i<=backSteps;i++){
+    const lx = -width/2 + (width*i/backSteps);
+    const p = toWorld(lx, -depth/2);
+    registerObstacle(p.x, p.z, wallR);
+  }
+  // two side walls — several circles spaced along their depth
+  const sideSteps = Math.max(2, Math.round(depth/3));
+  [-width/2, width/2].forEach(lx=>{
+    for(let i=0;i<=sideSteps;i++){
+      const lz = -depth/2 + (depth*i/sideSteps);
+      const p = toWorld(lx, lz);
+      registerObstacle(p.x, p.z, wallR);
+    }
+  });
+}
+
+const shedBig = buildShed(16, 12, 5.5);
+shedBig.position.set(FARMYARD_X-22, 0, FARMYARD_Z+18);
+shedBig.rotation.y = Math.PI; // open bay faces back toward the yard/vehicle parking
+scene.add(shedBig);
+registerShedWalls(shedBig, 16, 12);
+
+const shedSmall = buildShed(9, 7, 4.2);
+shedSmall.position.set(FARMYARD_X+9, 0, FARMYARD_Z-27);
+// open bay (unrotated, faces +z) looks south toward the implement yard row, without overlapping it
+scene.add(shedSmall);
+registerShedWalls(shedSmall, 9, 7);
+
+// a second big shed, same size as shedBig, parked next to the small shed
+const shedBig2 = buildShed(16, 12, 5.5);
+shedBig2.position.set(FARMYARD_X+22, 0, FARMYARD_Z-30);
+shedBig2.rotation.y = Math.PI/2; // open bay faces west, toward the small shed
+scene.add(shedBig2);
+registerShedWalls(shedBig2, 16, 12);
+
+// Implement yard — parked plow / seeder / header, pickable by driving close and pressing Q
+const yardMeshes = {};
+const yardFoldRefs = {};
+const implementPos = {}; // each implement's current ground position — starts at the yard, moves wherever it's dropped
+function buildYardMesh(type){
+  const built = buildImplementModel(type, previewWidth(type), true);
+  const pos = YARD_POS[type];
+  built.group.position.set(pos.x, 0, pos.z);
+  scene.add(built.group);
+  yardMeshes[type] = built.group;
+  yardFoldRefs[type] = built;
+  implementPos[type] = {x:pos.x, z:pos.z};
+}
+// extra purchased implements (a second plow, a second seeder, etc.) — parked alongside the
+// original at the yard, tracked separately so both can exist and be picked up independently
+let extraUnits = []; // {id, type, mesh, x, z}
+let nextExtraUnitId = 1;
+function spawnImplementUnit(type, x, z){
+  const built = buildImplementModel(type, previewWidth(type), true);
+  built.group.position.set(x,0,z);
+  scene.add(built.group);
+  const id = 'extra'+(nextExtraUnitId++);
+  extraUnits.push({id, type, mesh:built.group, x, z});
+  return id;
+}
+function buySpareImplement(type){
+  const count = extraUnits.filter(u=>u.type===type).length;
+  const base = YARD_POS[type] || {x: FARMYARD_X+23, z: FARMYARD_Z-24};
+  const x = base.x + 4*(count+1), z = base.z - 4;
+  return spawnImplementUnit(type, x, z);
+}
+function previewWidth(type){
+  if(type==='plow') return 3;
+  return 3; // nominal parked-yard preview width for seeder/header
+}
+Object.keys(YARD_POS).forEach(buildYardMesh);
+// small signpost so the yard reads clearly in the world
+const signGeo = new THREE.BoxGeometry(0.3, 2, 0.3);
+const sign = new THREE.Mesh(signGeo, new THREE.MeshLambertMaterial({color:0x4A3728}));
+sign.position.set(0, 1, YARD_POS.seeder.z - 3);
+scene.add(sign);
+
+/* ============ REALISTIC IMPLEMENT MODEL BUILDER ============ */
+// Returns {group, augerParts, foldLeft, foldRight} — fold/auger refs only populated for headers.
+function buildImplementModel(type, width, isYardPreview){
+  const group = new THREE.Group();
+  const metal = new THREE.MeshLambertMaterial({color:0x555555});
+  const darkMetal = new THREE.MeshLambertMaterial({color:0x2b2b2b});
+  const tireMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+
+  if(type==='plow'){
+    // Disc plow: toolbar beam + angled concave disc blades on shanks, one disc per plot-row
+    const w = width*PLOT_SIZE*0.85;
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(w,0.28,0.28), darkMetal);
+    beam.position.y=0.9; beam.castShadow=true;
+    group.add(beam);
+    const discCount = Math.max(4, width*2);
+    for(let i=0;i<discCount;i++){
+      const xPos = -w/2+0.4 + i*((w-0.8)/(discCount-1));
+      const shank = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.55,0.12), darkMetal);
+      shank.position.set(xPos,0.55,0.15); shank.castShadow=true;
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.05,20), new THREE.MeshLambertMaterial({color:0xb5b8ba, metalness:1}));
+      disc.rotation.z = Math.PI/2;
+      disc.rotation.y = 0.5;
+      disc.position.set(xPos, 0.32, 0.4);
+      disc.castShadow = true;
+      group.add(shank, disc);
+    }
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.25,14), tireMat);
+    wheel.rotation.z=Math.PI/2; wheel.position.set(w/2-0.2,0.35,-0.6); wheel.castShadow=true;
+    const wheel2 = wheel.clone(); wheel2.position.x=-(w/2-0.2);
+    group.add(wheel, wheel2);
+    return {group};
+  }
+
+  if(type==='baler'){
+    // Round baler: pickup reel out front and a big cylindrical baling chamber. Finished
+    // bales are ejected as real objects out in the field — see harvesterHarvestAction-style
+    // baler logic in performImplementAction, which spawns a physical bale each time it bales.
+    const chamberMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+    const chamber = new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.95,1.9,18), chamberMat);
+    chamber.rotation.z = Math.PI/2;
+    chamber.position.set(0,1.15,-0.3); chamber.castShadow=true;
+    group.add(chamber);
+    const chamberDoor = new THREE.Mesh(new THREE.CylinderGeometry(0.97,0.97,0.1,18), darkMetal);
+    chamberDoor.rotation.z = Math.PI/2;
+    chamberDoor.position.set(1.0,1.15,-0.3);
+    group.add(chamberDoor);
+    // pickup reel with tined bars, out front where it lifts straw off the ground
+    const pickupCore = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,1.7,14), metal);
+    pickupCore.rotation.z = Math.PI/2;
+    pickupCore.position.set(0,0.4,1.1); pickupCore.castShadow=true;
+    group.add(pickupCore);
+    for(let i=0;i<8;i++){
+      const tine = new THREE.Mesh(new THREE.BoxGeometry(1.6,0.04,0.06), darkMetal);
+      tine.rotation.x = (Math.PI/4)*i;
+      tine.position.set(0,0.4,1.1);
+      group.add(tine);
+    }
+    const wheelB = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.28,14), tireMat);
+    wheelB.rotation.z = Math.PI/2; wheelB.position.set(0.95,0.4,-0.9); wheelB.castShadow=true;
+    const wheelB2 = wheelB.clone(); wheelB2.position.x=-0.95;
+    group.add(wheelB, wheelB2);
+    return {group};
+  }
+
+  if(type==='baletrailer'){
+    // Bale trailer: a long flatbed with four raised cradles. Loaded bales are added
+    // dynamically elsewhere (see updateBaleTrailerVisual) based on state.baleTrailerLoad.
+    const deckMat = new THREE.MeshLambertMaterial({color:0x8a3a2c});
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.25,6.0), deckMat);
+    deck.position.set(0,0.85,0); deck.castShadow=true;
+    group.add(deck);
+    const cradleMat = new THREE.MeshLambertMaterial({color:0x2b2b2b});
+    [-2.1,-0.7,0.7,2.1].forEach(z=>{
+      [-0.85,0.85].forEach(x=>{
+        const cradle = new THREE.Mesh(new THREE.BoxGeometry(0.15,0.3,0.5), cradleMat);
+        cradle.position.set(x,1.05,z); cradle.castShadow=true;
+        group.add(cradle);
+      });
+    });
+    const wheelGeo = new THREE.CylinderGeometry(0.5,0.5,0.36,16);
+    [-2.2,2.2].forEach(z=>{
+      [-1.15,1.15].forEach(x=>{
+        const wheel = new THREE.Mesh(wheelGeo, tireMat);
+        wheel.rotation.z = Math.PI/2;
+        wheel.position.set(x,0.5,z); wheel.castShadow=true;
+        group.add(wheel);
+      });
+    });
+    const drawbar = new THREE.Mesh(new THREE.BoxGeometry(0.15,0.15,1.6), darkMetal);
+    drawbar.position.set(0,0.5,3.6); drawbar.castShadow=true;
+    group.add(drawbar);
+    return {group};
+  }
+
+  if(type==='chaserbin'){
+    // Chaser bin: a big towed grain cart with an unloading auger, used to catch grain from
+    // the harvester out in the field instead of driving all the way back to the barn.
+    const binMat = new THREE.MeshLambertMaterial({color:0x2f6b2f});
+    const bin = new THREE.Mesh(new THREE.BoxGeometry(2.6,1.7,4.2), binMat);
+    bin.position.set(0,1.55,-0.5); bin.castShadow=true;
+    const hopperL = new THREE.Mesh(new THREE.BoxGeometry(2.6,0.5,4.2), new THREE.MeshLambertMaterial({color:0x244f24}));
+    hopperL.position.set(0,0.85,-0.5); hopperL.rotation.x=0.12; hopperL.castShadow=true;
+    group.add(bin, hopperL);
+    const auger = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,3.2,12), darkMetal);
+    auger.rotation.z = Math.PI/2 + 0.35;
+    auger.position.set(1.6,1.7,-0.5); auger.castShadow=true;
+    group.add(auger);
+    const wheelGeo = new THREE.CylinderGeometry(0.6,0.6,0.42,16);
+    [-1.5,1.5].forEach(dx=>{
+      const wheel = new THREE.Mesh(wheelGeo, tireMat);
+      wheel.rotation.z = Math.PI/2;
+      wheel.position.set(dx,0.6,-1.9); wheel.castShadow=true;
+      group.add(wheel);
+    });
+    return {group};
+  }
+
+  if(type==='gravitywagon'){
+    // Gravity wagon: a simpler, smaller grain cart that unloads straight down through a
+    // gate underneath rather than an auger — cheaper than a chaser bin, less capacity.
+    const wagonMat = new THREE.MeshLambertMaterial({color:0xB7BCC0});
+    const hopperTop = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.9,2.6), wagonMat);
+    hopperTop.position.set(0,1.5,-0.4); hopperTop.castShadow=true;
+    const hopperBottom = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.9,0.8,4), wagonMat);
+    hopperBottom.rotation.y = Math.PI/4;
+    hopperBottom.position.set(0,0.85,-0.4); hopperBottom.castShadow=true;
+    group.add(hopperTop, hopperBottom);
+    const wheelGeo = new THREE.CylinderGeometry(0.45,0.45,0.32,14);
+    [-1.15,1.15].forEach(dx=>{
+      const wheel = new THREE.Mesh(wheelGeo, tireMat);
+      wheel.rotation.z = Math.PI/2;
+      wheel.position.set(dx,0.45,-1.2); wheel.castShadow=true;
+      group.add(wheel);
+    });
+    return {group};
+  }
+
+  if(type==='spreader'){
+    // Marshall 810T-style manure/lime spreader.  Built to match the reference:
+    // large cream rectangular hopper, sloping lower sides, single wide flotation
+    // axle, rear beater/spinner assembly, ladder and long drawbar.
+    const hopperMat = new THREE.MeshLambertMaterial({color:0xE8D9A8});
+    const hopperTopMat = new THREE.MeshLambertMaterial({color:0xF1E5BF});
+    const frameMat = new THREE.MeshLambertMaterial({color:0x384038});
+    const steelMat = new THREE.MeshLambertMaterial({color:0x555555});
+    const blackMat = new THREE.MeshLambertMaterial({color:0x181818});
+    const hubMat = new THREE.MeshLambertMaterial({color:0xb7b7b7});
+
+    const bodyW = Math.max(2.7, width*2.7);
+    const bodyL = 3.8;
+    const bodyH = 1.65;
+
+    // Main upper hopper — deliberately tall and boxy like the 810T side profile.
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(bodyW, bodyH, bodyL), hopperMat);
+    upper.position.set(0,1.65,-0.55);
+    upper.castShadow = true;
+    group.add(upper);
+
+    // Slightly raised top rim/lid.
+    const top = new THREE.Mesh(new THREE.BoxGeometry(bodyW+0.08,0.18,bodyL+0.08), hopperTopMat);
+    top.position.set(0,2.55,-0.55);
+    top.castShadow = true;
+    group.add(top);
+
+    // Four sloping hopper panels, giving the lower body its distinctive tapered shape.
+    const slopeL = bodyL*0.78;
+    [-1,1].forEach(side=>{
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.95,slopeL), hopperMat);
+      panel.rotation.z = side*0.22;
+      panel.position.set(side*(bodyW/2-0.42),0.92,-0.55);
+      panel.castShadow = true;
+      group.add(panel);
+    });
+    [-1,1].forEach(end=>{
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(bodyW-0.7,0.14,0.95), hopperMat);
+      panel.rotation.x = -end*0.22;
+      panel.position.set(0,0.92,-0.55+end*(bodyL/2-0.48));
+      panel.castShadow = true;
+      group.add(panel);
+    });
+
+    // Heavy chassis underneath the hopper.
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(bodyW+0.25,0.24,bodyL+0.6), frameMat);
+    chassis.position.set(0,0.45,-0.55);
+    chassis.castShadow = true;
+    group.add(chassis);
+
+    // Large single flotation tyres on the axle, one each side.
+    const tyreGeo = new THREE.CylinderGeometry(0.9,0.9,0.62,20);
+    [-1,1].forEach(side=>{
+      const tyre = new THREE.Mesh(tyreGeo, blackMat);
+      tyre.rotation.z = Math.PI/2;
+      tyre.position.set(side*(bodyW/2+0.18),0.78,-0.75);
+      tyre.castShadow = true;
+      group.add(tyre);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.38,0.66,16), hubMat);
+      hub.rotation.z = Math.PI/2;
+      hub.position.copy(tyre.position);
+      group.add(hub);
+    });
+
+    // Rear beater/spinner shaft and guards under the back of the hopper.
+    const beater = new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,bodyW,12), steelMat);
+    beater.rotation.z = Math.PI/2;
+    beater.position.set(0,0.52,-0.55-bodyL/2-0.08);
+    beater.castShadow = true;
+    group.add(beater);
+    for(let i=-3;i<=3;i++){
+      const tine = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.48,0.08), blackMat);
+      tine.position.set(i*(bodyW/7),0.45,-0.55-bodyL/2-0.18);
+      tine.rotation.x = (i%2===0 ? -0.55 : 0.55);
+      group.add(tine);
+    }
+    const rearGuard = new THREE.Mesh(new THREE.BoxGeometry(bodyW,0.16,0.18), frameMat);
+    rearGuard.position.set(0,0.78,-0.55-bodyL/2-0.16);
+    group.add(rearGuard);
+
+    // Long front drawbar and hitch eye.
+    const drawbar = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.18,2.25), frameMat);
+    drawbar.position.set(0,0.55,bodyL/2+0.55);
+    drawbar.castShadow = true;
+    group.add(drawbar);
+    const hitch = new THREE.Mesh(new THREE.TorusGeometry(0.19,0.055,8,14), steelMat);
+    hitch.position.set(0,0.58,bodyL/2+1.7);
+    hitch.rotation.x = Math.PI/2;
+    group.add(hitch);
+
+    // Side ladder and rail — a prominent feature of the real machine.
+    const ladder = new THREE.Group();
+    for(let i=0;i<5;i++){
+      const rung = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.07,0.07), steelMat);
+      rung.position.set(0,0.35+i*0.32,0);
+      ladder.add(rung);
+    }
+    const railA = new THREE.Mesh(new THREE.BoxGeometry(0.07,1.5,0.07), steelMat);
+    const railB = railA.clone(); railB.position.x=0.5;
+    ladder.add(railA,railB);
+    ladder.position.set(bodyW/2+0.1,0.45,bodyL/2-0.15);
+    ladder.rotation.y = Math.PI/2;
+    group.add(ladder);
+
+    // Simple side rails to break up the large cream hopper face.
+    [-1,1].forEach(side=>{
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06,1.45,bodyL*0.9), frameMat);
+      rail.position.set(side*(bodyW/2+0.08),1.65,-0.55);
+      group.add(rail);
+    });
+
+    return {group};
+  }
+
+  if(type==='loader'){
+    // Front-end loader: a mounting frame on the tractor's nose, two lift arms reaching
+    // forward, and a scoop bucket at the end.
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.3,0.3), darkMetal);
+    frame.position.set(0,1.5,-0.2); frame.castShadow=true;
+    group.add(frame);
+    [-0.75,0.75].forEach(xSide=>{
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.16,2.4), metal);
+      arm.position.set(xSide,1.55,0.9); arm.castShadow=true;
+      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.9,0.12), metal);
+      strut.rotation.x = 0.5;
+      strut.position.set(xSide,1.1,0.1); strut.castShadow=true;
+      group.add(arm, strut);
+    });
+    const bucketBack = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.9,0.15), darkMetal);
+    bucketBack.position.set(0,1.15,2.15); bucketBack.castShadow=true;
+    const bucketFloor = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.15,0.9), darkMetal);
+    bucketFloor.rotation.x = 0.15;
+    bucketFloor.position.set(0,0.75,2.55); bucketFloor.castShadow=true;
+    const bucketSideL = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.85,0.9), darkMetal);
+    bucketSideL.position.set(0.95,1.1,2.55); bucketSideL.castShadow=true;
+    const bucketSideR = bucketSideL.clone(); bucketSideR.position.x=-0.95;
+    group.add(bucketBack, bucketFloor, bucketSideL, bucketSideR);
+    // hydraulic rams linking the arms to the bucket, for detail
+    [-0.75,0.75].forEach(xSide=>{
+      const ram = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1.1,8), new THREE.MeshLambertMaterial({color:0x8a8d8f}));
+      ram.rotation.x = 0.9;
+      ram.position.set(xSide,1.3,1.7); ram.castShadow=true;
+      group.add(ram);
+    });
+    return {group};
+  }
+
+  if(type==='seeder'){
+    // Bourgault-style air seeder rig: a real plow-style disc bar leads the way (like the
+    // plow's own toolbar), followed by the wide red drill toolbar, towed by a big white
+    // saddle-tank cart with a ladder, catwalk rail, and a fill auger — like the reference photo.
+    // NOTE: the whole assembly is built shifted back in local Z (relative to the plow's
+    // numbers) so that once hitched, it clears the tractor's own body and is fully visible
+    // instead of clipping inside the cab/hood.
+    const w = Math.max(4.4, width*PLOT_SIZE*0.85); // floor keeps the bar visibly wider than the tractor even unupgraded
+    const drillRed = new THREE.MeshLambertMaterial({color:0xC5231C});
+    const tankWhite = new THREE.MeshLambertMaterial({color:0xF2F2EE});
+    const hoseMat = new THREE.MeshLambertMaterial({color:0xd6d6d6});
+
+    // leading disc bar — the same beam + concave-disc-on-shank build as the plow, mounted
+    // out front of the drill so the ground gets cut ahead of the seed openers
+    const discBarBeam = new THREE.Mesh(new THREE.BoxGeometry(w,0.26,0.26), darkMetal);
+    discBarBeam.position.set(0,0.95,0.4); discBarBeam.castShadow=true;
+    group.add(discBarBeam);
+    const discBarCount = Math.max(2, width);
+    for(let i=0;i<discBarCount;i++){
+      const xPos = -w/2+0.4 + i*((w-0.8)/(discBarCount-1));
+      const discShank = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.5,0.12), darkMetal);
+      discShank.position.set(xPos,0.6,0.6); discShank.castShadow=true;
+      const discBlade = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.05,20), new THREE.MeshLambertMaterial({color:0xb5b8ba}));
+      discBlade.rotation.z = Math.PI/2;
+      discBlade.rotation.y = 0.5;
+      discBlade.position.set(xPos, 0.36, 0.85);
+      discBlade.castShadow = true;
+      group.add(discShank, discBlade);
+    }
+
+    // wide red drill toolbar with coulter/disc-opener rows and hydraulic hoses
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(w,0.24,0.3), drillRed);
+    bar.position.set(0,0.85,-0.6); bar.castShadow=true;
+    group.add(bar);
+
+    // distribution box (manifold) mounted centrally on the bar — this is what the tank's
+    // supply hose hooks into, splitting seed flow out to each row's opener
+    const distBox = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.55,0.5), new THREE.MeshLambertMaterial({color:0x2b2b2b}));
+    distBox.position.set(0,1.25,-0.6); distBox.castShadow=true;
+    const distBoxLid = new THREE.Mesh(new THREE.BoxGeometry(0.9,0.1,0.4), new THREE.MeshLambertMaterial({color:0x555555}));
+    distBoxLid.position.set(0,1.55,-0.6); distBoxLid.castShadow=true;
+    group.add(distBox, distBoxLid);
+    // mounting brackets physically bridging the box down onto the bar
+    [-0.4,0.4].forEach(dx=>{
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.35,0.08), darkMetal);
+      bracket.position.set(dx,1.0,-0.6); bracket.castShadow=true;
+      group.add(bracket);
+    });
+    // main supply hose hooking the box up to the tank behind it
+    const boxPos = {x:0, y:1.25, z:-0.6};
+
+    const tyneCount = Math.max(6, Math.round(width*4));
+    for(let i=0;i<tyneCount;i++){
+      const xPos = -w/2 + 0.3 + i*((w-0.6)/(tyneCount-1));
+      const tyne = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.55,0.09), darkMetal);
+      tyne.rotation.x = -0.2;
+      tyne.position.set(xPos,0.55,-0.35); tyne.castShadow=true;
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.04,12), new THREE.MeshLambertMaterial({color:0xb5b8ba}));
+      disc.rotation.z=Math.PI/2;
+      disc.position.set(xPos,0.26,-0.15); disc.castShadow=true;
+      group.add(tyne, disc);
+      if(i%2===0){
+        // a real hose running from the distribution box out to this opener, not a floating tube
+        const endX=xPos, endY=0.62, endZ=-0.35;
+        const dx=endX-boxPos.x, dy=endY-boxPos.y, dz=endZ-boxPos.z;
+        const len = Math.sqrt(dx*dx+dy*dy+dz*dz) || 0.1;
+        const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,8), hoseMat);
+        hose.position.set((boxPos.x+endX)/2, (boxPos.y+endY)/2, (boxPos.z+endZ)/2);
+        hose.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx,dy,dz).normalize());
+        hose.castShadow = true;
+        group.add(hose);
+      }
+    }
+    const drillWheelGeo = new THREE.CylinderGeometry(0.35,0.35,0.24,14);
+    const dWheelL = new THREE.Mesh(drillWheelGeo, tireMat); dWheelL.rotation.z=Math.PI/2; dWheelL.position.set(w/2-0.3,0.35,-0.6); dWheelL.castShadow=true;
+    const dWheelR = dWheelL.clone(); dWheelR.position.x=-(w/2-0.3);
+    group.add(dWheelL, dWheelR);
+
+    // big white saddle-tank cart, towed behind the drill
+    const tankLen = Math.max(3.4, width*0.9);
+    const tankBody = new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.95,tankLen,16), tankWhite);
+    tankBody.rotation.z = Math.PI/2;
+    tankBody.position.set(0,1.5,-4.0); tankBody.castShadow=true;
+    group.add(tankBody);
+    // main supply hose hooking the tank up to the distribution box on the bar
+    {
+      const tankOutlet = {x:0, y:1.0, z:-3.3};
+      const dx=boxPos.x-tankOutlet.x, dy=boxPos.y-tankOutlet.y, dz=boxPos.z-tankOutlet.z;
+      const len = Math.sqrt(dx*dx+dy*dy+dz*dz);
+      const supplyHose = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,len,10), hoseMat);
+      supplyHose.position.set((boxPos.x+tankOutlet.x)/2, (boxPos.y+tankOutlet.y)/2, (boxPos.z+tankOutlet.z)/2);
+      supplyHose.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx,dy,dz).normalize());
+      supplyHose.castShadow = true;
+      group.add(supplyHose);
+    }
+    const tankNoseL = new THREE.Mesh(new THREE.SphereGeometry(0.95,14,10,0,Math.PI*2,0,Math.PI/2), tankWhite);
+    tankNoseL.rotation.z = -Math.PI/2;
+    tankNoseL.position.set(-tankLen/2,1.5,-4.0);
+    const tankNoseR = tankNoseL.clone();
+    tankNoseR.rotation.z = Math.PI/2;
+    tankNoseR.position.set(tankLen/2,1.5,-4.0);
+    group.add(tankNoseL, tankNoseR);
+    // catwalk rail along the top
+    const catwalk = new THREE.Mesh(new THREE.BoxGeometry(tankLen*0.85,0.06,0.6), darkMetal);
+    catwalk.position.set(0,2.5,-4.0); catwalk.castShadow=true;
+    const railL = new THREE.Mesh(new THREE.BoxGeometry(tankLen*0.85,0.4,0.04), darkMetal);
+    railL.position.set(0,2.75,-4.28);
+    const railR = railL.clone(); railR.position.z=-3.72;
+    group.add(catwalk, railL, railR);
+    // ladder up the side to the catwalk
+    const ladder = new THREE.Group();
+    for(let i=0;i<5;i++){
+      const rung = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.04,0.05), new THREE.MeshLambertMaterial({color:0x8a8d8f}));
+      rung.position.set(0,0.3+i*0.35,0);
+      ladder.add(rung);
+    }
+    const ladderRailL = new THREE.Mesh(new THREE.BoxGeometry(0.05,1.8,0.05), darkMetal); ladderRailL.position.set(0.2,0.9,0);
+    const ladderRailR = ladderRailL.clone(); ladderRailR.position.x=-0.2;
+    ladder.add(ladderRailL, ladderRailR);
+    ladder.position.set(tankLen/2-0.3, 0.6, -4.8);
+    group.add(ladder);
+    // black fill auger on the side, angled up like the reference
+    const fillAuger = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,3.2,12), darkMetal);
+    fillAuger.rotation.z = 0.85;
+    fillAuger.position.set(tankLen/2-0.3, 2.5, -3.1);
+    fillAuger.castShadow = true;
+    const augerHopper = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.2,0.5,10), darkMetal);
+    augerHopper.position.set(tankLen/2-1.5, 1.35, -3.5);
+    augerHopper.castShadow = true;
+    group.add(fillAuger, augerHopper);
+
+    // big single flotation tires under the tank, like the reference cart
+    const tankWheelGeo = new THREE.CylinderGeometry(0.95,0.95,0.7,20);
+    const tWheelL = new THREE.Mesh(tankWheelGeo, tireMat); tWheelL.rotation.z=Math.PI/2; tWheelL.position.set(1.05,0.95,-5.0); tWheelL.castShadow=true;
+    const tWheelR = tWheelL.clone(); tWheelR.position.x=-1.05;
+    group.add(tWheelL, tWheelR);
+
+    // A-frame drawbar with a jack stand up front, like the reference cart's tow tongue
+    const drawbarMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+    const drawbarTip = {x:0, y:0.75, z: tankLen/2+2.6};
+    [-0.8,0.8].forEach(xSide=>{
+      const dx = drawbarTip.x-xSide, dy = drawbarTip.y-0.6, dz = drawbarTip.z-(tankLen/2-0.4);
+      const len = Math.sqrt(dx*dx+dy*dy+dz*dz);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.14,len), drawbarMat);
+      arm.position.set((xSide+drawbarTip.x)/2, (0.6+drawbarTip.y)/2, ((tankLen/2-0.4)+drawbarTip.z)/2);
+      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), new THREE.Vector3(dx,dy,dz).normalize());
+      arm.castShadow = true;
+      group.add(arm);
+    });
+    const hitchEye = new THREE.Mesh(new THREE.TorusGeometry(0.18,0.05,8,14), darkMetal);
+    hitchEye.position.set(drawbarTip.x, drawbarTip.y, drawbarTip.z);
+    const jackStand = new THREE.Mesh(new THREE.BoxGeometry(0.12,1.0,0.12), darkMetal);
+    jackStand.position.set(0, 0.25, tankLen/2+1.6); jackStand.castShadow = true;
+    group.add(hitchEye, jackStand);
+
+    // brand plate on the tank nose
+    const brandMat = new THREE.MeshBasicMaterial({color:0xC5231C});
+    const brandPlate = new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.35), brandMat);
+    brandPlate.rotation.y = Math.PI/2;
+    brandPlate.position.set(0.2,1.5,-4.0);
+    group.add(brandPlate);
+
+    return {group};
+  }
+
+  if(type==='sprayer'){
+    // HARDI-style trailed boom sprayer based on the user's reference:
+    // cream/yellow tank, red chassis and tow tongue, big flotation wheels,
+    // tall rear boom frame, folding lattice booms and many spray nozzles.
+    const tankMat = new THREE.MeshLambertMaterial({color:0xE6E5A2});
+    const tankLight = new THREE.MeshLambertMaterial({color:0xF4F0C8});
+    const redMat = new THREE.MeshLambertMaterial({color:0xB81818});
+    const redDark = new THREE.MeshLambertMaterial({color:0x741010});
+    const alu = new THREE.MeshLambertMaterial({color:0xB7BDC0, metalness:0.8});
+    const aluDark = new THREE.MeshLambertMaterial({color:0x70777A, metalness:0.8});
+    const black = new THREE.MeshLambertMaterial({color:0x181818});
+    const tyreMat = new THREE.MeshLambertMaterial({color:0x202020});
+    const hoseMat = new THREE.MeshLambertMaterial({color:0x222222});
+    const liquidMat = new THREE.MeshBasicMaterial({color:0xA9E4FF, transparent:true, opacity:0.48, depthWrite:false});
+    const nozzleMat = new THREE.MeshBasicMaterial({color:0x86D5FF, transparent:true, opacity:0.82, depthWrite:false});
+
+    // Main tank — broad horizontal oval/cylindrical profile.
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.38,4.0,24), tankMat);
+    tank.rotation.x = Math.PI/2;
+    tank.position.set(0,1.55,-0.70);
+    tank.castShadow = true;
+
+    // Lower tank cradle/skirt and top filler.
+    const cradle = new THREE.Mesh(new THREE.BoxGeometry(2.65,0.34,3.65), redMat);
+    cradle.position.set(0,0.76,-0.70);
+    cradle.castShadow = true;
+    const filler = new THREE.Mesh(new THREE.CylinderGeometry(0.30,0.30,0.18,16), tankLight);
+    filler.position.set(0,2.74,-0.86);
+    filler.castShadow = true;
+    group.add(tank,cradle,filler);
+
+    // Red machine chassis and axle.
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(3.0,0.23,4.7), redMat);
+    chassis.position.set(0,0.55,-0.65);
+    const axle = new THREE.Mesh(new THREE.BoxGeometry(3.3,0.20,0.25), redDark);
+    axle.position.set(0,0.59,-0.85);
+    group.add(chassis,axle);
+
+    // Large single flotation tyre each side.
+    const wheelGeo = new THREE.CylinderGeometry(0.92,0.92,0.60,22);
+    [-1.60,1.60].forEach(side=>{
+      const wheel = new THREE.Mesh(wheelGeo,black);
+      wheel.rotation.z = Math.PI/2;
+      wheel.position.set(side,0.86,-0.83);
+      wheel.castShadow = true;
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.63,16),alu);
+      hub.rotation.z = Math.PI/2;
+      hub.position.copy(wheel.position);
+      group.add(wheel,hub);
+    });
+
+    // Long red tow tongue and A-frame braces.
+    const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.22,3.2),redMat);
+    tongue.position.set(0,0.72,3.58);
+    tongue.castShadow = true;
+    const braceL = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.14,2.25),redDark);
+    braceL.position.set(-0.62,0.78,2.92); braceL.rotation.y=-0.18;
+    const braceR = braceL.clone(); braceR.position.x=0.62; braceR.rotation.y=0.18;
+    const hitch = new THREE.Mesh(new THREE.TorusGeometry(0.20,0.06,10,16),alu);
+    hitch.rotation.x=Math.PI/2; hitch.position.set(0,0.78,5.10);
+    group.add(tongue,braceL,braceR,hitch);
+
+    // Tall central mast and protective red/aluminium frame.
+    const mast = new THREE.Mesh(new THREE.BoxGeometry(0.20,2.75,0.20),redMat);
+    mast.position.set(0,1.78,-2.12);
+    const mastTop = new THREE.Mesh(new THREE.BoxGeometry(2.25,0.18,0.18),redMat);
+    mastTop.position.set(0,2.88,-2.12);
+    const diagL = new THREE.Mesh(new THREE.BoxGeometry(0.09,2.2,0.09),aluDark);
+    diagL.rotation.z=-0.48; diagL.position.set(-0.52,2.0,-2.12);
+    const diagR = diagL.clone(); diagR.rotation.z=0.48; diagR.position.x=0.52;
+    group.add(mast,mastTop,diagL,diagR);
+
+    // Catwalk and ladder details.
+    const catwalk = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.08,0.70),alu);
+    catwalk.position.set(0,2.58,-2.55);
+    group.add(catwalk);
+    const ladder = new THREE.Group();
+    for(let i=0;i<6;i++){
+      const rung = new THREE.Mesh(new THREE.BoxGeometry(0.52,0.06,0.07),alu);
+      rung.position.set(0,0.25+i*0.32,0);
+      ladder.add(rung);
+    }
+    const rail1 = new THREE.Mesh(new THREE.BoxGeometry(0.07,1.85,0.07),aluDark);
+    rail1.position.set(-0.28,1.0,0);
+    const rail2 = rail1.clone(); rail2.position.x=0.28;
+    ladder.add(rail1,rail2);
+    ladder.position.set(0,0.55,-2.95);
+    group.add(ladder);
+
+    // Boom centre carrier.
+    const boomCarrier = new THREE.Mesh(new THREE.BoxGeometry(2.55,0.18,0.20),aluDark);
+    boomCarrier.position.set(0,2.16,-2.22);
+    group.add(boomCarrier);
+
+    // Two independently folding main boom wings.
+    const leftPivot = new THREE.Group();
+    const rightPivot = new THREE.Group();
+    leftPivot.position.set(-1.15,2.16,-2.22);
+    rightPivot.position.set(1.15,2.16,-2.22);
+
+    const totalWing = Math.max(6.5,width*3.4);
+    const innerLen = totalWing*0.72;
+    const outerLen = totalWing-innerLen;
+
+    const leftInner = new THREE.Mesh(new THREE.BoxGeometry(innerLen,0.13,0.13),alu);
+    leftInner.position.set(-innerLen/2,0,0);
+    const rightInner = new THREE.Mesh(new THREE.BoxGeometry(innerLen,0.13,0.13),alu);
+    rightInner.position.set(innerLen/2,0,0);
+
+    const leftOuterPivot = new THREE.Group();
+    const rightOuterPivot = new THREE.Group();
+    leftOuterPivot.position.set(-innerLen,0,0);
+    rightOuterPivot.position.set(innerLen,0,0);
+
+    const leftOuter = new THREE.Mesh(new THREE.BoxGeometry(outerLen,0.11,0.11),aluDark);
+    leftOuter.position.set(-outerLen/2,0,0);
+    const rightOuter = new THREE.Mesh(new THREE.BoxGeometry(outerLen,0.11,0.11),aluDark);
+    rightOuter.position.set(outerLen/2,0,0);
+    leftOuterPivot.add(leftOuter); rightOuterPivot.add(rightOuter);
+
+    // Lattice braces like the photographed boom.
+    function boomBrace(pivot,side){
+      const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,innerLen),aluDark);
+      b1.rotation.y=side<0?-0.26:0.26;
+      b1.position.set(side<0?-innerLen*0.34:innerLen*0.34,0.28,0);
+      const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,innerLen),aluDark);
+      b2.rotation.y=side<0?0.26:-0.26;
+      b2.position.set(side<0?-innerLen*0.70:innerLen*0.70,0.14,0);
+      pivot.add(b1,b2);
+    }
+    boomBrace(leftPivot,-1); boomBrace(rightPivot,1);
+
+    const sprayTips = [];
+    function addNozzles(pivot,side){
+      const count = Math.max(12,Math.round(totalWing/0.42));
+      for(let i=0;i<count;i++){
+        const t=(i+0.5)/count;
+        const x=side<0?-totalWing*t:totalWing*t;
+
+        const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.18,8),redDark);
+        nozzle.position.set(x,-0.12,0);
+        pivot.add(nozzle);
+
+        // Continuous-looking liquid cone beneath every nozzle when spraying.
+        const spray = new THREE.Mesh(new THREE.ConeGeometry(0.075,0.34,8,1,true),nozzleMat);
+        spray.rotation.x=Math.PI;
+        spray.position.set(x,-0.38,0);
+        spray.visible=false;
+        pivot.add(spray);
+        sprayTips.push(spray);
+      }
+    }
+    addNozzles(leftPivot,-1); addNozzles(rightPivot,1);
+
+    // Hoses from central tank manifold to the booms.
+    const hoseL = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,2.4,8),hoseMat);
+    hoseL.position.set(-0.55,1.52,-1.95); hoseL.rotation.x=0.44;
+    const hoseR = hoseL.clone(); hoseR.position.x=0.55;
+    group.add(hoseL,hoseR,leftPivot,rightPivot);
+
+    // HARDI-style label panel.
+    const canvas=document.createElement('canvas');
+    canvas.width=512; canvas.height=120;
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,512,120);
+    ctx.fillStyle='#B81818';
+    ctx.font='bold 52px Arial';
+    ctx.fillText('HARDI',16,54);
+    ctx.fillStyle='#303030';
+    ctx.font='bold 23px Arial';
+    ctx.fillText('BOOMSPRAYER 10000',16,92);
+    const labelTex=new THREE.CanvasTexture(canvas);
+    labelTex.needsUpdate=true;
+    const label=new THREE.Mesh(
+      new THREE.PlaneGeometry(2.35,0.55),
+      new THREE.MeshBasicMaterial({map:labelTex,transparent:true})
+    );
+    label.rotation.y=Math.PI/2;
+    label.position.set(1.31,1.60,-0.58);
+    group.add(label);
+
+    // Folded transport pose in the yard.
+    if(isYardPreview){
+      leftPivot.rotation.z=1.38;
+      rightPivot.rotation.z=-1.38;
+      leftOuterPivot.rotation.z=0.70;
+      rightOuterPivot.rotation.z=-0.70;
+    }
+
+    return {
+      group,
+      leftPivot,
+      rightPivot,
+      leftOuterPivot,
+      rightOuterPivot,
+      sprayTips,
+      boomWingLen:totalWing
+    };
+  }
+
+  // header (draper/auger front) — table, folding auger wings, cage reel, skid shoes
+  const w = width*PLOT_SIZE*0.85;
+  const tableMat = new THREE.MeshLambertMaterial({color:0xC5231C}); // Case IH red
+  const table = new THREE.Mesh(new THREE.BoxGeometry(w,0.5,1.3), tableMat);
+  table.position.set(0,0.55,0.3); table.castShadow=true;
+  group.add(table);
+
+  // Case IH 7230 branded decal plate, front-and-center on the table shield
+  const decalW = Math.min(w*0.55, 3.2);
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(decalW, decalW*140/512), new THREE.MeshBasicMaterial({map:CASE_IH_DECAL_TEXTURE, transparent:true}));
+  decal.position.set(0, 0.68, 0.96);
+  group.add(decal);
+
+  // skid shoes at each end
+  [-w/2+0.3, w/2-0.3].forEach(sx=>{
+    const skid = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.15,1.5), darkMetal);
+    skid.position.set(sx,0.28,0.3); skid.castShadow=true;
+    group.add(skid);
+  });
+
+  // Dual transport wheels (twin tires side-by-side) under the frame — like the duals on the
+  // reference Case IH 7230's front axle, used to wheel the header for road transport.
+  const dualTireMat = new THREE.MeshLambertMaterial({color:0x161616});
+  const dualHubMat = new THREE.MeshLambertMaterial({color:0xb5b8ba});
+  function buildDualWheelSet(){
+    const wheelSet = new THREE.Group();
+    [-0.24, 0.24].forEach(dz=>{
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.3,18), dualTireMat);
+      tire.rotation.x = Math.PI/2;
+      tire.position.set(0,0,dz);
+      tire.castShadow = true;
+      wheelSet.add(tire);
+    });
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.66,12), dualHubMat);
+    hub.rotation.x = Math.PI/2;
+    wheelSet.add(hub);
+    return wheelSet;
+  }
+  const dualsL = buildDualWheelSet();
+  dualsL.position.set(-w/2+0.9, 0.5, -0.65);
+  const dualsR = buildDualWheelSet();
+  dualsR.position.set(w/2-0.9, 0.5, -0.65);
+  group.add(dualsL, dualsR);
+
+  // Center auger segment (fixed) + two folding wing segments, each with helical-look ridge rings
+  const augerRadius = 0.38;
+  const segLen = w/3;
+  function buildAugerSegment(len){
+    const seg = new THREE.Group();
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(augerRadius*0.55,augerRadius*0.55,len,14), darkMetal);
+    shaft.rotation.z = Math.PI/2; shaft.castShadow=true;
+    seg.add(shaft);
+    const ringCount = Math.max(3, Math.round(len));
+    for(let i=0;i<ringCount;i++){
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(augerRadius, 0.07, 8, 16), new THREE.MeshLambertMaterial({color:0xB8860B}));
+      ring.rotation.y = Math.PI/2;
+      ring.rotation.z = i*0.9;
+      ring.position.x = -len/2 + 0.3 + i*((len-0.6)/Math.max(1,ringCount-1));
+      ring.castShadow = true;
+      seg.add(ring);
+    }
+    return seg;
+  }
+  const augerParts = [];
+  const centerSeg = buildAugerSegment(segLen);
+  centerSeg.position.set(0, 1.05, 0.15);
+  group.add(centerSeg);
+  augerParts.push(centerSeg);
+
+  // Left/right wing segments live inside pivot groups anchored at the hinge point,
+  // so rotating the pivot folds the wing back against the table for transport.
+  const leftPivot = new THREE.Group();
+  leftPivot.position.set(-segLen/2, 1.05, 0.15);
+  const leftSeg = buildAugerSegment(segLen);
+  leftSeg.position.set(-segLen/2, 0, 0);
+  leftPivot.add(leftSeg);
+  group.add(leftPivot);
+  augerParts.push(leftSeg);
+
+  const rightPivot = new THREE.Group();
+  rightPivot.position.set(segLen/2, 1.05, 0.15);
+  const rightSeg = buildAugerSegment(segLen);
+  rightSeg.position.set(segLen/2, 0, 0);
+  rightPivot.add(rightSeg);
+  group.add(rightPivot);
+  augerParts.push(rightSeg);
+
+  // cage reel out front — a rotating rod cylinder with radiating slats
+  const reelPivot = new THREE.Group();
+  reelPivot.position.set(0, 1.15, 1.1);
+  const reelCore = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,w*0.94,10), darkMetal);
+  reelCore.rotation.z = Math.PI/2;
+  reelPivot.add(reelCore);
+  for(let s=0;s<4;s++){
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(w*0.94,0.06,0.5), new THREE.MeshLambertMaterial({color:0xEDE6D6}));
+    slat.rotation.x = (Math.PI/2)*s;
+    slat.position.z = 0.25;
+    reelPivot.add(slat);
+  }
+  group.add(reelPivot);
+
+  if(isYardPreview){
+    // start folded when parked in the yard for a compact, realistic look
+    leftPivot.rotation.y = -1.9;
+    rightPivot.rotation.y = 1.9;
+  }
+
+  return {group, augerParts, leftPivot, rightPivot, reelPivot};
+}
+
+// Simple tractor built from boxes
+function buildTractor(hasDuals){
+  if(hasDuals===undefined) hasDuals = true; // Magnum 8940s are shown on duals by default
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({color:0xC23B2B});
+  const darkMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const glassMat = new THREE.MeshLambertMaterial({color:0x6b8494});
+  const chromeMat = new THREE.MeshLambertMaterial({color:0xcfd2d4});
+
+  // Case IH Magnum-style body: a long sloped hood out front, black lower chassis skirt,
+  // and a big glass cab set back over the rear axle — scaled up from a mid-size tractor.
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.55,4.6), darkMat);
+  chassis.position.set(0,0.85,0.2); chassis.castShadow=true;
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.15,2.6), bodyMat);
+  hood.position.set(0,1.65,1.9); hood.castShadow=true;
+  const hoodTop = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.2,2.4), bodyMat);
+  hoodTop.position.set(0,2.28,1.9); hoodTop.castShadow=true;
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.35,0.9,0.15), darkMat);
+  grille.position.set(0,1.55,3.22); grille.castShadow=true;
+  const sideVentL = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.55,1.6), darkMat);
+  sideVentL.position.set(0.76,1.65,1.9);
+  const sideVentR = sideVentL.clone(); sideVentR.position.x=-0.76;
+
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.05,1.75,2.1), new THREE.MeshLambertMaterial({color:0xEDE6D6}));
+  cab.position.set(0,2.55,-0.5); cab.castShadow=true;
+  const cabGlassFront = new THREE.Mesh(new THREE.BoxGeometry(1.85,1.35,0.06), glassMat);
+  cabGlassFront.position.set(0,2.6,0.56);
+  const cabGlassSideL = new THREE.Mesh(new THREE.BoxGeometry(0.06,1.1,1.9), glassMat);
+  cabGlassSideL.position.set(1.02,2.55,-0.5);
+  const cabGlassSideR = cabGlassSideL.clone(); cabGlassSideR.position.x=-1.02;
+  const roofLight = new THREE.Mesh(new THREE.BoxGeometry(1.6,0.14,0.5), darkMat);
+  roofLight.position.set(0,3.46,0.3); roofLight.castShadow=true;
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.8,6), darkMat);
+  antenna.position.set(0.9,3.7,-1.2);
+
+  // tall exhaust stack with a chrome tip, mounted beside the cab — a Magnum signature detail
+  const exhaustPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,1.9,10), darkMat);
+  exhaustPipe.position.set(-0.85,2.9,0.9); exhaustPipe.castShadow=true;
+  const exhaustTip = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.11,0.3,10), chromeMat);
+  exhaustTip.position.set(-0.85,3.9,0.9); exhaustTip.castShadow=true;
+
+  // brand decal on the hood side
+  const decalPlateL = new THREE.Mesh(new THREE.PlaneGeometry(1.9,0.52), new THREE.MeshBasicMaterial({map:MAGNUM_DECAL_TEXTURE, transparent:true}));
+  decalPlateL.position.set(0.76,1.65,1.4);
+  decalPlateL.rotation.y = Math.PI/2;
+  const decalPlateR = decalPlateL.clone();
+  decalPlateR.position.x = -0.76;
+  decalPlateR.rotation.y = -Math.PI/2;
+
+  g.add(chassis, hood, hoodTop, grille, sideVentL, sideVentR, cab, cabGlassFront, cabGlassSideL,
+        cabGlassSideR, roofLight, antenna, exhaustPipe, exhaustTip, decalPlateL, decalPlateR);
+
+  // front wheels — smaller steering axle, single tires (MFWD-style, like the real Magnum)
+  const frontWheelGeo = new THREE.CylinderGeometry(0.85,0.85,0.65,18);
+  const wheelMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const wheelFR = new THREE.Mesh(frontWheelGeo, wheelMat); wheelFR.rotation.z=Math.PI/2; wheelFR.position.set(1.35,0.85,1.8); wheelFR.castShadow=true; wheelFR.userData.isWheel=true;
+  const wheelFL = wheelFR.clone(); wheelFL.position.x=-1.35; wheelFL.userData.isWheel=true;
+  g.add(wheelFR, wheelFL);
+
+  if(hasDuals){
+    // dual (twin) rear wheels — two big tires side-by-side per side
+    const bigWheelGeo = new THREE.CylinderGeometry(1.35,1.35,0.62,18);
+    function buildRearDualSet(xSide){
+      const set = new THREE.Group();
+      const sign = Math.sign(xSide);
+      const innerX = 0, outerX = 0.68*sign; // inner tire close to the body, outer tire further out
+      [innerX, outerX].forEach(dx=>{
+        const tire = new THREE.Mesh(bigWheelGeo, wheelMat);
+        tire.rotation.z = Math.PI/2;
+        tire.position.set(dx,0,0);
+        tire.castShadow = true;
+        set.add(tire);
+      });
+      // connecting beam bridging the inner and outer wheel hubs, like a real dual-wheel spacer
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,Math.abs(outerX-innerX)+0.25,10), chromeMat);
+      beam.rotation.z = Math.PI/2;
+      beam.position.set((innerX+outerX)/2, 0, 0);
+      beam.castShadow = true;
+      set.add(beam);
+      set.position.set(xSide,1.35,-1.6);
+      set.userData.isWheel = true;
+      return set;
+    }
+    g.add(buildRearDualSet(1.85), buildRearDualSet(-1.85));
+  } else {
+    const bigWheelGeo = new THREE.CylinderGeometry(1.35,1.35,0.85,18);
+    const wheelBR = new THREE.Mesh(bigWheelGeo, wheelMat); wheelBR.rotation.z=Math.PI/2; wheelBR.position.set(1.7,1.35,-1.6); wheelBR.castShadow=true; wheelBR.userData.isWheel=true;
+    const wheelBL = wheelBR.clone(); wheelBL.position.x=-1.7; wheelBL.userData.isWheel=true;
+    g.add(wheelBR, wheelBL);
+  }
+
+  g.position.set(FARMYARD_X, 0, FARMYARD_Z + 8);
+  return g;
+}
+const tractors = [buildTractor(true)]; // fleet — more can be bought from the machinery shop
+scene.add(tractors[0]);
+let activeTractorIndex = 0;
+
+// Ute — a Land Cruiser-style farm 4x4 with a bull bar and rear tray, for scooting around without towing anything
+function buildUte(){
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({color:0xF2F2EE}); // classic farm-white paint
+  const darkMat = new THREE.MeshLambertMaterial({color:0x2a2a2a});
+  const glassMat = new THREE.MeshLambertMaterial({color:0x6b8494});
+  const chromeMat = new THREE.MeshLambertMaterial({color:0xbfc4c7});
+
+  // boxy Land Cruiser cabin + bonnet, flat and upright like the reference 4x4 wagon shape
+  const bonnet = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.75,1.6), bodyMat);
+  bonnet.position.set(0,0.95,1.7); bonnet.castShadow=true;
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.95,1.15,2.4), bodyMat);
+  cabin.position.set(0,1.55,0.15); cabin.castShadow=true;
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.12,2.3), bodyMat);
+  roof.position.set(0,2.18,0.15); roof.castShadow=true;
+  // windows
+  const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.7,0.06), glassMat);
+  windshield.position.set(0,1.65,1.32);
+  const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(1.7,0.65,0.06), glassMat);
+  rearGlass.position.set(0,1.65,-1.0);
+  const sideGlassL = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.6,2.1), glassMat);
+  sideGlassL.position.set(0.99,1.65,0.15);
+  const sideGlassR = sideGlassL.clone(); sideGlassR.position.x=-0.99;
+  // rear tray (open utility bed)
+  const trayFloor = new THREE.Mesh(new THREE.BoxGeometry(1.85,0.15,1.9), new THREE.MeshLambertMaterial({color:0xd8d3c2}));
+  trayFloor.position.set(0,0.95,-2.15); trayFloor.castShadow=true;
+  const trayWallMat = new THREE.MeshLambertMaterial({color:0xF2F2EE});
+  const trayBack = new THREE.Mesh(new THREE.BoxGeometry(1.85,0.55,0.1), trayWallMat);
+  trayBack.position.set(0,1.28,-3.05); trayBack.castShadow=true;
+  const traySideL = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.55,1.9), trayWallMat);
+  traySideL.position.set(0.92,1.28,-2.15); traySideL.castShadow=true;
+  const traySideR = traySideL.clone(); traySideR.position.x=-0.92;
+  // tubular steel bull bar up front — twin horizontal rails + vertical hoop, classic Aussie farm-truck guard
+  const barMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const bbHoopGeo = new THREE.TorusGeometry(0.62, 0.055, 8, 16, Math.PI);
+  const bullBarHoop = new THREE.Mesh(bbHoopGeo, barMat);
+  bullBarHoop.rotation.x = Math.PI/2; bullBarHoop.rotation.z = Math.PI;
+  bullBarHoop.position.set(0,1.0,2.55); bullBarHoop.castShadow=true;
+  const railTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.85,10), barMat);
+  railTop.rotation.z=Math.PI/2; railTop.position.set(0,1.15,2.45); railTop.castShadow=true;
+  const railLow = railTop.clone(); railLow.position.y=0.62;
+  const bbUprightL = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.7,10), barMat);
+  bbUprightL.position.set(0.85,0.9,2.45); bbUprightL.castShadow=true;
+  const bbUprightR = bbUprightL.clone(); bbUprightR.position.x=-0.85;
+  const bbMountL = new THREE.Mesh(new THREE.BoxGeometry(0.15,0.5,0.4), barMat);
+  bbMountL.position.set(0.85,0.65,2.15); bbMountL.castShadow=true;
+  const bbMountR = bbMountL.clone(); bbMountR.position.x=-0.85;
+
+  // roof rack (light steel frame on top, common farm-ute fitment)
+  const rackMat = new THREE.MeshLambertMaterial({color:0x3a3a3a});
+  const rackRailL = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,2.2), rackMat);
+  rackRailL.position.set(0.85,2.28,0.15); rackRailL.castShadow=true;
+  const rackRailR = rackRailL.clone(); rackRailR.position.x=-0.85;
+  const rackCrossF = new THREE.Mesh(new THREE.BoxGeometry(1.75,0.06,0.06), rackMat);
+  rackCrossF.position.set(0,2.28,1.15);
+  const rackCrossB = rackCrossF.clone(); rackCrossB.position.z=-0.85;
+
+  // grille + headlights
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.35,0.06), darkMat);
+  grille.position.set(0,1.05,2.5); grille.castShadow=true;
+  const headlightL = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.28,0.08), new THREE.MeshLambertMaterial({color:0xF5F0D8}));
+  headlightL.position.set(0.75,1.05,2.5);
+  const headlightR = headlightL.clone(); headlightR.position.x=-0.75;
+
+  // wheels — chunky all-terrain look, raised for ground clearance
+  const wheelGeo = new THREE.CylinderGeometry(0.5,0.5,0.4,18);
+  const wheelMat = new THREE.MeshLambertMaterial({color:0x161616});
+  const hubMat = new THREE.MeshLambertMaterial({color:0xd6d6d6});
+  function makeWheel(x,z){
+    const wg = new THREE.Group();
+    const tire = new THREE.Mesh(wheelGeo, wheelMat); tire.rotation.z=Math.PI/2; tire.castShadow=true;
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.42,12), hubMat); hub.rotation.z=Math.PI/2;
+    wg.add(tire, hub);
+    wg.position.set(x,0.5,z);
+    wg.userData.isWheel = true;
+    return wg;
+  }
+  const wFR = makeWheel(1.0,1.55);
+  const wFL = makeWheel(-1.0,1.55);
+  const wBR = makeWheel(1.0,-1.3);
+  const wBL = makeWheel(-1.0,-1.3);
+
+  const bumperF = new THREE.Mesh(new THREE.BoxGeometry(1.95,0.2,0.15), darkMat);
+  bumperF.position.set(0,0.55,2.05); bumperF.castShadow=true;
+
+  g.add(bonnet, cabin, roof, windshield, rearGlass, sideGlassL, sideGlassR,
+        trayFloor, trayBack, traySideL, traySideR,
+        bullBarHoop, railTop, railLow, bbUprightL, bbUprightR, bbMountL, bbMountR,
+        rackRailL, rackRailR, rackCrossF, rackCrossB,
+        grille, headlightL, headlightR, bumperF,
+        wFR, wFL, wBR, wBL);
+  g.position.set(UTE_POS.x, 0, UTE_POS.z);
+  return g;
+}
+const ute = buildUte();
+scene.add(ute);
+
+// Case IH 7230 combine harvester — a real self-propelled vehicle: cab, grain tank "box",
+// big dual drive wheels up front, smaller steering wheels at the rear, roof-line unloading
+// auger, ladder to the cab, and its own front-mounted header — matching the reference photos.
+function buildHarvester(){
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+  const darkMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const glassMat = new THREE.MeshLambertMaterial({color:0x5f7a8c});
+  const blackFrame = new THREE.MeshLambertMaterial({color:0x141414});
+
+  // main chassis / separator body
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.8,1.7,5.6), bodyMat);
+  chassis.position.set(0,1.9,-0.6); chassis.castShadow=true;
+  // grain tank "box" sitting up on top toward the rear
+  const grainTank = new THREE.Mesh(new THREE.BoxGeometry(2.6,1.5,2.6), bodyMat);
+  grainTank.position.set(0,3.4,-1.3); grainTank.castShadow=true;
+  const tankLid = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.2,2.2), darkMat);
+  tankLid.position.set(0,4.2,-1.3); tankLid.castShadow=true;
+
+  // cab, offset to one side like the real machine, up front near the header
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(1.7,1.5,2.1), bodyMat);
+  cab.position.set(-0.55,2.55,1.9); cab.castShadow=true;
+  const cabGlassFront = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.15,0.06), glassMat);
+  cabGlassFront.position.set(-0.55,2.65,2.94);
+  const cabGlassSideL = new THREE.Mesh(new THREE.BoxGeometry(0.06,1.0,1.9), glassMat);
+  cabGlassSideL.position.set(-1.38,2.6,1.9);
+  const cabGlassSideR = new THREE.Mesh(new THREE.BoxGeometry(0.06,1.0,1.9), glassMat);
+  cabGlassSideR.position.set(0.28,2.6,1.9);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), new THREE.MeshLambertMaterial({color:0xE8A93A}));
+  beacon.position.set(-0.55,3.42,1.3);
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1.4,6), darkMat);
+  antenna.position.set(-1.0,4.0,0.9);
+
+  // ladder up to the cab platform — black rails + grated steps, mounted front-right of the machine
+  const ladderGroup = new THREE.Group();
+  const railGeo = new THREE.BoxGeometry(0.08,2.2,0.08);
+  const railL = new THREE.Mesh(railGeo, blackFrame); railL.position.set(-0.25,1.1,0);
+  const railR = new THREE.Mesh(railGeo, blackFrame); railR.position.set(0.25,1.1,0);
+  ladderGroup.add(railL, railR);
+  for(let i=0;i<6;i++){
+    const step = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.05,0.32), new THREE.MeshLambertMaterial({color:0x8a8d8f}));
+    step.position.set(0, 0.15+i*0.36, 0);
+    step.castShadow = true;
+    ladderGroup.add(step);
+  }
+  ladderGroup.position.set(0.85,0.2,1.55);
+  ladderGroup.rotation.x = -0.12;
+
+  // roof-line unloading auger running from the grain tank forward, in its folded transport
+  // position along the top of the machine (matches the tucked-in auger seen in the reference photo)
+  const augerMat = new THREE.MeshLambertMaterial({color:0x8f231c});
+  const roofAuger = new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.24,4.2,14), augerMat);
+  roofAuger.rotation.z = Math.PI/2;
+  roofAuger.position.set(0.4,4.15,0.6); roofAuger.castShadow=true;
+  const roofAugerRings = new THREE.Group();
+  for(let i=0;i<6;i++){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.26,0.04,8,14), new THREE.MeshLambertMaterial({color:0xB8860B}));
+    ring.rotation.y = Math.PI/2;
+    ring.position.set(0.4, 4.15, 0.6 - 1.8 + i*0.72);
+    roofAugerRings.add(ring);
+  }
+  const augerSpout = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.18,0.5,12), darkMat);
+  augerSpout.rotation.z = Math.PI/2 + 0.4;
+  augerSpout.position.set(0.4,4.05,2.6); augerSpout.castShadow=true;
+
+  // engine bay grille + rear body panel details
+  const engineBay = new THREE.Mesh(new THREE.BoxGeometry(2.4,0.9,1.6), darkMat);
+  engineBay.position.set(0,1.15,-2.6); engineBay.castShadow=true;
+
+  // Case IH decal on both side panels, reusing the branded texture
+  const decalTexHarvester = createCaseIHDecalTexture();
+  function buildSideDecal(xSide){
+    const decal = new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.71), new THREE.MeshBasicMaterial({map:decalTexHarvester, transparent:true}));
+    decal.position.set(xSide, 2.15, 0.4);
+    decal.rotation.y = xSide>0 ? Math.PI/2 : -Math.PI/2;
+    return decal;
+  }
+  const decalL = buildSideDecal(-1.42);
+  const decalR = buildSideDecal(1.42);
+
+  // Big dual drive wheels, front-center under the chassis (like the reference machine's drive axle)
+  const dualTireMat = new THREE.MeshLambertMaterial({color:0x161616});
+  const dualHubMat = new THREE.MeshLambertMaterial({color:0xd6d6d6});
+  function buildBigDualWheelSet(){
+    const wheelSet = new THREE.Group();
+    [-0.42, 0.42].forEach(dx=>{
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,0.55,20), dualTireMat);
+      tire.rotation.z = Math.PI/2;
+      tire.position.set(dx,0,0);
+      tire.castShadow = true;
+      wheelSet.add(tire);
+    });
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,1.1,14), dualHubMat);
+    hub.rotation.z = Math.PI/2;
+    wheelSet.add(hub);
+    wheelSet.userData.isWheel = true;
+    return wheelSet;
+  }
+  const dualL = buildBigDualWheelSet(); dualL.position.set(-1.65,1.15,0.9);
+  const dualR = buildBigDualWheelSet(); dualR.position.set(1.65,1.15,0.9);
+
+  // Smaller single steering wheels at the rear
+  const rearWheelGeo = new THREE.CylinderGeometry(0.62,0.62,0.4,16);
+  const rearWheelMat = new THREE.MeshLambertMaterial({color:0x161616});
+  const rearWheelL = new THREE.Mesh(rearWheelGeo, rearWheelMat); rearWheelL.rotation.z=Math.PI/2; rearWheelL.position.set(-1.5,0.62,-2.7); rearWheelL.castShadow=true; rearWheelL.userData.isWheel=true;
+  const rearWheelR = rearWheelL.clone(); rearWheelR.position.x=1.5; rearWheelR.userData.isWheel=true;
+
+  g.add(chassis, grainTank, tankLid, cab, cabGlassFront, cabGlassSideL, cabGlassSideR,
+        beacon, antenna, ladderGroup, roofAuger, roofAugerRings, augerSpout, engineBay,
+        decalL, decalR, dualL, dualR, rearWheelL, rearWheelR);
+
+  // permanently front-mounted header, matching the harvester's own upgrade width
+  const headerBuilt = buildImplementModel('header', currentImplementWidth('header'), false);
+  headerBuilt.group.position.set(0, -0.15, 3.1);
+  g.add(headerBuilt.group);
+  g.userData.headerRefs = headerBuilt;
+
+  g.position.set(HARVESTER_POS.x, 0, HARVESTER_POS.z);
+  return g;
+}
+const harvester = buildHarvester();
+scene.add(harvester);
+
+function rebuildHarvesterHeader(){
+  if(harvester.userData.headerRefs){
+    harvester.remove(harvester.userData.headerRefs.group);
+  }
+  const headerBuilt = buildImplementModel('header', currentImplementWidth('header'), false);
+  headerBuilt.group.position.set(0, -0.15, 3.1);
+  harvester.add(headerBuilt.group);
+  harvester.userData.headerRefs = headerBuilt;
+}
+
+// Truck + road train — a prime mover towing three grain trailers, for hauling harvested grain.
+// Built as one rigid combined vehicle (no per-trailer articulation) for simplicity.
+function buildTruck(){
+  const g = new THREE.Group();
+  const cabMat = new THREE.MeshLambertMaterial({color:0xC5231C});
+  const chromeMat = new THREE.MeshLambertMaterial({color:0xd8d8d8});
+  const darkMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const glassMat = new THREE.MeshLambertMaterial({color:0x5f7a8c});
+  const tireMat = new THREE.MeshLambertMaterial({color:0x161616});
+
+  // Kenworth T900-style conventional: tall boxy cab + small sleeper, and a long flat hood
+  // out front (the T900's signature long nose) with a chrome slatted grille and round lights.
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.4,2.2,2.0), cabMat);
+  cab.position.set(0,1.9,8.0); cab.castShadow=true;
+  const sleeper = new THREE.Mesh(new THREE.BoxGeometry(2.35,1.7,1.3), cabMat);
+  sleeper.position.set(0,1.55,6.9); sleeper.castShadow=true;
+  const roofFairing = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.35,1.6), cabMat);
+  roofFairing.position.set(0,3.15,7.4); roofFairing.castShadow=true;
+  const sunVisor = new THREE.Mesh(new THREE.BoxGeometry(2.35,0.12,0.5), darkMat);
+  sunVisor.position.set(0,2.95,8.9); sunVisor.castShadow=true;
+
+  // long flat hood (the defining T900 feature)
+  const bonnet = new THREE.Mesh(new THREE.BoxGeometry(2.15,1.0,3.0), cabMat);
+  bonnet.position.set(0,1.15,10.5); bonnet.castShadow=true;
+  const hoodRidge = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,3.0), cabMat);
+  hoodRidge.position.set(0,1.72,10.5); hoodRidge.castShadow=true;
+
+  const windshield = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.85,0.06), glassMat);
+  windshield.position.set(0,2.15,8.98);
+  const sideGlassL = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.7,1.7), glassMat);
+  sideGlassL.position.set(1.21,2.1,8.1);
+  const sideGlassR = sideGlassL.clone(); sideGlassR.position.x=-1.21;
+
+  // chrome slatted grille, flat vertical face at the very front of the hood
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(1.9,0.85,0.1), chromeMat);
+  grille.position.set(0,1.1,11.98); grille.castShadow=true;
+  const grilleGroup = new THREE.Group();
+  for(let i=0;i<7;i++){
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(1.82,0.05,0.03), darkMat);
+    slat.position.set(0, 0.75+i*0.11, 12.04);
+    grilleGroup.add(slat);
+  }
+  const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.22,0.2), chromeMat);
+  bumper.position.set(0,0.5,12.05); bumper.castShadow=true;
+  const headlightL = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.12,16), new THREE.MeshLambertMaterial({color:0xF5F0D8}));
+  headlightL.rotation.x = Math.PI/2;
+  headlightL.position.set(0.95,1.05,11.95); headlightL.castShadow=true;
+  const headlightR = headlightL.clone(); headlightR.position.x=-0.95;
+
+  // tall chrome exhaust stacks behind the cab, a hallmark of the T900
+  function buildStack(xSide){
+    const stackGroup = new THREE.Group();
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,3.4,12), chromeMat);
+    pipe.position.set(0,1.7,0); pipe.castShadow=true;
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.12,0.3,12), darkMat);
+    cap.position.set(0,3.4,0); cap.castShadow=true;
+    const heatShield = new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,1.4,12), darkMat);
+    heatShield.position.set(0,0.9,0);
+    stackGroup.add(pipe, cap, heatShield);
+    stackGroup.position.set(xSide,1.1,6.6);
+    return stackGroup;
+  }
+  const stackL = buildStack(-1.05);
+  const stackR = buildStack(1.05);
+
+  function cabWheelPair(z, radius){
+    const group = new THREE.Group();
+    [-1.15,1.15].forEach(dx=>{
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,0.36,16), tireMat);
+      tire.rotation.z = Math.PI/2;
+      tire.position.set(dx,radius,0);
+      tire.castShadow = true;
+      tire.userData.isWheel = true;
+      group.add(tire);
+    });
+    group.position.set(0,0,z);
+    return group;
+  }
+  // tandem rear axle — two axles close together, each with dual (twin) tires per side,
+  // matching a real prime mover's drive axle setup
+  function rearDualAxle(z, radius){
+    const group = new THREE.Group();
+    [-1.25,1.25].forEach(xSide=>{
+      [-0.22,0.22].forEach(dz=>{
+        const tire = new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,0.32,16), tireMat);
+        tire.rotation.z = Math.PI/2;
+        tire.position.set(xSide,radius,dz);
+        tire.castShadow = true;
+        tire.userData.isWheel = true;
+        group.add(tire);
+      });
+    });
+    group.position.set(0,0,z);
+    return group;
+  }
+  const cabWheelsF = cabWheelPair(11.0, 0.55);
+  const cabWheelsR1 = rearDualAxle(7.4, 0.55);
+  const cabWheelsR2 = rearDualAxle(5.9, 0.55);
+
+  g.add(cab, sleeper, roofFairing, sunVisor, bonnet, hoodRidge, windshield, sideGlassL, sideGlassR,
+        grille, grilleGroup, bumper, headlightL, headlightR, stackL, stackR,
+        cabWheelsF, cabWheelsR1, cabWheelsR2);
+  g.position.set(TRUCK_POS.x, 0, TRUCK_POS.z);
+  g.userData.hitchZ = 4.9; // where trailer 1's drawbar connects, in the cab's local space (behind the tandem axle)
+  return g;
+}
+let trucks = [];
+let activeTruckIndex = 0;
+let allTruckTrailers = [];
+
+function createTruckRig(x, z){
+  const cab = buildTruck();
+  cab.position.set(x, 0, z);
+  scene.add(cab);
+  trucks.push(cab);
+  const t1 = makeArticulatedTrailer(cab, cab.userData.hitchZ);
+  const t2 = makeArticulatedTrailer(t1.mesh, -(TRAILER_LENGTH/2));
+  allTruckTrailers.push(t1, t2);
+  // line the trailers up straight behind the cab so they don't snap into place on the first frame
+  let zc = cab.position.z + cab.userData.hitchZ;
+  [t1,t2].forEach(t=>{
+    zc -= (TRAILER_LENGTH/2 + TRAILER_HITCH_GAP/2);
+    t.mesh.position.set(cab.position.x, 0, zc);
+    t.mesh.rotation.y = cab.rotation.y;
+    zc -= (TRAILER_LENGTH/2 + TRAILER_HITCH_GAP/2);
+  });
+  return cab;
+}
+
+// Independent, articulated trailers — each is its own scene object (not a child of the truck
+// group) so it can trail behind the hitch point ahead of it, like a real road train swinging
+// through corners, instead of turning rigidly with the cab.
+const TRAILER_LENGTH = 7.0;
+const TRAILER_HITCH_GAP = 1.4; // drawbar length between one trailer's rear and the next one's front
+function buildTrailerMesh(){
+  const trailerMat = new THREE.MeshLambertMaterial({color:0xE8E2D0});
+  const darkMat = new THREE.MeshLambertMaterial({color:0x1c1c1c});
+  const tireMat = new THREE.MeshLambertMaterial({color:0x161616});
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.5,1.9,TRAILER_LENGTH), trailerMat);
+  body.position.set(0,1.85,0); body.castShadow=true;
+  const roofCap = new THREE.Mesh(new THREE.BoxGeometry(2.3,0.15,TRAILER_LENGTH-0.2), darkMat);
+  roofCap.position.set(0,2.85,0);
+  const drawbar = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.18,TRAILER_HITCH_GAP+0.4), darkMat);
+  drawbar.position.set(0,0.5,TRAILER_LENGTH/2+TRAILER_HITCH_GAP/2); drawbar.castShadow=true;
+  group.add(body, roofCap, drawbar);
+  [-2.2, 2.2].forEach(dz=>{
+    [-1.15,1.15].forEach(dx=>{
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.34,16), tireMat);
+      tire.rotation.z = Math.PI/2;
+      tire.position.set(dx,0.5,dz);
+      tire.castShadow = true;
+      tire.userData.isWheel = true;
+      group.add(tire);
+    });
+  });
+  return group;
+}
+
+// Each trailer tracks a short trail of past hitch-point positions so it can follow the
+// vehicle ahead of it with real articulation instead of being rigidly parented.
+function makeArticulatedTrailer(towVehicleMesh, hitchLocalOffset){
+  const mesh = buildTrailerMesh();
+  scene.add(mesh);
+  return {
+    mesh,
+    towMesh: towVehicleMesh,        // whatever this trailer is hitched behind (truck cab or the trailer ahead)
+    hitchLocalOffset,                // local z-offset on towMesh where this trailer's drawbar connects
+    trail: []                        // recorded {x,z} positions of the tow point, oldest first
+  };
+}
+const truck = createTruckRig(TRUCK_POS.x, TRUCK_POS.z); // trucks[0] — kept as a named alias for readability elsewhere
+
+// Called every frame: each trailer chases the hitch point on the vehicle in front of it,
+// giving real corner-swing articulation instead of turning as one rigid body.
+function updateTruckArticulation(){
+  allTruckTrailers.forEach(t=>{
+    const towMesh = t.towMesh;
+    const hitchWorld = new THREE.Vector3(0,0,t.hitchLocalOffset).applyAxisAngle(new THREE.Vector3(0,1,0), towMesh.rotation.y).add(towMesh.position);
+    t.trail.push({x:hitchWorld.x, z:hitchWorld.z});
+    if(t.trail.length>400) t.trail.shift();
+    // walk back along the trail until we reach the trailer's fixed length from the hitch
+    let target = t.trail[t.trail.length-1];
+    for(let i=t.trail.length-1;i>=0;i--){
+      const d = Math.hypot(t.trail[i].x-hitchWorld.x, t.trail[i].z-hitchWorld.z);
+      if(d>=TRAILER_LENGTH+TRAILER_HITCH_GAP){ target=t.trail[i]; break; }
+      target = t.trail[i];
+    }
+    const dx = hitchWorld.x-target.x, dz = hitchWorld.z-target.z;
+    const dist = Math.hypot(dx,dz)||1;
+    const bodyCenterX = hitchWorld.x - (dx/dist)*(TRAILER_LENGTH/2+TRAILER_HITCH_GAP);
+    const bodyCenterZ = hitchWorld.z - (dz/dist)*(TRAILER_LENGTH/2+TRAILER_HITCH_GAP);
+    t.mesh.position.set(bodyCenterX, 0, bodyCenterZ);
+    t.mesh.rotation.y = Math.atan2(dx, dz);
+    // spin trailer wheels roughly in step with the truck for a cheap but consistent look
+    t.mesh.children.forEach(c=>{ if(c.userData && c.userData.isWheel){ c.rotation.x += velocity*0.033*1.5; }});
+  });
+}
+
+// Every rear-towed tractor implement (plow, seeder, baler, chaser bin, gravity wagon, bale
+// trailer — anything but the front-mounted loader) genuinely articulates behind the hitch,
+// the same way the truck's trailers do, instead of turning as one rigid body with the tractor.
+function updateImplementArticulation(dt){
+  if(!implementMesh || implementIsParented || !state.attached || !implementHostMesh) return;
+  const mountZ = IMPLEMENT_MOUNT_Z[state.attached] ?? -3.2;
+  const hitchWorld = new THREE.Vector3(0,0,mountZ).applyAxisAngle(new THREE.Vector3(0,1,0), implementHostMesh.rotation.y).add(implementHostMesh.position);
+  implementTrail.push({x:hitchWorld.x, z:hitchWorld.z});
+  if(implementTrail.length>400) implementTrail.shift();
+  const len = Math.abs(mountZ);
+  let target = implementTrail[implementTrail.length-1];
+  for(let i=implementTrail.length-1;i>=0;i--){
+    const d = Math.hypot(implementTrail[i].x-hitchWorld.x, implementTrail[i].z-hitchWorld.z);
+    if(d>=len){ target=implementTrail[i]; break; }
+    target = implementTrail[i];
+  }
+  const dx = hitchWorld.x-target.x, dz = hitchWorld.z-target.z;
+  const dist = Math.hypot(dx,dz)||1;
+  implementMesh.position.x = hitchWorld.x - (dx/dist)*len;
+  implementMesh.position.z = hitchWorld.z - (dz/dist)*len;
+  implementMesh.rotation.y = Math.atan2(dx, dz);
+}
+
+function getActiveMesh(){
+  if(activeVehicle==='tractor') return tractors[activeTractorIndex];
+  if(activeVehicle==='ute') return ute;
+  if(activeVehicle==='truck') return trucks[activeTruckIndex];
+  return harvester;
+}
+function vehicleDisplayName(v){ return v==='tractor'?'tractor':v==='ute'?'ute':v==='truck'?'truck':'combine harvester'; }
+
+// finds whichever vehicle (any tractor in the fleet, the ute, any truck, or the harvester) is nearest
+// the currently active one, excluding the active vehicle itself
+function nearestOtherVehicle(){
+  const activeMesh = getActiveMesh();
+  let best=null, bestDist=6, bestKind=null, bestIdx=0;
+  tractors.forEach((t,i)=>{
+    if(activeVehicle==='tractor' && i===activeTractorIndex) return;
+    const d = activeMesh.position.distanceTo(t.position);
+    if(d<bestDist){ bestDist=d; best=t; bestKind='tractor'; bestIdx=i; }
+  });
+  if(activeVehicle!=='ute'){
+    const d = activeMesh.position.distanceTo(ute.position);
+    if(d<bestDist){ bestDist=d; best=ute; bestKind='ute'; bestIdx=0; }
+  }
+  if(activeVehicle!=='harvester'){
+    const d = activeMesh.position.distanceTo(harvester.position);
+    if(d<bestDist){ bestDist=d; best=harvester; bestKind='harvester'; bestIdx=0; }
+  }
+  trucks.forEach((tr,i)=>{
+    if(activeVehicle==='truck' && i===activeTruckIndex) return;
+    const d = activeMesh.position.distanceTo(tr.position);
+    if(d<bestDist){ bestDist=d; best=tr; bestKind='truck'; bestIdx=i; }
+  });
+  return best ? {kind:bestKind, idx:bestIdx, mesh:best} : null;
+}
+
+// The implement currently attached to a tractor's hitch (visual group + fold refs + which tractor hosts it)
+let implementMesh = null;
+let implementRefs = null;
+let implementHostMesh = null;
+let implementIsParented = false; // true only for the loader — a rigid front-bucket mount
+let implementTrail = [];         // hitch-point history for articulated rear-towed implements
+
+function updateImplementVisual(){
+  let preservedPos = null, preservedRotY = null;
+  if(implementMesh){
+    if(implementIsParented && implementHostMesh){ implementHostMesh.remove(implementMesh); }
+    else {
+      preservedPos = implementMesh.position.clone();
+      preservedRotY = implementMesh.rotation.y;
+      scene.remove(implementMesh);
+    }
+    implementMesh=null; implementRefs=null; implementHostMesh=null;
+  }
+  if(!state.attached) return;
+  const built = buildImplementModel(state.attached, state.toolWidth, false);
+  implementMesh = built.group;
+  implementRefs = built;
+  implementHostMesh = getActiveMesh(); // mounts on whichever tractor is currently driven
+  const mountZ = IMPLEMENT_MOUNT_Z[state.attached] ?? -3.2;
+  const loweredOffset = state.attached==='loader' ? (state.lowered?-0.5:0) : (state.lowered?-0.35:0.25);
+
+  if(state.attached==='loader'){
+    // front-mounted bucket — rigid, doesn't articulate
+    implementIsParented = true;
+    implementHostMesh.add(implementMesh);
+    implementMesh.position.set(0, loweredOffset, mountZ);
+  } else {
+    // rear-towed implement — a real, independent object that trails behind the hitch
+    // point with its own swing, instead of turning rigidly with the tractor
+    implementIsParented = false;
+    scene.add(implementMesh);
+    if(preservedPos){
+      // just toggling lowered/raised or a fold — keep the same articulated position,
+      // only refresh the height
+      implementMesh.position.copy(preservedPos);
+      implementMesh.position.y = loweredOffset;
+      implementMesh.rotation.y = preservedRotY;
+    } else {
+      // freshly attached — place it straight behind the hitch to start; attachImplement()
+      // already reset implementTrail so articulation builds up naturally from here
+      const hitchWorld = new THREE.Vector3(0,0,mountZ).applyAxisAngle(new THREE.Vector3(0,1,0), implementHostMesh.rotation.y).add(implementHostMesh.position);
+      const len = Math.abs(mountZ);
+      const back = new THREE.Vector3(0,0,mountZ<0?-len:len).applyAxisAngle(new THREE.Vector3(0,1,0), implementHostMesh.rotation.y);
+      implementMesh.position.set(hitchWorld.x+back.x, loweredOffset, hitchWorld.z+back.z);
+      implementMesh.rotation.y = implementHostMesh.rotation.y;
+    }
+  }
+
+  if(state.attached==='header'){
+    // headers start folded whenever freshly attached
+    implementRefs.leftPivot.rotation.y = state.headerFolded ? -1.9 : 0;
+    implementRefs.rightPivot.rotation.y = state.headerFolded ? 1.9 : 0;
+  }
+  if(state.attached==='loader') updateLoaderCarryVisual();
+  if(state.attached==='baletrailer'){
+    const unit = extraUnits.find(u=>u.id===state.attachedUnitId);
+    if(unit) rebuildBaleTrailerBales(implementMesh, unit.load||0);
+  }
+}
+
+function currentImplementWidth(type){
+  if(type==='seeder') return state.owned.planter3?5:state.owned.planter2?3:1;
+  if(type==='header') return state.owned.harvester3?5:state.owned.harvester2?3:1;
+  if(type==='baler') return 1;
+  if(type==='plow') return 3; // a 3-row disc plow
+  if(type==='sprayer') return 3;
+  return 1; // loader, chaser bin, gravity wagon — no field-strip action, width is irrelevant
+}
+
+// live-effective width: a folded tractor header (legacy) only reaches its narrow center segment;
+// the combine harvester uses its own header's upgrade width instead of the tractor's toolWidth.
+function effectiveWidth(){
+  if(activeVehicle==='harvester') return currentImplementWidth('header');
+  if(state.attached==='header' && state.headerFolded) return 1;
+  return state.toolWidth;
+}
+
+function toggleHeaderFold(){
+  if(state.attached!=='header'){ addLog('No header attached to fold.'); return; }
+  if(state.lowered){ addLog('Raise the header before folding the wings.'); return; }
+  state.headerFolded = !state.headerFolded;
+  addLog(state.headerFolded ? 'Folded the header wings in for transport.' : 'Unfolded the header to full width.');
+  updateHud();
+}
+// smoothly animates the auger wing pivots toward their fold/unfold target each frame
+function animateHeaderFold(dt){
+  if(!implementRefs || state.attached!=='header') return;
+  const targetL = state.headerFolded ? -1.9 : 0;
+  const targetR = state.headerFolded ? 1.9 : 0;
+  const lp = implementRefs.leftPivot, rp = implementRefs.rightPivot;
+  lp.rotation.y += (targetL - lp.rotation.y) * Math.min(1, dt*3);
+  rp.rotation.y += (targetR - rp.rotation.y) * Math.min(1, dt*3);
+  if(state.lowered && !state.headerFolded){
+    implementRefs.augerParts.forEach(seg=> seg.rotation.x += dt*6);
+    implementRefs.reelPivot.rotation.x += dt*4;
+  }
+}
+
+function toggleSprayerFold(){
+  if(state.attached!=='sprayer'){ addLog('Attach the sprayer first.'); return; }
+  if(state.lowered){ addLog('Raise the sprayer before folding or unfolding the booms.'); return; }
+  state.sprayerFolded = !state.sprayerFolded;
+  addLog(state.sprayerFolded ? 'Folded the sprayer booms for transport.' : 'Unfolded the sprayer booms to full spraying width.');
+  updateHud();
+  updateImplementVisual();
+}
+function animateSprayerBooms(dt){
+  if(!implementRefs || state.attached!=='sprayer') return;
+  const lp=implementRefs.leftPivot, rp=implementRefs.rightPivot;
+  if(!lp || !rp) return;
+  const targetL=state.sprayerFolded?1.38:0;
+  const targetR=state.sprayerFolded?-1.38:0;
+  lp.rotation.z += (targetL-lp.rotation.z)*Math.min(1,dt*3.5);
+  rp.rotation.z += (targetR-rp.rotation.z)*Math.min(1,dt*3.5);
+
+  if(implementRefs.leftOuterPivot && implementRefs.rightOuterPivot){
+    const oL=state.sprayerFolded?0.70:0;
+    const oR=state.sprayerFolded?-0.70:0;
+    implementRefs.leftOuterPivot.rotation.z += (oL-implementRefs.leftOuterPivot.rotation.z)*Math.min(1,dt*3.5);
+    implementRefs.rightOuterPivot.rotation.z += (oR-implementRefs.rightOuterPivot.rotation.z)*Math.min(1,dt*3.5);
+  }
+
+  const spraying=!!(state.lowered && !state.sprayerFolded && state.sprayTank>0);
+  if(implementRefs.sprayTips){
+    const t=performance.now()*0.012;
+    implementRefs.sprayTips.forEach((tip,i)=>{
+      tip.visible=spraying;
+      if(spraying){
+        tip.scale.y=0.85+0.20*Math.sin(t+i*0.55);
+        tip.material.opacity=0.38+0.20*(0.5+0.5*Math.sin(t*0.75+i*0.37));
+      }
+    });
+  }
+}
+function sprayVisualBurst(){
+  if(!implementMesh || !implementRefs || state.attached!=='sprayer' || state.sprayerFolded || !state.lowered) return;
+  const group = new THREE.Group();
+  const sprayMat = new THREE.MeshBasicMaterial({
+    color:0x9ED8FF, transparent:true, opacity:0.55, depthWrite:false
+  });
+  const drops = [];
+  for(let i=-8;i<=8;i++){
+    const x = i * Math.max(0.45, (implementRefs.boomWingLen||6)/8);
+    for(let j=0;j<2;j++){
+      const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.06,0.65,6), sprayMat);
+      drop.position.set(x, -0.55-j*0.18, (j-0.5)*0.18);
+      drop.rotation.x = Math.PI;
+      group.add(drop);
+      drops.push(drop);
+    }
+  }
+  implementMesh.add(group);
+  setTimeout(()=>{ if(group.parent) group.parent.remove(group); }, 260);
+}
+
+function nearestYardImplement(){
+  let best=null, bestDist=8, bestUnitId=null; // pickup range
+  const pos = getActiveMesh().position;
+  Object.entries(implementPos).forEach(([type,p])=>{
+    if(state.attached===type && state.attachedUnitId==='base') return; // already attached
+    const d = pos.distanceTo(new THREE.Vector3(p.x,0,p.z));
+    if(d<bestDist){ bestDist=d; best=type; bestUnitId='base'; }
+  });
+  extraUnits.forEach(u=>{
+    if(state.attachedUnitId===u.id) return;
+    const d = pos.distanceTo(new THREE.Vector3(u.x,0,u.z));
+    if(d<bestDist){ bestDist=d; best=u.type; bestUnitId=u.id; }
+  });
+  return best ? {type:best, unitId:bestUnitId} : null;
+}
+function isNearYard(){
+  const pos = getActiveMesh().position;
+  const nearBase = Object.values(implementPos).some(p=> pos.distanceTo(new THREE.Vector3(p.x,0,p.z)) < 8);
+  const nearExtra = extraUnits.some(u=> pos.distanceTo(new THREE.Vector3(u.x,0,u.z)) < 8);
+  return nearBase || nearExtra;
+}
+
+function attachImplement(type, unitId){
+  if(type==='header'){
+    addLog('The old separate header has been removed. The combine uses its built-in header.');
+    return;
+  }
+  if(unitId==='base'){
+    yardMeshes[type].visible = false;
+  } else {
+    const unit = extraUnits.find(u=>u.id===unitId);
+    if(unit) unit.mesh.visible = false;
+  }
+  state.attached = type;
+  state.attachedUnitId = unitId;
+  state.lowered = false;
+  state.toolWidth = currentImplementWidth(type);
+  if(type==='header') state.headerFolded = true;
+  if(type==='sprayer') state.sprayerFolded = true;
+  implementTrail = []; // fresh tow — start the articulation history clean
+  updateImplementVisual();
+  addLog(`Attached the ${IMPLEMENTS[type].name}.`);
+  updateHud();
+}
+function detachImplement(){
+  if(!state.attached) return;
+  const type = state.attached;
+  const unitId = state.attachedUnitId;
+  // drop it wherever it currently sits — for rear-towed implements that's their live
+  // articulated position (already trailing behind wherever the tow vehicle has been),
+  // not a fixed offset recomputed from the tractor's current spot
+  let dropX, dropZ, dropRotY;
+  if(implementIsParented || !implementMesh){
+    const mesh = getActiveMesh();
+    const dropOffset = new THREE.Vector3(0,0,-3).applyAxisAngle(new THREE.Vector3(0,1,0), mesh.rotation.y);
+    dropX = mesh.position.x + dropOffset.x;
+    dropZ = mesh.position.z + dropOffset.z;
+    dropRotY = mesh.rotation.y;
+  } else {
+    dropX = implementMesh.position.x;
+    dropZ = implementMesh.position.z;
+    dropRotY = implementMesh.rotation.y;
+  }
+  if(unitId==='base'){
+    yardMeshes[type].position.set(dropX, 0, dropZ);
+    yardMeshes[type].rotation.y = dropRotY;
+    yardMeshes[type].visible = true;
+    implementPos[type] = {x:dropX, z:dropZ};
+  } else {
+    const unit = extraUnits.find(u=>u.id===unitId);
+    if(unit){
+      unit.mesh.position.set(dropX, 0, dropZ);
+      unit.mesh.rotation.y = dropRotY;
+      unit.mesh.visible = true;
+      unit.x = dropX; unit.z = dropZ;
+    }
+  }
+  addLog(`Detached the ${IMPLEMENTS[type].name} here.`);
+  state.attached = null;
+  state.attachedUnitId = null;
+  state.lowered = false;
+  updateImplementVisual();
+  updateHud();
+}
+function tryAttachDetach(){
+  if(activeVehicle!=='tractor'){ addLog('Hop back in the tractor to attach or detach implements.'); return; }
+  if(state.attached){ detachImplement(); return; } // can detach anywhere, no need to be at the yard
+  if(!isNearYard()){ addLog('Drive up to a parked implement to attach it.'); return; }
+  const near = nearestYardImplement();
+  if(near) attachImplement(near.type, near.unitId);
+  else addLog('No free implement close enough to attach.');
+}
+updateImplementVisual();
+
+function tryToggleVehicle(){
+  const found = nearestOtherVehicle();
+  if(found){
+    activeVehicle = found.kind;
+    if(found.kind==='tractor') activeTractorIndex = found.idx;
+    if(found.kind==='truck') activeTruckIndex = found.idx;
+    velocity = 0;
+    addLog(`Hopped into the ${vehicleDisplayName(found.kind)}.`);
+    updateHud();
+  } else {
+    addLog('Pull up alongside another vehicle to hop in.');
+  }
+}
+
+// Tab cycles through every vehicle in the game instantly, no matter where you are —
+// unlike V/tryToggleVehicle, which only works when you're standing right next to one.
+function cycleVehicleAnywhere(){
+  const all = [];
+  tractors.forEach((t,i)=> all.push({kind:'tractor', idx:i}));
+  all.push({kind:'ute', idx:0});
+  all.push({kind:'harvester', idx:0});
+  trucks.forEach((t,i)=> all.push({kind:'truck', idx:i}));
+  const currentPos = all.findIndex(v=> v.kind===activeVehicle && v.idx===(activeVehicle==='tractor'?activeTractorIndex:activeVehicle==='truck'?activeTruckIndex:0));
+  const next = all[(currentPos+1) % all.length];
+  activeVehicle = next.kind;
+  if(next.kind==='tractor') activeTractorIndex = next.idx;
+  if(next.kind==='truck') activeTruckIndex = next.idx;
+  velocity = 0;
+  addLog(`Switched to the ${vehicleDisplayName(next.kind)}.`);
+  updateHud();
+}
+
+/* ================= DRIVING ================= */
+const keys = {};
+window.addEventListener('keydown', e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.key===' '){ toggleLowered(); e.preventDefault(); }
+  if(e.key==='1') selectSeedCrop('soybean');
+  if(e.key==='2') selectSeedCrop('canola');
+  if(e.key==='3') selectSeedCrop('barley');
+  if(e.key==='4') selectSeedCrop('wheat');
+  if(e.key.toLowerCase()==='r'){ toggleSpreaderMode(); e.preventDefault(); }
+  if(e.key.toLowerCase()==='q') tryAttachDetach();
+  if(e.key.toLowerCase()==='e') tryOpenNearbyBuilding();
+  if(e.key.toLowerCase()==='f') toggleSprayerFold();
+  if(e.key.toLowerCase()==='v') tryToggleVehicle();
+  if(e.key==='Tab'){ cycleVehicleAnywhere(); e.preventDefault(); }
+  if(e.key.toLowerCase()==='c') cycleCameraView();
+  if(e.key.toLowerCase()==='m') toggleBirdseye();
+});
+window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
+
+function selectSeedCrop(cropName){
+  state.seedCrop = cropName;
+  updateHud();
+}
+
+function toggleLowered(){
+  if(activeVehicle==='ute' || activeVehicle==='truck'){ addLog("Can't lower an implement from here."); return; }
+  if(activeVehicle==='harvester'){
+    state.harvesterLowered = !state.harvesterLowered;
+    addLog(state.harvesterLowered ? 'Lowered the header — driving over ripe crops will harvest them.' : 'Raised the header.');
+    updateHud();
+    if(state.harvesterLowered){
+      const loc = currentPaddockAndCoords();
+      lastPlotKey = loc ? (loc.paddock.id+','+loc.x+','+loc.z) : null;
+      if(loc) harvesterHarvestAction();
+    }
+    return;
+  }
+  if(!state.attached){ addLog('Nothing attached — drive to the yard and press Q to hitch an implement.'); return; }
+  if(state.attached==='header'){ state.attached=null; state.attachedUnitId=null; state.lowered=false; updateImplementVisual(); addLog('The old separate header has been removed.'); return; }
+  if(state.attached==='sprayer' && state.sprayerFolded){ addLog('Unfold the sprayer booms first (press F).'); return; }
+  state.lowered = !state.lowered;
+  addLog(state.lowered ? `Lowered the ${IMPLEMENTS[state.attached].name}.` : `Raised the ${IMPLEMENTS[state.attached].name}.`);
+  updateImplementVisual();
+  if(state.lowered){
+    const loc = currentPaddockAndCoords();
+    lastPlotKey = loc ? (loc.paddock.id+','+loc.x+','+loc.z) : null;
+    if(loc) performImplementAction();
+  }
+}
+
+let velocity = 0;
+const baseMaxSpeed = 9;
+const baseAccel = 10;
+const baseTurn = 1.9;
+const uteMaxSpeed = 15;
+const uteAccel = 14;
+const uteTurn = 2.4;
+const harvesterMaxSpeed = 7;
+const harvesterAccel = 6;
+const harvesterTurn = 1.15;
+const truckMaxSpeed = 12;
+const truckAccel = 5;
+const truckTurn = 0.9;
+
+// Collision — approximate every vehicle as a circle in the XZ plane. A move is blocked if
+// it would put that circle inside a static obstacle or another vehicle's circle.
+const VEHICLE_RADIUS = {tractor:2.3, ute:1.9, harvester:3.6, truck:2.4};
+function checkCollision(x, z, radius, selfMesh){
+  for(let i=0;i<collisionObstacles.length;i++){
+    const o = collisionObstacles[i];
+    if(Math.hypot(o.x-x, o.z-z) < o.radius+radius) return true;
+  }
+  // other vehicles
+  for(let i=0;i<tractors.length;i++){
+    if(tractors[i]===selfMesh) continue;
+    if(Math.hypot(tractors[i].position.x-x, tractors[i].position.z-z) < VEHICLE_RADIUS.tractor+radius) return true;
+  }
+  if(ute!==selfMesh && Math.hypot(ute.position.x-x, ute.position.z-z) < VEHICLE_RADIUS.ute+radius) return true;
+  if(harvester!==selfMesh && Math.hypot(harvester.position.x-x, harvester.position.z-z) < VEHICLE_RADIUS.harvester+radius) return true;
+  for(let i=0;i<trucks.length;i++){
+    if(trucks[i]===selfMesh) continue;
+    if(Math.hypot(trucks[i].position.x-x, trucks[i].position.z-z) < VEHICLE_RADIUS.truck+radius) return true;
+  }
+  return false;
+}
+
+function updateVehicle(dt){
+  const mesh = getActiveMesh();
+  const isTractor = activeVehicle==='tractor';
+  const maxSpeed = isTractor ? baseMaxSpeed*state.speedMul : activeVehicle==='ute' ? uteMaxSpeed : activeVehicle==='truck' ? truckMaxSpeed : harvesterMaxSpeed;
+  const accel = isTractor ? baseAccel*state.speedMul : activeVehicle==='ute' ? uteAccel : activeVehicle==='truck' ? truckAccel : harvesterAccel;
+  const turnSpeed = isTractor ? baseTurn*state.turnMul : activeVehicle==='ute' ? uteTurn : activeVehicle==='truck' ? truckTurn : harvesterTurn;
+
+  if(keys['w']) velocity = Math.min(maxSpeed, velocity+accel*dt);
+  else if(keys['s']) velocity = Math.max(-maxSpeed*0.6, velocity-accel*dt);
+  else velocity *= (1-Math.min(1,3*dt));
+
+  let steer = 0;
+  if(keys['a']) steer += 1;
+  if(keys['d']) steer -= 1;
+  if(Math.abs(velocity)>0.05){
+    mesh.rotation.y += steer*turnSpeed*dt*(velocity>0?1:-1);
+  }
+  const prevX = mesh.position.x, prevZ = mesh.position.z;
+  mesh.position.x += Math.sin(mesh.rotation.y)*velocity*dt;
+  mesh.position.z += Math.cos(mesh.rotation.y)*velocity*dt;
+
+  // collision — buildings, sheds, scrub, and other vehicles all block movement; a blocked
+  // move just cancels this frame's position change (a hard stop) and kills momentum
+  const myRadius = VEHICLE_RADIUS[activeVehicle] || 2.2;
+  if(checkCollision(mesh.position.x, mesh.position.z, myRadius, mesh)){
+    mesh.position.x = prevX;
+    mesh.position.z = prevZ;
+    velocity *= 0.2;
+  }
+
+  // clamp inside the farmyard + all three paddocks
+  mesh.position.x = Math.max(worldMinX, Math.min(worldMaxX, mesh.position.x));
+  mesh.position.z = Math.max(worldMinZ, Math.min(worldMaxZ, mesh.position.z));
+
+  // wheel spin (cosmetic)
+  mesh.children.forEach(c=>{ if(c.userData && c.userData.isWheel){ c.rotation.x += velocity*dt*1.5; }});
+
+  // trigger implement action when driving into a new plot while lowered (tractor only)
+  if(isTractor && state.attached && state.lowered){
+    const loc = currentPaddockAndCoords();
+    const key = loc ? (loc.paddock.id+','+loc.x+','+loc.z) : null;
+    if(key !== lastPlotKey){
+      lastPlotKey = key;
+      if(loc) performImplementAction();
+    }
+  }
+  // the combine's own header harvests automatically while lowered and driving
+  if(activeVehicle==='harvester' && state.harvesterLowered){
+    const loc = currentPaddockAndCoords();
+    const key = loc ? (loc.paddock.id+','+loc.x+','+loc.z) : null;
+    if(key !== lastPlotKey){
+      lastPlotKey = key;
+      if(loc) harvesterHarvestAction();
+    }
+  }
+}
+let lastPlotKey = null;
+
+function soilForPaddock(paddock){
+  let n=0, ph=0, weeds=0, count=0;
+  for(let x=0;x<paddock.cols;x++) for(let z=0;z<paddock.rows;z++){
+    const p=paddock.plots[x][z]; n+=p.nitrogen ?? 75; ph+=p.ph ?? 6.3; weeds+=p.weeds ?? 0; count++;
+  }
+  return {nitrogen:n/count, ph:ph/count, weeds:weeds/count};
+}
+function clampSoil(p){ p.nitrogen=Math.max(0,Math.min(100,p.nitrogen)); p.ph=Math.max(4.5,Math.min(8.0,p.ph)); }
+function soilYieldFactor(plot,cfg){
+  const nFactor=Math.max(0.45,Math.min(1.15,0.45+(plot.nitrogen/100)*0.70));
+  const phFactor=Math.max(0.55,1-Math.abs(plot.ph-cfg.idealPH)*0.18);
+  const weedPct=Math.max(0,Math.min(100,plot.weeds ?? 0));
+  const weedFactor=1-(weedPct/100)*(cfg.weedPenalty ?? 0.75);
+  return Math.max(0.20,Math.min(1.2,nFactor*phFactor*weedFactor));
+}
+function updateSoilStatus(){
+  const el=document.getElementById('soilStatusText'); if(!el) return;
+  const loc=currentPaddockAndCoords();
+  if(!loc){ el.innerHTML='Drive into a paddock'; return; }
+  const soil=soilForPaddock(loc.paddock);
+  const nClass=soil.nitrogen>=65?'soil-good':soil.nitrogen<40?'soil-bad':'';
+  const phClass=(soil.ph>=5.8&&soil.ph<=7.2)?'soil-good': 'soil-bad';
+  const crop=loc.paddock.plots[loc.x][loc.z].crop;
+  const weedPct=loc.paddock.plots[loc.x][loc.z].weeds ?? 0;
+  const cfg=crop?CROPS[crop]:null;
+  const expected=cfg?Math.round(soilYieldFactor({nitrogen:soil.nitrogen,ph:soil.ph},cfg)*100):null;
+  el.innerHTML=`<div class="soil-grid"><span>Nitrogen</span><span class="${nClass}">${soil.nitrogen.toFixed(0)}%</span><span>pH</span><span class="${phClass}">${soil.ph.toFixed(1)}</span><span>Weeds</span><span class="${soil.weeds>30?'soil-bad':soil.weeds>15?'':'soil-good'}">${soil.weeds.toFixed(0)}%</span>${cfg?`<span>Crop</span><span>${cfg.label}</span><span>Expected yield</span><span class="${expected>=90?'soil-good':expected<70?'soil-bad':''}">${expected}%</span>`:''}</div>`;
+}
+function toggleSpreaderMode(){
+  if(state.attached!=='spreader'){ addLog('Attach the spreader first.'); return; }
+  state.spreaderMode=state.spreaderMode==='fertiliser'?'lime':'fertiliser';
+  addLog(state.spreaderMode==='fertiliser'?'Spreader set to fertiliser — raises nitrogen.':'Spreader set to lime — raises soil pH.');
+  updateHud();
+}
+
+// finds which paddock (if any) currently contains the active vehicle, and its plot coords within it
+function currentPaddockAndCoords(){
+  const pos = getActiveMesh().position;
+  for(const paddock of paddocks){
+    const localX = pos.x - paddock.originX;
+    const localZ = pos.z - paddock.originZ;
+    if(localX>=0 && localX<paddock.width && localZ>=0 && localZ<paddock.depth){
+      return {paddock, x:Math.floor(localX/PLOT_SIZE), z:Math.floor(localZ/PLOT_SIZE)};
+    }
+  }
+  return null;
+}
+
+function applyToStrip(fn){
+  const loc = currentPaddockAndCoords();
+  if(!loc) return;
+  const {paddock, x:cx, z:cz} = loc;
+  const w = effectiveWidth();
+  const half = Math.floor(w/2);
+  // strip runs perpendicular to tractor facing, roughly along x
+  for(let off=-half; off<=half - (w%2===0?1:0); off++){
+    const x = cx+off, z = cz;
+    if(x>=0 && x<paddock.cols && z>=0 && z<paddock.rows) fn(paddock,x,z);
+  }
+}
+
+function performImplementAction(){
+  if(isNearBarn() || isNearYard()) return;
+  const loc = currentPaddockAndCoords();
+  if(!loc) return;
+
+  if(state.attached==='plow'){
+    let did=false, plowedUnderStraw=false, hitBlocked=false;
+    applyToStrip((paddock,x,z)=>{
+      const p = paddock.plots[x][z];
+      if(p.blocked){ hitBlocked=true; return; }
+      if((p.status==='empty' || p.status==='stubble') && !isWinter()){
+        if(p.status==='stubble' && p.hasStraw) plowedUnderStraw=true;
+        p.status='tilled'; p.hasStraw=false;
+        p.mesh.material.color.set(0x5b3f2a);
+        did=true;
+      }
+    });
+    if(did) addLog(plowedUnderStraw ? 'Tilled soil — leftover straw plowed under (unbaled).' : 'Tilled soil.');
+    else if(isWinter()) addLog("❄️ Ground's frozen — can't till in winter.");
+    else if(hitBlocked) addLog("🌳 Can't till through scrub or the river.");
+  }
+  else if(state.attached==='baler'){
+    let baled=0;
+    applyToStrip((paddock,x,z)=>{
+      const p = paddock.plots[x][z];
+      if(p.status==='stubble' && p.hasStraw){
+        p.hasStraw = false;
+        p.mesh.material.color.set(0xA89570); // baled-over stubble, duller than fresh straw
+        const [bx,,bz] = plotWorldPos(paddock,x,z);
+        spawnWorldBale(bx,bz);
+        baled++;
+      }
+    });
+    if(baled>0) addLog(`Baled straw on ${baled} plot(s) — bales left in the field. Pick them up with the loader.`);
+    else addLog('No loose straw here to bale.');
+    updateHud();
+  }
+  else if(state.attached==='spreader'){
+    let changed=0;
+    applyToStrip((paddock,x,z)=>{
+      const p=paddock.plots[x][z];
+      if(p.blocked) return;
+      if(state.spreaderMode==='fertiliser') p.nitrogen=Math.min(100,p.nitrogen+22);
+      else p.ph=Math.min(8.0,p.ph+0.35);
+      clampSoil(p); changed++;
+    });
+    if(changed) addLog(state.spreaderMode==='fertiliser'?`🌱 Applied fertiliser to ${changed} plot(s) — nitrogen increased.`:`🧪 Spread lime on ${changed} plot(s) — pH increased.`);
+    updateHud();
+  }
+  else if(state.attached==='sprayer'){
+    let sprayed=0;
+    applyToStrip((paddock,x,z)=>{
+      const p=paddock.plots[x][z];
+      if(p.blocked || p.status!=='planted' || state.sprayTank<=0 || state.sprayerFolded) return;
+      const before=p.weeds ?? 0;
+      if(before>0){ p.weeds=Math.max(0,before-50); state.sprayTank--; sprayed++; }
+    });
+    if(sprayed){
+      sprayVisualBurst();
+      addLog(`🧪 Sprayed weeds on ${sprayed} plot(s).`);
+    } else if(state.sprayTank<=0) addLog('🚫 Sprayer tank empty — return to the barn to refill.');
+    else if(state.sprayerFolded) addLog('↔️ Sprayer booms are folded — press F to unfold them.');
+    else addLog('No weeds to spray here.');
+    updateHud();
+  }
+  else if(state.attached==='seeder'){
+    const cropName = state.seedCrop;
+    const cfg = CROPS[cropName];
+    let planted=0;
+    applyToStrip((paddock,x,z)=>{
+      const p = paddock.plots[x][z];
+      if(p.status==='tilled' && state.seedTank>=1 && !isWinter()){
+        state.seedTank -= 1;
+        p.status='planted'; p.crop=cropName; p.daysGrown=0; p.watered=false; p.weeds=5+Math.random()*8; p.nitrogen=Math.max(0,p.nitrogen); p.ph=Math.max(4.5,Math.min(8,p.ph));
+        spawnCropMesh(paddock,x,z,cropName,0);
+        planted++;
+      }
+    });
+    if(planted>0) addLog(`Planted ${planted} plot(s) of ${cfg.label}.`);
+    else if(state.seedTank<1) addLog('🚫 Seed tank empty — return to the barn to refill.');
+    updateHud();
+  }
+  // Note: 'header' can no longer be attached to the tractor — harvesting is now handled
+  // exclusively by the combine harvester's own built-in header, via harvesterHarvestAction().
+}
+
+// The combine harvester's own harvest action — fills its 2500L grain tank (one crop type at a
+// time) instead of going straight to barn inventory; unload near the barn or the truck to bank it.
+function harvesterHarvestAction(){
+  if(isNearBarn() || isNearSilo() || isNearYard() || isNearTruck() || isNearChaserOrWagon()) return;
+  const loc = currentPaddockAndCoords();
+  if(!loc) return;
+  let harvestedPlots=0, litresAdded=0, blockedByFullTank=false, blockedByMixedCrop=false;
+  applyToStrip((paddock,x,z)=>{
+    const p = paddock.plots[x][z];
+    const cfg = p.crop ? CROPS[p.crop] : null;
+    if(p.status==='planted' && cfg && p.daysGrown>=cfg.growDays){
+      if(state.harvesterGrainCrop && state.harvesterGrainCrop!==p.crop){ blockedByMixedCrop=true; return; }
+      if(state.harvesterGrainL>=state.harvesterGrainCapL){ blockedByFullTank=true; return; }
+      state.harvesterGrainCrop = p.crop;
+      const yieldFactor=soilYieldFactor(p,cfg);
+      const harvestL=Math.round(1000*yieldFactor);
+      state.harvesterGrainL = Math.min(state.harvesterGrainCapL, state.harvesterGrainL+harvestL);
+      litresAdded += harvestL;
+      p.nitrogen=Math.max(0,p.nitrogen-(cfg.nitrogenUse||20));
+      harvestedPlots++;
+      if(p.cropMesh){ scene.remove(p.cropMesh); p.cropMesh=null; }
+      p.status='stubble'; p.crop=null; p.daysGrown=0; p.watered=false; p.hasStraw=true;
+      p.mesh.material.color.set(0xC9A961); // golden stubble left behind after reaping
+    }
+  });
+  if(harvestedPlots>0) addLog(`Harvested ${harvestedPlots} plot(s) — ${litresAdded}L into the grain tank. Straw left behind — bale it before replowing.`);
+  else if(blockedByFullTank) addLog(`🚛 Grain tank full (${state.harvesterGrainCapL}L) — unload at the barn or the truck.`);
+  else if(blockedByMixedCrop) addLog(`Grain tank already holds ${CROPS[state.harvesterGrainCrop].label} — unload before switching crops.`);
+  updateHud();
+}
+
+function unloadHarvesterGrain(){
+  if(state.harvesterGrainL<=0) return;
+  const litres = state.harvesterGrainL;
+  const crop = state.harvesterGrainCrop;
+  const units = Math.round(litres/1000);
+  if(units>0) addToInventory(crop, units);
+  addLog(`Unloaded ${litres}L of ${CROPS[crop].label} into the barn.`);
+  state.harvesterGrainL = 0;
+  state.harvesterGrainCrop = null;
+  updateHud();
+  if(document.getElementById('barnModal').classList.contains('open')) renderBarnModal();
+}
+
+function spawnCropMesh(paddock,x,z,cropName,stage){
+  const p = paddock.plots[x][z];
+  if(p.cropMesh) scene.remove(p.cropMesh);
+  const cfg = CROPS[cropName];
+  const height = 0.4 + stage*0.6;
+  const color = stage>=2 ? cfg.tallColor : cfg.color;
+  const mat = new THREE.MeshLambertMaterial({color});
+  const group = new THREE.Group();
+  // a small cluster of plants per plot instead of one lone cone, for a fuller, denser crop look
+  const clusterOffsets = [[0,0],[0.9,0.7],[-0.9,0.7],[0.9,-0.7],[-0.9,-0.7],[0,1.2]];
+  clusterOffsets.forEach(([ox,oz])=>{
+    const geo = new THREE.ConeGeometry(0.55, height, 6);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(ox, height/2, oz);
+    mesh.castShadow = true;
+    group.add(mesh);
+  });
+  const [px,,pz] = plotWorldPos(paddock,x,z);
+  group.position.set(px, 0.15, pz);
+  scene.add(group);
+  p.cropMesh = group;
+}
+
+/* ================= WORLD BALES (baler drops them, loader picks them up) ================= */
+let worldBales = []; // {mesh, x, z}
+function buildBaleMesh(){
+  const group = new THREE.Group();
+  const baleMat = new THREE.MeshLambertMaterial({color:0xD9BB6A});
+  const bale = new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,1.55,16), baleMat);
+  bale.rotation.z = Math.PI/2;
+  bale.position.y = 0.8;
+  bale.castShadow = true;
+  group.add(bale);
+  for(let i=0;i<3;i++){
+    const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.82,0.035,6,20), new THREE.MeshLambertMaterial({color:0xffffff}));
+    wrap.rotation.y = Math.PI/2;
+    wrap.position.set(-0.45+i*0.45,0.8,0);
+    group.add(wrap);
+  }
+  return group;
+}
+function spawnWorldBale(x,z){
+  const mesh = buildBaleMesh();
+  mesh.position.set(x,0,z);
+  scene.add(mesh);
+  worldBales.push({mesh, x, z});
+}
+// checked every frame while driving the tractor with the loader down — picks up any bale close by
+function checkLoaderPickup(){
+  if(activeVehicle!=='tractor' || state.attached!=='loader' || !state.lowered || state.loaderCarrying) return;
+  const pos = getActiveMesh().position;
+  for(let i=0;i<worldBales.length;i++){
+    const b = worldBales[i];
+    if(Math.hypot(b.x-pos.x, b.z-pos.z) < 3.2){
+      scene.remove(b.mesh);
+      worldBales.splice(i,1);
+      state.loaderCarrying = true;
+      addLog('Picked up a straw bale with the loader.');
+      updateLoaderCarryVisual();
+      updateHud();
+      return;
+    }
+  }
+}
+const BALE_CRADLE_Z = [-2.1,-0.7,0.7,2.1];
+function rebuildBaleTrailerBales(mesh, load){
+  const toRemove = mesh.children.filter(c=>c.userData && c.userData.isBaleLoad);
+  toRemove.forEach(c=>mesh.remove(c));
+  for(let i=0;i<load && i<BALE_CRADLE_Z.length;i++){
+    const bale = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,1.3,14), new THREE.MeshLambertMaterial({color:0xD9BB6A}));
+    bale.rotation.z = Math.PI/2;
+    bale.position.set(0,1.35,BALE_CRADLE_Z[i]);
+    bale.castShadow = true;
+    bale.userData.isBaleLoad = true;
+    mesh.add(bale);
+  }
+}
+// checked every frame while carrying a bale — loads it onto any parked (unattached) bale
+// trailer nearby, so the loader tractor and the trailer tractor can be different vehicles
+function checkBaleTrailerLoad(){
+  if(activeVehicle!=='tractor' || state.attached!=='loader' || !state.loaderCarrying) return;
+  const pos = getActiveMesh().position;
+  const trailer = extraUnits.find(u=> u.type==='baletrailer' && u.mesh.visible && u.load<state.baleTrailerCap && Math.hypot(u.x-pos.x,u.z-pos.z)<3.5);
+  if(!trailer) return;
+  trailer.load = (trailer.load||0)+1;
+  rebuildBaleTrailerBales(trailer.mesh, trailer.load);
+  state.loaderCarrying = false;
+  updateLoaderCarryVisual();
+  addLog(`Loaded a bale onto the trailer (${trailer.load}/${state.baleTrailerCap}).`);
+  updateHud();
+}
+function unloadBaleTrailer(){
+  if(state.attached!=='baletrailer') return;
+  const unit = extraUnits.find(u=>u.id===state.attachedUnitId);
+  const load = unit ? (unit.load||0) : 0;
+  if(load<=0) return;
+  addToInventory('straw', load);
+  addLog(`Unloaded ${load} bale(s) from the trailer into the barn.`);
+  if(unit){ unit.load = 0; rebuildBaleTrailerBales(unit.mesh, 0); }
+  if(implementMesh) rebuildBaleTrailerBales(implementMesh, 0);
+  updateHud();
+  if(document.getElementById('barnModal').classList.contains('open')) renderBarnModal();
+}
+// visually attaches/detaches a bale in the loader's bucket depending on state.loaderCarrying
+let loaderBaleMesh = null;
+function updateLoaderCarryVisual(){
+  if(loaderBaleMesh && implementMesh){ implementMesh.remove(loaderBaleMesh); }
+  loaderBaleMesh = null;
+  if(state.attached==='loader' && state.loaderCarrying && implementMesh){
+    loaderBaleMesh = buildBaleMesh();
+    loaderBaleMesh.scale.set(0.8,0.8,0.8);
+    loaderBaleMesh.position.set(0,0.95,2.55); // sitting in the bucket
+    implementMesh.add(loaderBaleMesh);
+  }
+}
+function dropOffCarriedBale(){
+  if(!state.loaderCarrying) return;
+  addToInventory('straw', 1);
+  state.loaderCarrying = false;
+  addLog('Dropped the straw bale off — added to the barn.');
+  updateLoaderCarryVisual();
+  updateHud();
+  if(document.getElementById('barnModal').classList.contains('open')) renderBarnModal();
+}
+
+function isNearBarn(){
+  return getActiveMesh().position.distanceTo(new THREE.Vector3(barnPos.x,0,barnPos.z)) < 10;
+}
+function isNearSilo(){
+  return getActiveMesh().position.distanceTo(new THREE.Vector3(SILO_POS.x,0,SILO_POS.z)) < 9;
+}
+function isNearTruck(){
+  // wider catch radius since the road train is much longer than the other vehicles
+  const pos = getActiveMesh().position;
+  return trucks.some(tr=> pos.distanceTo(new THREE.Vector3(tr.position.x,0,tr.position.z)) < 16);
+}
+// a chaser bin/gravity wagon might be parked somewhere (extraUnits) or currently towed
+// behind whichever tractor has it attached — check both cases
+function isNearChaserOrWagon(){
+  const pos = getActiveMesh().position;
+  if((state.attached==='chaserbin' || state.attached==='gravitywagon') && implementHostMesh){
+    if(pos.distanceTo(implementHostMesh.position) < 10) return true;
+  }
+  return extraUnits.some(u=> (u.type==='chaserbin'||u.type==='gravitywagon') && u.mesh.visible && pos.distanceTo(new THREE.Vector3(u.x,0,u.z)) < 9);
+}
+function tryOpenNearbyBuilding(){
+  if(isNearBarn() || isNearSilo()){
+    if(activeVehicle==='harvester' && state.harvesterGrainL>0) unloadHarvesterGrain();
+    if(activeVehicle==='tractor' && state.attached==='loader' && state.loaderCarrying) dropOffCarriedBale();
+    if(activeVehicle==='tractor' && state.attached==='baletrailer') unloadBaleTrailer();
+    openModal('barnModal');
+  } else if(isNearTruck() && activeVehicle==='harvester' && state.harvesterGrainL>0){
+    unloadHarvesterGrain();
+  } else if(isNearChaserOrWagon() && activeVehicle==='harvester' && state.harvesterGrainL>0){
+    unloadHarvesterGrain();
+  }
+}
+
+/* ================= INVENTORY / MARKET ================= */
+function addToInventory(name, qty){
+  if(!state.inventory[name]) state.inventory[name]=0;
+  state.inventory[name]+=qty;
+}
+function sellItem(name, qty){
+  if(!state.inventory[name] || state.inventory[name]<qty) return;
+  const price = priceFor(name);
+  const total = price*qty;
+  state.inventory[name]-=qty;
+  state.money+=total;
+  addLog(`Sold ${qty}x ${goodDef(name).label} (${goodDef(name).unit}) for $${total}.`);
+  renderBarnModal(); updateHud();
+}
+function refillTank(){
+  const missing = state.seedTankMax - state.seedTank;
+  if(missing<=0){ addLog('Seed tank is already full.'); return; }
+  if(state.money < 1000){ addLog('🚫 You need $1000 to refill the seeder.'); return; }
+  state.money -= 1000;
+  state.seedTank = state.seedTankMax;
+  addLog('💰 Refilled the seeder for $1000.');
+  updateHud(); renderBarnModal();
+}
+
+/* ================= MACHINERY SHOP ================= */
+function extraTractorCost(){ return 31200 + state.extraTractorsBought*800; }
+function extraSpareCost(spareType){
+  const count = extraUnits.filter(u=>u.type===spareType).length;
+  const bases = {plow:15000, seeder:18000, chaserbin:20000, gravitywagon:12000};
+  const base = bases[spareType] ?? 18000;
+  return base + count*6000;
+}
+
+function buyMachine(id){
+  if(id==='extraTractor'){
+    const cost = extraTractorCost();
+    if(state.money<cost) return;
+    state.money -= cost;
+    state.extraTractorsBought++;
+    const newTractor = buildTractor(true); // every Magnum in the fleet ships on duals
+    newTractor.position.set(FARMYARD_X + 10 + tractors.length*4, 0, FARMYARD_Z + 8);
+    scene.add(newTractor);
+    tractors.push(newTractor);
+    addLog(`Purchased another Magnum 8940! (${tractors.length} in your fleet now)`);
+    renderShopModal(); updateHud();
+    return;
+  }
+  const spareEntry = MACHINES.find(m=>m.id===id && m.kind==='buySpare');
+  if(spareEntry){
+    const cost = extraSpareCost(spareEntry.spareType);
+    if(state.money<cost) return;
+    state.money -= cost;
+    buySpareImplement(spareEntry.spareType);
+    addLog(`Purchased another ${IMPLEMENTS[spareEntry.spareType].name}, parked at the yard.`);
+    renderShopModal(); updateHud();
+    return;
+  }
+  const m = MACHINES.find(m=>m.id===id);
+  if(!m || state.owned[id] || state.money<m.cost) return;
+  state.money -= m.cost;
+  state.owned[id] = true;
+  if(m.kind==='tractor'){ state.speedMul = m.speedMul; state.turnMul = m.turnMul; }
+  if(m.kind==='tank'){ state.seedTankMax = m.capacity; state.seedTank = m.capacity; }
+  if(m.kind==='baletrailer'){ spawnImplementUnit('baletrailer', FARMYARD_X+23, FARMYARD_Z-24); }
+  addLog(`Purchased ${m.name}!`);
+  // refresh currently attached implement's width/visual if it was upgraded
+  if(state.attached){
+    state.toolWidth = currentImplementWidth(state.attached);
+    updateImplementVisual();
+  }
+  // refresh the combine's own header width if it was upgraded
+  if(harvester.userData.headerRefs){
+    rebuildHarvesterHeader();
+  }
+  renderShopModal(); updateHud();
+}
+
+/* ================= MODALS ================= */
+function openModal(id){ document.getElementById(id).classList.add('open'); if(id==='barnModal') renderBarnModal(); if(id==='shopModal') renderShopModal(); if(id==='saveModal') renderSaveModal(); if(id==='usedModal') renderUsedModal(); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.close-x').forEach(el=>{
+  el.onclick = ()=> closeModal(el.dataset.close);
+});
+document.getElementById('openBarnBtn').onclick = ()=> openModal('barnModal');
+document.getElementById('openShopBtn').onclick = ()=> openModal('shopModal');
+document.getElementById('openSaveBtn').onclick = ()=> openModal('saveModal');
+document.getElementById('openUsedBtn').onclick = ()=> openModal('usedModal');
+document.querySelectorAll('[data-shoptab]').forEach(btn=>{
+  btn.onclick = ()=>{
+    shopActiveTab = btn.dataset.shoptab;
+    document.querySelectorAll('[data-shoptab]').forEach(b=>b.classList.toggle('active', b===btn));
+    renderShopModal();
+  };
+});
+
+/* ================= SAVE / LOAD ================= */
+const SAVE_SLOT_COUNT = 3;
+function saveKey(slot){ return 'savegame:slot'+slot; }
+
+function serializeGame(){
+  return {
+    v:1, savedAt:Date.now(),
+    day:state.day, seasonIndex:state.seasonIndex, seasonDay:state.seasonDay, year:state.year,
+    money:state.money, weather:state.weather,
+    attached:state.attached, lowered:state.lowered, headerFolded:state.headerFolded, sprayerFolded:state.sprayerFolded, seedCrop:state.seedCrop, spreaderMode:state.spreaderMode,
+    owned:state.owned, extraTractorsBought:state.extraTractorsBought,
+    toolWidth:state.toolWidth, speedMul:state.speedMul, turnMul:state.turnMul,
+    seedTank:state.seedTank, seedTankMax:state.seedTankMax, sprayTank:state.sprayTank, sprayTankMax:state.sprayTankMax,
+    harvesterLowered:state.harvesterLowered, harvesterGrainL:state.harvesterGrainL,
+    harvesterGrainCapL:state.harvesterGrainCapL, harvesterGrainCrop:state.harvesterGrainCrop,
+    inventory:state.inventory, prices:state.prices,
+    tractorCount:tractors.length,
+    truckCount:trucks.length,
+    animalTypes: state.animals.map(a=>a.type),
+    paddocks: paddocks.map(p=>({
+      id:p.id,
+      cells: p.plots.map(col=>col.map(cell=>({status:cell.status, crop:cell.crop, daysGrown:cell.daysGrown, hasStraw:cell.hasStraw, nitrogen:cell.nitrogen, ph:cell.ph, weeds:cell.weeds})))
+    }))
+  };
+}
+
+function applySavedGame(data){
+  state.day=data.day; state.seasonIndex=data.seasonIndex; state.seasonDay=data.seasonDay; state.year=data.year;
+  state.money=data.money; state.weather=data.weather;
+  state.headerFolded=data.headerFolded; state.sprayerFolded=data.sprayerFolded ?? true; state.seedCrop=data.seedCrop; state.spreaderMode=data.spreaderMode||'fertiliser';
+  state.owned=data.owned; state.extraTractorsBought=data.extraTractorsBought;
+  state.speedMul=data.speedMul; state.turnMul=data.turnMul;
+  state.seedTank=data.seedTank; state.seedTankMax=data.seedTankMax; state.sprayTank=data.sprayTank ?? 40; state.sprayTankMax=data.sprayTankMax ?? 40;
+  state.harvesterLowered=data.harvesterLowered; state.harvesterGrainL=data.harvesterGrainL;
+  state.harvesterGrainCapL=data.harvesterGrainCapL; state.harvesterGrainCrop=data.harvesterGrainCrop;
+  state.inventory=data.inventory; state.prices=data.prices;
+  state.attached=null; state.attachedUnitId=null; state.lowered=false; state.toolWidth=1; state.loaderCarrying=false;
+  worldBales.forEach(b=>scene.remove(b.mesh));
+  worldBales = [];
+
+  // every implement resets to visible and parked back at the yard on load — avoids one
+  // staying invisible forever if it happened to be attached at save time
+  Object.keys(YARD_POS).forEach(type=>{
+    yardMeshes[type].visible = true;
+    yardMeshes[type].position.set(YARD_POS[type].x, 0, YARD_POS[type].z);
+    yardMeshes[type].rotation.y = 0;
+    implementPos[type] = {x:YARD_POS[type].x, z:YARD_POS[type].z};
+  });
+  extraUnits.forEach(u=>{ u.mesh.visible = true; }); // purchased spares aren't persisted, but shouldn't stay invisible either
+
+  // rebuild the tractor fleet to match the saved count — all Magnums ship on duals
+  while(tractors.length>1){ const t=tractors.pop(); scene.remove(t); }
+  for(let i=1;i<data.tractorCount;i++){
+    const t = buildTractor(true);
+    t.position.set(FARMYARD_X + 10 + i*4, 0, FARMYARD_Z + 8);
+    scene.add(t);
+    tractors.push(t);
+  }
+  activeTractorIndex = 0; activeVehicle = 'tractor';
+  updateImplementVisual();
+  rebuildHarvesterHeader();
+
+  // rebuild the truck fleet (and their trailers) to match the saved count
+  while(trucks.length>1){ const t=trucks.pop(); scene.remove(t); }
+  while(allTruckTrailers.length>2){ const tr=allTruckTrailers.pop(); scene.remove(tr.mesh); }
+  for(let i=1;i<(data.truckCount||1);i++){
+    createTruckRig(FARMYARD_X - 22 - i*12, FARMYARD_Z - 16);
+  }
+  activeTruckIndex = 0;
+
+  // rebuild the animal pen to match the saved list
+  state.animals.forEach(a=>scene.remove(a.mesh));
+  state.animals = [];
+  (data.animalTypes||[]).forEach(type=>{
+    const mesh = buildAnimalMesh(type);
+    const ax = PEN_POS.x + (Math.random()-0.5)*(PEN_SIZE-2);
+    const az = PEN_POS.z + (Math.random()-0.5)*(PEN_SIZE-2);
+    mesh.position.set(ax,0,az);
+    mesh.rotation.y = Math.random()*Math.PI*2;
+    scene.add(mesh);
+    state.animals.push({id:'animal'+state.animals.length+'_'+Date.now(), type, mesh, daysSinceProduct:0});
+  });
+
+  // restore every paddock's plots and crop meshes
+  data.paddocks.forEach(saved=>{
+    const paddock = paddocks.find(p=>p.id===saved.id);
+    if(!paddock) return;
+    for(let x=0;x<paddock.cols;x++){
+      for(let z=0;z<paddock.rows;z++){
+        const cell = paddock.plots[x][z];
+        const savedCell = saved.cells[x] && saved.cells[x][z];
+        if(!savedCell) continue;
+        if(cell.cropMesh){ scene.remove(cell.cropMesh); cell.cropMesh=null; }
+        cell.status=savedCell.status; cell.crop=savedCell.crop; cell.daysGrown=savedCell.daysGrown;
+        cell.watered=false; cell.hasStraw=!!savedCell.hasStraw; cell.nitrogen=savedCell.nitrogen ?? 75; cell.ph=savedCell.ph ?? 6.3; cell.weeds=savedCell.weeds ?? 0; clampSoil(cell);
+        if(!cell.blocked){
+          if(cell.status==='empty') cell.mesh.material.color.set(0x6b8f4e);
+          else if(cell.status==='stubble') cell.mesh.material.color.set(cell.hasStraw ? 0xC9A961 : 0xA89570);
+          else cell.mesh.material.color.set(0x5b3f2a);
+        }
+        if(cell.status==='planted' && cell.crop){
+          const cfg = CROPS[cell.crop];
+          const stage = Math.min(2, Math.floor((cell.daysGrown/cfg.growDays)*2));
+          spawnCropMesh(paddock,x,z,cell.crop,stage);
+        }
+      }
+    }
+  });
+  updateHud();
+}
+
+async function saveToSlot(slot){
+  try{
+    await window.storage.set(saveKey(slot), JSON.stringify(serializeGame()), false);
+    addLog(`Saved game to Slot ${slot}.`);
+  } catch(e){ addLog(`⚠️ Save failed for Slot ${slot}.`); }
+  renderSaveModal();
+}
+async function loadFromSlot(slot){
+  try{
+    const result = await window.storage.get(saveKey(slot), false);
+    if(!result){ addLog(`Slot ${slot} is empty.`); return; }
+    const data = JSON.parse(result.value);
+    applySavedGame(data);
+    addLog(`Loaded game from Slot ${slot}.`);
+    closeModal('saveModal');
+  } catch(e){ addLog(`⚠️ Slot ${slot} is empty or couldn't be read.`); }
+}
+
+/* ================= BOOT SCREEN ================= */
+function hideBootScreen(){
+  const el=document.getElementById('bootScreen');
+  if(el) el.classList.add('hidden');
+}
+function showBootScreen(){
+  const el=document.getElementById('bootScreen');
+  if(el) el.classList.remove('hidden');
+  renderBootSaveList();
+}
+async function renderBootSaveList(){
+  const list=document.getElementById('bootSaveList');
+  if(!list) return;
+  list.innerHTML='<div id="bootLoading">Checking save games…</div>';
+
+  let html='';
+  for(let slot=1;slot<=SAVE_SLOT_COUNT;slot++){
+    let info=null;
+    try{
+      const result=await window.storage.get(saveKey(slot),false);
+      if(result) info=JSON.parse(result.value);
+    }catch(e){ info=null; }
+
+    if(info){
+      const season=SEASONS[info.seasonIndex]||'Spring';
+      const saved=new Date(info.savedAt).toLocaleString();
+      html+=`<button class="boot-save" data-boot-load="${slot}">
+        <span>
+          <span class="slot-name">💾 Save Slot ${slot}</span>
+          <div class="slot-info">Day ${info.day} · ${season} · Year ${info.year||1} · $${info.money} · ${saved}</div>
+        </span>
+        <span class="slot-button">Load</span>
+      </button>`;
+    }else{
+      html+=`<div class="boot-save empty">
+        <span>
+          <span class="slot-name">💾 Save Slot ${slot}</span>
+          <div class="slot-info">Empty save slot</div>
+        </span>
+        <span style="font-weight:700;color:#7a6a55;">Empty</span>
+      </div>`;
+    }
+  }
+  list.innerHTML=html;
+  list.querySelectorAll('[data-boot-load]').forEach(btn=>{
+    btn.onclick=()=>bootLoadSlot(parseInt(btn.dataset.bootLoad));
+  });
+}
+async function bootLoadSlot(slot){
+  const loading=document.getElementById('bootLoading');
+  if(loading) loading.textContent=`Loading Save Slot ${slot}…`;
+  try{
+    const result=await window.storage.get(saveKey(slot),false);
+    if(!result){ renderBootSaveList(); return; }
+    const data=JSON.parse(result.value);
+    applySavedGame(data);
+    addLog(`Loaded game from Slot ${slot}.`);
+    hideBootScreen();
+  }catch(e){
+    if(loading) loading.textContent='Could not load that save game.';
+  }
+}
+function startNewGameFromBoot(){
+  // The page starts with the default fresh-game state, so a New Game simply
+  // enters the game world without loading a saved slot.
+  showBootScreen._newGameStarted=true;
+  addLog('🌱 New game started — welcome to Aussie farming 2026!');
+  hideBootScreen();
+}
+
+async function deleteSlot(slot){
+  try{ await window.storage.delete(saveKey(slot), false); addLog(`Cleared Slot ${slot}.`); }
+  catch(e){ /* already empty */ }
+  renderSaveModal();
+}
+
+async function renderSaveModal(){
+  const list = document.getElementById('saveSlotList');
+  list.innerHTML = '<div class="empty-note">Loading save slots…</div>';
+  let html = '';
+  for(let slot=1; slot<=SAVE_SLOT_COUNT; slot++){
+    let info = null;
+    try{
+      const result = await window.storage.get(saveKey(slot), false);
+      if(result) info = JSON.parse(result.value);
+    } catch(e){ /* empty slot */ }
+    const summary = info
+      ? `Day ${info.day} · ${SEASONS[info.seasonIndex]} · $${info.money} · saved ${new Date(info.savedAt).toLocaleString()}`
+      : 'Empty slot';
+    html += `<div class="machine-card">
+      <div class="mtitle"><span>Slot ${slot}</span></div>
+      <div class="mdesc">${summary}</div>
+      <div style="display:flex; gap:6px;">
+        <button class="small-btn" data-save="${slot}">Save Here</button>
+        <button class="small-btn ghost" data-load="${slot}" ${info?'':'disabled'}>Load</button>
+        <button class="small-btn ghost" data-delslot="${slot}" ${info?'':'disabled'}>Delete</button>
+      </div>
+    </div>`;
+  }
+  list.innerHTML = html;
+  list.querySelectorAll('[data-save]').forEach(btn=> btn.onclick=()=>saveToSlot(parseInt(btn.dataset.save)));
+  list.querySelectorAll('[data-load]').forEach(btn=> btn.onclick=()=>loadFromSlot(parseInt(btn.dataset.load)));
+  list.querySelectorAll('[data-delslot]').forEach(btn=> btn.onclick=()=>deleteSlot(parseInt(btn.dataset.delslot)));
+}
+
+function renderBarnModal(){
+  const list = document.getElementById('inventoryList');
+  let html = `<div class="item-row" style="background:#fff3d6;">
+    <span class="name">🌾 Seeder Tank</span>
+    <span style="display:flex;gap:8px;align-items:center;">
+      <span class="mono">${state.seedTank}/${state.seedTankMax}</span>
+      <button class="small-btn" id="refillBtn">Refill $1000</button>
+    </span></div>`;
+  html += `<div class="item-row" style="background:#e7f1f7;"><span class="name">🧪 Sprayer Tank</span><span style="display:flex;gap:8px;align-items:center;"><span class="mono">${state.sprayTank}/${state.sprayTankMax}</span><button class="small-btn ghost" id="refillSprayBtn">Refill</button></span></div>`;
+  const entries = Object.entries(state.inventory).filter(([,v])=>v>0);
+  if(entries.length===0){
+    html += '<div class="empty-note">Nothing harvested yet. Plant and harvest crops out in the field.</div>';
+  } else {
+    entries.forEach(([name,qty])=>{
+      const mult = state.prices[name];
+      const trend = mult>1.02?'up':mult<0.98?'down':'flat';
+      const price = priceFor(name);
+      html += `<div class="item-row">
+        <span class="name">${goodDef(name).label} <span class="mono" style="font-weight:400;">x${qty} (${goodDef(name).unit})</span></span>
+        <span style="display:flex;gap:8px;align-items:center;">
+          <span class="mono ${trend==='up'?'price-up':trend==='down'?'price-down':''}">$${price} ${trend==='up'?'▲':trend==='down'?'▼':'—'}</span>
+          <button class="small-btn" data-sell="${name}" data-qty="1">Sell 1</button>
+          <button class="small-btn ghost" data-sell="${name}" data-qty="${qty}">Sell All</button>
+        </span></div>`;
+    });
+  }
+  list.innerHTML = html;
+  document.getElementById('refillBtn').onclick = refillTank;
+  document.getElementById('refillSprayBtn').onclick = ()=>{ state.sprayTank=state.sprayTankMax; addLog('Refilled sprayer tank at the barn.'); updateHud(); renderBarnModal(); };
+  list.querySelectorAll('[data-sell]').forEach(btn=>{
+    btn.onclick = ()=> sellItem(btn.dataset.sell, parseInt(btn.dataset.qty));
+  });
+}
+
+let shopActiveTab = 'machinery';
+function hasBaseUnit(type){ return !!YARD_POS[type]; }
+
+function renderShopModal(){
+  const list = document.getElementById('machineList');
+  let html = '';
+
+  if(shopActiveTab==='animals'){
+    Object.entries(ANIMALS).forEach(([type,cfg])=>{
+      const owned = state.animals.filter(a=>a.type===type).length;
+      html += `<div class="machine-card">
+        <div class="mtitle"><span>${cfg.label} (${owned} owned)</span><span class="mono">$${cfg.cost}</span></div>
+        <div class="mdesc">Produces ${goodDef(cfg.product).label.toLowerCase()} every ${cfg.interval} day${cfg.interval>1?'s':''}, automatically.</div>
+        <button class="small-btn" data-buyanimal="${type}" ${state.money<cfg.cost?'disabled':''}>Buy</button>
+      </div>`;
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('[data-buyanimal]').forEach(btn=>{
+      btn.onclick = ()=> { buyAnimal(btn.dataset.buyanimal); renderShopModal(); };
+    });
+    return;
+  }
+
+  MACHINES.filter(m=>m.category===shopActiveTab).forEach(m=>{
+    if(m.kind==='buyTractor'){
+      const cost = extraTractorCost();
+      html += `<div class="machine-card">
+        <div class="mtitle"><span>${m.name} (${tractors.length} owned)</span><span class="mono">$${cost}</span></div>
+        <div class="mdesc">${m.desc}</div>
+        <button class="small-btn" data-buy="${m.id}" ${state.money<cost?'disabled':''}>Buy</button>
+      </div>`;
+      return;
+    }
+    if(m.kind==='buySpare'){
+      const owned = (hasBaseUnit(m.spareType)?1:0) + extraUnits.filter(u=>u.type===m.spareType).length;
+      const cost = extraSpareCost(m.spareType);
+      html += `<div class="machine-card">
+        <div class="mtitle"><span>${m.name} (${owned} owned)</span><span class="mono">$${cost}</span></div>
+        <div class="mdesc">${m.desc}</div>
+        <button class="small-btn" data-buy="${m.id}" ${state.money<cost?'disabled':''}>Buy</button>
+      </div>`;
+      return;
+    }
+    const owned = state.owned[m.id];
+    html += `<div class="machine-card">
+      <div class="mtitle"><span>${m.name}</span><span class="mono">${owned?'OWNED':'$'+m.cost}</span></div>
+      <div class="mdesc">${m.desc}</div>
+      <button class="small-btn" data-buy="${m.id}" ${owned||state.money<m.cost?'disabled':''}>${owned?'Purchased':'Buy'}</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+  list.querySelectorAll('[data-buy]').forEach(btn=>{
+    btn.onclick = ()=> buyMachine(btn.dataset.buy);
+  });
+}
+
+/* ================= USED EQUIPMENT ================= */
+const USED_LISTINGS = [
+  {id:'usedTractor', name:'Used Case IH Magnum 8940', desc:'High-hour Magnum on duals, a few scratches but runs strong. Adds another tractor to your fleet.', fullPrice:31200, discountPct:35},
+  {id:'usedTruck', name:'Used Kenworth T900 + Road Train', desc:'High-km prime mover with two trailers, still road-ready. Adds another truck to your fleet.', fullPrice:42000, discountPct:40},
+  {id:'usedChaserBin', name:'Used Chaser Bin', desc:'Field grain cart with an unloading auger — the harvester can dump straight into it out in the paddock instead of driving back.', fullPrice:18000, discountPct:30},
+  {id:'usedGravityWagon', name:'Used Gravity Wagon', desc:'Simple gate-unload grain cart. Smaller capacity than a chaser bin, but cheap.', fullPrice:9000, discountPct:25}
+];
+function usedPrice(listing){ return Math.round(listing.fullPrice*(1-listing.discountPct/100)); }
+
+function buyUsedListing(id){
+  const listing = USED_LISTINGS.find(l=>l.id===id);
+  if(!listing || state.owned[id]) return;
+  const price = usedPrice(listing);
+  if(state.money<price) return;
+  state.money -= price;
+  state.owned[id] = true;
+  if(id==='usedTractor'){
+    const newTractor = buildTractor(true);
+    newTractor.position.set(FARMYARD_X + 10 + tractors.length*4, 0, FARMYARD_Z + 8);
+    scene.add(newTractor);
+    tractors.push(newTractor);
+  } else if(id==='usedTruck'){
+    createTruckRig(FARMYARD_X - 22 - trucks.length*12, FARMYARD_Z - 16);
+  } else if(id==='usedChaserBin'){
+    spawnImplementUnit('chaserbin', FARMYARD_X-13, FARMYARD_Z-24);
+  } else if(id==='usedGravityWagon'){
+    spawnImplementUnit('gravitywagon', FARMYARD_X-1, FARMYARD_Z-24);
+  }
+  addLog(`Bought a ${listing.name} for $${price} (${listing.discountPct}% off, used)!`);
+  renderUsedModal(); updateHud();
+}
+
+function renderUsedModal(){
+  const list = document.getElementById('usedList');
+  let html = '';
+  USED_LISTINGS.forEach(listing=>{
+    const owned = state.owned[listing.id];
+    const price = usedPrice(listing);
+    html += `<div class="machine-card">
+      <div class="mtitle"><span>${listing.name}</span><span class="mono">${owned?'SOLD':`$${price} <span style="color:#4f8a4f;">(${listing.discountPct}% off $${listing.fullPrice})</span>`}</span></div>
+      <div class="mdesc">${listing.desc}</div>
+      <button class="small-btn" data-buyused="${listing.id}" ${owned||state.money<price?'disabled':''}>${owned?'Sold':'Buy Used'}</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+  list.querySelectorAll('[data-buyused]').forEach(btn=>{
+    btn.onclick = ()=> buyUsedListing(btn.dataset.buyused);
+  });
+}
+
+/* ================= END DAY ================= */
+function pickWeather(){
+  const table = WEATHER_TABLE[currentSeason()];
+  let r=Math.random(), acc=0;
+  for(const [w,p] of table){ acc+=p; if(r<=acc) return w; }
+  return table[0][0];
+}
+
+function endDay(){
+  const weather = state.weather;
+
+  state.animals.forEach(a=>{
+    const cfg = ANIMALS[a.type];
+    a.daysSinceProduct++;
+    if(a.daysSinceProduct>=cfg.interval){
+      a.daysSinceProduct = 0;
+      addToInventory(cfg.product, 1);
+      addLog(`Your ${cfg.label.toLowerCase()} produced ${goodDef(cfg.product).label.toLowerCase()}.`);
+    }
+  });
+
+  paddocks.forEach(paddock=>{
+    for(let x=0;x<paddock.cols;x++){
+      for(let z=0;z<paddock.rows;z++){
+        const p = paddock.plots[x][z];
+        p.nitrogen=Math.max(0,(p.nitrogen ?? 75)-0.5);
+        p.ph=(p.ph ?? 6.3) + (6.3-(p.ph ?? 6.3))*0.015;
+        clampSoil(p);
+        if(p.status==='planted') p.weeds=Math.min(100,(p.weeds ?? 0)+7+Math.random()*6);
+        if(p.status!=='planted') continue;
+        const cfg = CROPS[p.crop];
+        if(p.daysGrown>=cfg.growDays) continue;
+
+        if(weather==='Frost' && Math.random()<0.5){
+          addLog(`❄️ Frost wilted a ${cfg.label} plot in ${paddock.name}.`);
+          if(p.cropMesh){ scene.remove(p.cropMesh); p.cropMesh=null; }
+          p.status='tilled'; p.crop=null; p.daysGrown=0; p.watered=false;
+          p.mesh.material.color.set(0x5b3f2a);
+          continue;
+        }
+        if(weather==='Stormy' && Math.random()<0.2){
+          addLog(`⛈️ Storm damaged a ${cfg.label} plot in ${paddock.name}.`);
+          if(p.cropMesh){ scene.remove(p.cropMesh); p.cropMesh=null; }
+          p.status='tilled'; p.crop=null; p.daysGrown=0; p.watered=false;
+          p.mesh.material.color.set(0x5b3f2a);
+          continue;
+        }
+        // no more droughts — crops always progress a stage unless frost/storm hit them above
+        p.daysGrown += 1;
+        const stage = Math.min(2, Math.floor((p.daysGrown/cfg.growDays)*2));
+        spawnCropMesh(paddock,x,z,p.crop,stage);
+      }
+    }
+  });
+
+  Object.keys(state.prices).forEach(k=>{
+    const def = goodDef(k);
+    let m = state.prices[k] + (Math.random()-0.5)*0.18;
+    state.prices[k] = Math.max(def.minMult, Math.min(def.maxMult, m));
+  });
+
+  state.day+=1; state.seasonDay+=1;
+  if(state.seasonDay>SEASON_DAYS){
+    state.seasonDay=1;
+    state.seasonIndex=(state.seasonIndex+1)%SEASONS.length;
+    if(state.seasonIndex===0) state.year+=1;
+    addLog(`🍂 New season: ${currentSeason()}.`);
+  }
+  state.weather = pickWeather();
+  addLog(`Day ${state.day} — ${WEATHER_ICON[state.weather]} ${state.weather}.`);
+  updateHud();
+  if(document.getElementById('barnModal').classList.contains('open')) renderBarnModal();
+}
+document.getElementById('endDayBtn').onclick = endDay;
+
+
+document.getElementById('newGameBtn').onclick=startNewGameFromBoot;
+
+// Show the title screen on every boot, then populate its save slots.
+renderBootSaveList();
+
+/* ================= HUD ================= */
+function updateHud(){
+  document.getElementById('seasonLabel').textContent = currentSeason();
+  document.getElementById('dayLabel').textContent = state.day;
+  document.getElementById('moneyLabel').textContent = '$'+state.money;
+  document.getElementById('weatherIcon').textContent = WEATHER_ICON[state.weather];
+  document.getElementById('weatherLabel').textContent = state.weather;
+  document.getElementById('tankLabel').textContent = state.attached==='sprayer' ? ('Spray '+state.sprayTank+'/'+state.sprayTankMax) : (state.seedTank+'/'+state.seedTankMax);
+  const ringDeg = ((state.seasonIndex*SEASON_DAYS+state.seasonDay)/(SEASONS.length*SEASON_DAYS))*360;
+  document.getElementById('seasonRing').style.transform = `rotate(${ringDeg}deg)`;
+  document.getElementById('seasonWheel').style.background = '#'+WEATHER_SKY[state.weather].toString(16).padStart(6,'0');
+  scene.fog.color.setHex(WEATHER_SKY[state.weather]);
+  renderer.setClearColor(WEATHER_SKY[state.weather]);
+
+  let toolText = 'None (Q to hitch)';
+  if(activeVehicle==='ute'){
+    toolText = '— (in the ute)';
+  } else if(activeVehicle==='truck'){
+    toolText = '— (hauling grain)';
+  } else if(activeVehicle==='harvester'){
+    toolText = `Header (${state.harvesterLowered?'Down':'Up'}) — Tank ${state.harvesterGrainL}/${state.harvesterGrainCapL}L`;
+  } else if(state.attached){
+    toolText = (IMPLEMENTS[state.attached]?.name || 'Implement') + (state.attached==='spreader' ? ` — ${state.spreaderMode==='lime'?'Lime':'Fertiliser'}` : '') + (state.attached==='seeder' ? ' — '+CROPS[state.seedCrop].label : '') + (state.attached==='sprayer' ? ` — Weed Spray ${state.sprayerFolded?'[Folded]':'[Unfolded]'}` : '') + (state.attached==='loader' ? (state.loaderCarrying?' — carrying a bale':' — empty') : state.attached==='baletrailer' ? ` — ${(extraUnits.find(u=>u.id===state.attachedUnitId)||{load:0}).load}/${state.baleTrailerCap} bales` : (state.lowered?' (Down)':' (Up)'));
+  }
+  document.getElementById('toolLabel').textContent = toolText;
+  document.getElementById('vehicleLabel').textContent = activeVehicle==='tractor' ? 'Tractor' : activeVehicle==='ute' ? 'Ute' : activeVehicle==='truck' ? 'Truck' : 'Combine';
+  updateSoilStatus();
+}
+function renderLog(){
+  document.getElementById('log').innerHTML = state.log.map(l=>`<div>${l}</div>`).join('');
+}
+addLog('Welcome to Harvest Hollow 3D! Drive to the yard behind the barn and press Q to hitch an implement.');
+updateHud();
+
+/* ================= CAMERA & LOOP ================= */
+let cameraView = 'back'; // 'back' or 'front'
+let cameraZoom = 1.0;    // 0.5 (close) .. 2.2 (far)
+function updateCamera(){
+  const mesh = getActiveMesh();
+  // negative z sits behind the vehicle's front-facing direction, giving a proper trailing chase view
+  let camOffset = activeVehicle==='tractor' ? new THREE.Vector3(0, 7.5, -13)
+                     : activeVehicle==='ute' ? new THREE.Vector3(0, 4, -8.5)
+                     : activeVehicle==='truck' ? new THREE.Vector3(0, 6.5, -18)
+                     : new THREE.Vector3(0, 9, -16);
+  if(cameraView==='front'){
+    // mirror to the front of the vehicle (positive z) so you're looking back at its face
+    camOffset = new THREE.Vector3(camOffset.x, camOffset.y, -camOffset.z);
+  }
+  camOffset = camOffset.clone().multiplyScalar(cameraZoom);
+  const rotated = camOffset.clone().applyAxisAngle(new THREE.Vector3(0,1,0), mesh.rotation.y);
+  camera.position.copy(mesh.position).add(rotated);
+  camera.lookAt(mesh.position.x, mesh.position.y+1.2, mesh.position.z);
+}
+let showMapOverlay = false;
+let mapAnimFrame = null;
+function toggleMapOverlay(){
+  showMapOverlay = !showMapOverlay;
+  document.getElementById('mapOverlay').style.display = showMapOverlay ? 'flex' : 'none';
+  if(showMapOverlay){
+    drawMapLoop();
+  } else if(mapAnimFrame){
+    cancelAnimationFrame(mapAnimFrame);
+    mapAnimFrame = null;
+  }
+}
+function drawMapLoop(){
+  renderFarmMap();
+  if(showMapOverlay) mapAnimFrame = requestAnimationFrame(drawMapLoop);
+}
+function renderFarmMap(){
+  const canvas = document.getElementById('mapCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = 30;
+  // world -> canvas mapping, preserving aspect ratio and fitting everything with padding
+  const worldW = worldMaxX-worldMinX, worldH = worldMaxZ-worldMinZ;
+  const scale = Math.min((W-pad*2)/worldW, (H-pad*2)/worldH);
+  const offX = (W - worldW*scale)/2, offZ = (H - worldH*scale)/2;
+  const toCanvas = (x,z)=> ({cx: offX + (x-worldMinX)*scale, cy: offZ + (z-worldMinZ)*scale});
+
+  ctx.fillStyle = '#6B8F4E';
+  ctx.fillRect(0,0,W,H);
+
+  // roads — light dirt-colored bands wherever paddocks aren't
+  ctx.strokeStyle = 'rgba(138,107,69,0.6)';
+  ctx.lineWidth = 14;
+  const rowsByZ = {};
+  paddocks.forEach(p=>{ if(!rowsByZ[p.originZ]) rowsByZ[p.originZ]=[]; rowsByZ[p.originZ].push(p); });
+  const rowZs = Object.keys(rowsByZ).map(Number).sort((a,b)=>a-b);
+  rowZs.forEach(z=>{
+    const rowDepth = Math.max(...rowsByZ[z].map(p=>p.depth));
+    const a = toCanvas(0, z+rowDepth/2);
+    ctx.beginPath(); ctx.moveTo(offX, a.cy); ctx.lineTo(offX+worldW*scale, a.cy); ctx.stroke();
+  });
+  { const a=toCanvas(0, FARMYARD_Z), b=toCanvas(0, rowZs[0]);
+    ctx.beginPath(); ctx.moveTo(a.cx,a.cy); ctx.lineTo(b.cx,b.cy); ctx.stroke(); }
+
+  // river
+  if(riverPathPoints.length>1){
+    ctx.strokeStyle = '#4a7fa5';
+    ctx.lineWidth = Math.max(2, riverWaterWidth*scale);
+    ctx.beginPath();
+    riverPathPoints.forEach((p,i)=>{
+      const c = toCanvas(p.x,p.z);
+      if(i===0) ctx.moveTo(c.cx,c.cy); else ctx.lineTo(c.cx,c.cy);
+    });
+    ctx.stroke();
+  }
+
+  // paddocks
+  paddocks.forEach(p=>{
+    const tl = toCanvas(p.originX, p.originZ);
+    const w = p.width*scale, h = p.depth*scale;
+    ctx.fillStyle = 'rgba(139,163,94,0.9)';
+    ctx.fillRect(tl.cx, tl.cy, w, h);
+    ctx.strokeStyle = '#4A3728'; ctx.lineWidth = 2;
+    ctx.strokeRect(tl.cx, tl.cy, w, h);
+    ctx.fillStyle = '#2E2620';
+    ctx.font = `${Math.max(10,Math.min(14,w/9))}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, tl.cx+w/2, tl.cy+h/2-6);
+    ctx.font = `bold ${Math.max(10,Math.min(13,w/10))}px Arial`;
+    ctx.fillText(p.hectares+' ha', tl.cx+w/2, tl.cy+h/2+10);
+  });
+
+  // labeled landmarks: barn, house, sheds, silos, yard
+  function landmark(x,z,label,color,r){
+    const c = toCanvas(x,z);
+    ctx.beginPath(); ctx.arc(c.cx,c.cy,r,0,Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle='#2E2620'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle = '#2E2620';
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, c.cx+r+3, c.cy+4);
+  }
+  landmark(barnPos.x, barnPos.z, 'Barn', '#9C4A38', 7);
+  landmark(housePos.x, housePos.z, 'House', '#EDE6D6', 6);
+  landmark(shedBig.position.x, shedBig.position.z, 'Shed', '#B7BCC0', 6);
+  landmark(shedSmall.position.x, shedSmall.position.z, 'Shed', '#B7BCC0', 5);
+  landmark(shedBig2.position.x, shedBig2.position.z, 'Shed', '#B7BCC0', 6);
+  landmark(SILO_POS.x, SILO_POS.z, 'Silos', '#c9ccce', 8);
+  landmark((YARD_POS.plow.x+YARD_POS.loader.x)/2, YARD_POS.plow.z, 'Yard', '#555555', 5);
+
+  // player position + facing direction
+  const mesh = getActiveMesh();
+  const p = toCanvas(mesh.position.x, mesh.position.z);
+  ctx.save();
+  ctx.translate(p.cx, p.cy);
+  ctx.rotate(mesh.rotation.y);
+  ctx.beginPath();
+  ctx.moveTo(0,-11); ctx.lineTo(7,8); ctx.lineTo(0,4); ctx.lineTo(-7,8);
+  ctx.closePath();
+  ctx.fillStyle = '#C5231C';
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function toggleBirdseye(){ toggleMapOverlay(); }
+function cycleCameraView(){
+  cameraView = cameraView==='back' ? 'front' : 'back';
+  addLog(`Camera: ${cameraView==='back'?'chase (behind)':'front-facing'} view.`);
+}
+window.addEventListener('wheel', e=>{
+  cameraZoom = Math.max(0.5, Math.min(2.2, cameraZoom + Math.sign(e.deltaY)*0.08));
+}, {passive:true});
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function updateActionPrompt(){
+  const prompt = document.getElementById('actionPrompt');
+  const nearOther = nearestOtherVehicle();
+  if(isNearBarn() || isNearSilo()){
+    prompt.style.display='block';
+    prompt.textContent = (activeVehicle==='harvester' && state.harvesterGrainL>0)
+      ? `Press E to unload ${state.harvesterGrainL}L and open Barn & Market`
+      : (activeVehicle==='tractor' && state.attached==='loader' && state.loaderCarrying)
+      ? 'Press E to drop off the bale and open Barn & Market'
+      : (activeVehicle==='tractor' && state.attached==='baletrailer' && (extraUnits.find(u=>u.id===state.attachedUnitId)||{load:0}).load>0)
+      ? 'Press E to unload the bale trailer and open Barn & Market'
+      : 'Press E for Barn & Market';
+    return;
+  }
+  if(isNearTruck() && activeVehicle==='harvester' && state.harvesterGrainL>0){
+    prompt.style.display='block';
+    prompt.textContent = `Press E to unload ${state.harvesterGrainL}L into the truck`;
+    return;
+  }
+  if(isNearChaserOrWagon() && activeVehicle==='harvester' && state.harvesterGrainL>0){
+    prompt.style.display='block';
+    prompt.textContent = `Press E to unload ${state.harvesterGrainL}L into the cart`;
+    return;
+  }
+  if(isNearYard() && activeVehicle==='tractor' && !state.attached){
+    prompt.style.display='block';
+    prompt.textContent = 'Press Q to attach the nearest implement';
+    return;
+  }
+  if(nearOther){
+    prompt.style.display='block';
+    prompt.textContent = `Press V to hop into the ${vehicleDisplayName(nearOther.kind)}`;
+    return;
+  }
+  if(activeVehicle==='harvester'){
+    const loc = currentPaddockAndCoords();
+    if(!loc){ prompt.style.display='none'; return; }
+    prompt.style.display='block';
+    prompt.textContent = state.harvesterLowered ? 'Header lowered — SPACE to raise' : 'SPACE to lower the header';
+    return;
+  }
+  const loc = currentPaddockAndCoords();
+  if(activeVehicle!=='tractor' || !loc){
+    if(activeVehicle==='tractor' && state.attached){
+      prompt.style.display='block';
+      prompt.textContent = `Press Q to detach the ${IMPLEMENTS[state.attached].name}`;
+    } else {
+      prompt.style.display='none';
+    }
+    return;
+  }
+  let txt = '';
+  if(!state.attached) txt = 'No implement attached — visit the yard (Q)';
+  else if(state.attached==='sprayer' && state.sprayerFolded) txt = 'Sprayer booms folded — press F to unfold before lowering';
+  else txt = state.lowered ? `${IMPLEMENTS[state.attached].name} lowered — SPACE to raise` : `SPACE to lower the ${IMPLEMENTS[state.attached].name}`;
+  prompt.style.display = txt ? 'block' : 'none';
+  prompt.textContent = txt;
+}
+
+// updates the HUD's paddock readout every frame based on where the active vehicle currently is
+function updatePaddockHud(){
+  const loc = currentPaddockAndCoords();
+  const el = document.getElementById('paddockLabel');
+  if(!el) return;
+  el.textContent = loc ? `${loc.paddock.name} (${loc.paddock.hectares} ha)` : '—';
+}
+
+let lastTime = performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const dt = Math.min(0.05, (now-lastTime)/1000);
+  lastTime = now;
+  updateVehicle(dt);
+  checkLoaderPickup();
+  updateSoilStatus();
+  checkBaleTrailerLoad();
+  updateTruckArticulation();
+  updateImplementArticulation(dt);
+  animateHeaderFold(dt);
+  animateSprayerBooms(dt);
+  updateRain(dt);
+  updateCamera();
+  updateActionPrompt();
+  updatePaddockHud();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
