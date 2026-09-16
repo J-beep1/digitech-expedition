@@ -183,6 +183,31 @@
     background:rgba(23,105,255,0.25);
   }
 
+  .game-preview.bastion{
+    background:linear-gradient(180deg, #0a0f1a 0%, #16222b 55%, #27351f 78%, #161f13 100%);
+  }
+  .bastion-moon{
+    position:absolute;left:70%;top:16%;
+    width:32px;height:32px;border-radius:50%;
+    background:#dfe8e0;
+    box-shadow:0 0 22px rgba(223,232,224,0.5);
+  }
+  .bastion-wall{
+    position:absolute;left:0;right:0;bottom:0;height:14%;
+    background:#211a12;
+  }
+  .bastion-spike{
+    position:absolute;bottom:12%;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-bottom:34px solid #4a3a28;
+  }
+
+  .game-credit{
+    font-size:12px;font-style:italic;color:var(--text2);
+    margin-top:-8px;margin-bottom:16px;
+  }
+
   .game-body{padding:24px 26px;display:flex;flex-direction:column;flex:1;min-width:0;}
   .game-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-tag{
@@ -258,6 +283,34 @@
         </div>
         <div class="game-name">Sierra Surf</div>
         <div class="game-desc">Ride the waves in a full-window 3D surf game — chase combos, dodge wipeouts, and chain rides across a sunset coastline. Built single-file, playable straight in the browser.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- BASTION ZERO -->
+    <a class="game-card" href="bastion-zero.html" target="_blank">
+      <div class="game-preview bastion">
+        <div class="bastion-wall"></div>
+        <div class="bastion-spike" style="left:12%;"></div>
+        <div class="bastion-spike" style="left:26%;"></div>
+        <div class="bastion-spike" style="left:40%;"></div>
+        <div class="bastion-spike" style="left:54%;"></div>
+        <div class="bastion-spike" style="left:68%;"></div>
+        <div class="bastion-spike" style="left:82%;"></div>
+        <div class="bastion-moon"></div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">Student build</span>
+          <span class="game-tag">3D</span>
+          <span class="game-tag">Survival</span>
+        </div>
+        <div class="game-name">Bastion Zero</div>
+        <div class="game-desc">Guys after eight weeks(!!!) my game is finally complete, after lots of setbacks and removed features the final version of my game is complete. I hope everyone can enjoy and play my game and appreciate the time and effort into this project.<br><br>With great honor and happiness, I present Bastion Zero 3D.<br>Thankyou guys!</div>
+        <div class="game-credit">— Tate Herbert (TateHQ · TateHQ_)</div>
         <div class="game-footer">
           <span class="game-status">Live</span>
           <span class="play-btn">Play ▸</span>
