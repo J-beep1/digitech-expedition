@@ -1,0 +1,3107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Green Acre Farms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --soil-dark:#3b2e20;
+    --soil:#5b4530;
+    --ink:#2a2016;
+    --paper:#eee3c8;
+    --paper-deep:#e2d3ac;
+    --wheat-gold:#d7a63f;
+    --wheat-gold-deep:#b6832a;
+    --field-green-1:#a7c98a;
+    --field-green-2:#6ea852;
+    --field-green-3:#3e7a3a;
+    --stubble:#c2a878;
+    --tilled:#6b5238;
+    --sown:#8a6e42;
+    --hay-mowed:#d9c98a;
+    --hay-tedded:#e3d59a;
+    --hay-windrowed:#c8ac5e;
+    --silage-baled:#a9b98a;
+    --withered:#8c7a63;
+    --road:#5e5b54;
+    --road-line:#e8d24c;
+    --track-grass:#6f9c4c;
+    --track-dirt:#8a6a44;
+    --up:#3a7d3a;
+    --down:#a3372e;
+    --panel:#f6ecd6;
+    --panel-line:#cbb98c;
+    --shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, #f4e9cd 0%, var(--paper) 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{background:var(--wheat-gold);color:var(--ink);}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  #app{max-width:1180px;margin:0 auto;padding:18px 18px 60px;}
+
+  /* ---------- HEADER ---------- */
+  header.topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:10px;
+    background:var(--soil-dark);
+    color:var(--paper);
+    border-radius:14px;
+    padding:16px 22px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+    position:relative;
+    overflow:hidden;
+  }
+  header.topbar::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg, rgba(215,166,63,0.07) 0 18px, transparent 18px 36px);
+    pointer-events:none;
+  }
+  .brand{display:flex;flex-direction:column;gap:2px;z-index:1;}
+  .brand .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--wheat-gold);}
+  .brand h1{font-size:23px;font-weight:700;color:var(--paper);letter-spacing:.01em;}
+  .stat-cluster{display:flex;gap:22px;align-items:center;z-index:1;flex-wrap:wrap;}
+  .stat{display:flex;flex-direction:column;align-items:flex-end;}
+  .stat .label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#cbb98c;}
+  .stat .value{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;color:var(--paper);}
+  .stat .value.money{color:var(--wheat-gold);}
+  button.next-day{
+    z-index:1;
+    background:var(--wheat-gold);
+    color:var(--ink);
+    border:none;
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:15px;
+    padding:11px 20px;
+    border-radius:9px;
+    cursor:pointer;
+    box-shadow: var(--shadow);
+    transition:transform .08s ease;
+  }
+  button.next-day:hover{transform:translateY(-1px);background:#e2b451;}
+  button.next-day{min-width:118px;}
+  button.next-day:active{transform:translateY(1px);box-shadow:none;}
+  button.icon-btn{
+    z-index:1;
+    background:rgba(238,227,200,0.12);
+    color:var(--paper);
+    border:1px solid rgba(238,227,200,0.35);
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    padding:9px 12px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  button.icon-btn:hover{background:rgba(238,227,200,0.22);}
+
+  /* ---------- FS25-STYLE SLEEP / TIME ADVANCE ---------- */
+  .sleep-screen{
+    min-height:88vh;display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;border-radius:18px;
+    background:linear-gradient(180deg,#07111f 0%,#101c32 52%,#283b51 100%);
+    color:#fff;
+    --sleep-dur:2.6s;
+  }
+  .sleep-screen::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.16),transparent 30%),
+               linear-gradient(180deg,rgba(4,9,18,.15),rgba(4,9,18,.55));}
+  /* dusk-to-night-to-dawn light wash, timed to the sleep duration */
+  .sleep-dusk-overlay{position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:linear-gradient(180deg,rgba(255,150,90,.38),rgba(255,150,90,0) 62%);
+    animation:duskFade var(--sleep-dur) linear forwards;}
+  .sleep-dawn-overlay{position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:linear-gradient(0deg,rgba(255,200,140,.45),rgba(255,200,140,0) 58%);
+    animation:dawnFade var(--sleep-dur) linear forwards;}
+  @keyframes duskFade{0%{opacity:1;}18%{opacity:0;}100%{opacity:0;}}
+  @keyframes dawnFade{0%{opacity:0;}82%{opacity:0;}100%{opacity:1;}}
+  /* animated starfield used while actively sleeping */
+  .sleep-stars{position:absolute;inset:0;overflow:hidden;z-index:1;}
+  .sleep-star{position:absolute;background:#fff;border-radius:50%;opacity:.2;
+    box-shadow:0 0 4px 1px rgba(255,255,255,.7);
+    animation-name:starTwinkle;animation-iteration-count:infinite;animation-timing-function:ease-in-out;}
+  @keyframes starTwinkle{0%,100%{opacity:.15;}50%{opacity:1;}}
+  /* static starfield used on the sleep/wake picker */
+  .sleep-stars-static{position:absolute;inset:0;opacity:.8;z-index:1;background-image:
+    radial-gradient(circle at 12% 20%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 27% 35%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 46% 16%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 68% 28%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 84% 14%,#fff 0 1px,transparent 2px),
+    radial-gradient(circle at 91% 42%,#fff 0 1px,transparent 2px);}
+  /* clouds drifting across while time passes */
+  .sleep-clouds{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;}
+  .sleep-cloud-wrap{position:absolute;left:-180px;top:10%;animation-name:cloudDrift;
+    animation-timing-function:linear;animation-iteration-count:infinite;}
+  .sleep-cloud{display:inline-block;font-size:54px;filter:blur(.3px) drop-shadow(0 4px 6px rgba(0,0,0,.25));}
+  @keyframes cloudDrift{from{transform:translateX(0);}to{transform:translateX(calc(100vw + 260px));}}
+  /* moon arcing across the sky over the course of the sleep */
+  .sleep-moon-arc{position:absolute;inset:0;pointer-events:none;z-index:1;}
+  .sleep-moon-arc .sleep-moon{position:absolute;font-size:46px;left:6%;top:60%;
+    filter:drop-shadow(0 0 12px rgba(255,255,255,.55));
+    animation-name:moonArc;animation-duration:var(--sleep-dur);animation-timing-function:linear;
+    animation-iteration-count:1;animation-fill-mode:forwards;}
+  @keyframes moonArc{
+    0%{left:4%;top:62%;opacity:0;}
+    10%{opacity:1;}
+    50%{left:47%;top:8%;}
+    90%{opacity:1;}
+    100%{left:92%;top:60%;opacity:0;}
+  }
+  .sleep-card{position:relative;z-index:2;text-align:center;min-width:340px;padding:34px 42px;
+    background:rgba(8,15,27,.72);border:1px solid rgba(255,255,255,.18);
+    border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35);backdrop-filter:blur(5px);}
+  .sleep-card .sleep-moon{font-size:64px;line-height:1;margin-bottom:10px;animation:sleepFloat 2s ease-in-out infinite;}
+  .sleep-title{font-size:30px;font-weight:800;letter-spacing:.5px;}
+  .sleep-sub{margin-top:8px;color:rgba(255,255,255,.78);font-size:14px;}
+  .sleep-clock{margin-top:14px;font-size:34px;font-weight:700;letter-spacing:1px;color:#f3d37a;}
+  .sleep-time{margin-top:8px;font-size:16px;font-weight:600;color:rgba(255,255,255,.85);}
+  .sleep-bar{height:8px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;margin:22px 0 4px;}
+  .sleep-bar-fill{height:100%;width:0;background:#f3d37a;border-radius:99px;animation:sleepProgress var(--sleep-dur) linear forwards;}
+  .sleep-hint{font-size:11px;color:rgba(255,255,255,.55);}
+  @keyframes sleepProgress{to{width:100%;}}
+  @keyframes sleepFloat{50%{transform:translateY(-5px);}}
+  /* ---------- SLEEP / WAKE-TIME PICKER ---------- */
+  .sleep-screen.setup .sleep-card{min-width:380px;}
+  .wake-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0 4px;max-width:320px;}
+  .wake-opt{padding:9px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.08);color:#fff;font-family:'IBM Plex Mono',monospace;
+    font-size:13px;cursor:pointer;}
+  .wake-opt:hover{background:rgba(255,255,255,.16);}
+  .wake-opt.active{background:#f3d37a;color:#2a2016;border-color:#f3d37a;font-weight:700;}
+  .sleep-setup-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;}
+
+  /* ---------- MENU / TITLE SCREEN ---------- */
+  .menu-screen{
+    min-height:88vh;display:flex;align-items:flex-end;justify-content:center;
+    padding:20px;position:relative;overflow:hidden;border-radius:18px;
+    background:#eeeae2;
+  }
+  .menu-hero{
+    position:absolute;inset:0;width:100%;height:100%;z-index:0;
+    display:block;object-fit:cover;object-position:center center;
+    image-rendering:auto;
+    filter:saturate(.92) contrast(.98);
+  }
+  .menu-hero-scrim{
+    position:absolute;inset:0;z-index:0;
+    background:linear-gradient(to top, rgba(20,16,12,.42) 0%, rgba(20,16,12,.08) 28%, transparent 55%);
+    pointer-events:none;
+  }
+  .menu-card{
+    background:rgba(59,46,32,.94);
+    color:var(--paper);
+    border-radius:16px;
+    padding:18px 22px 20px;
+    max-width:410px;
+    width:min(92%,410px);
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.4), 0 4px 0 rgba(0,0,0,.2);
+    position:relative;
+    z-index:1;
+    overflow:hidden;
+    margin-bottom:4px;
+    backdrop-filter:blur(2px);
+  }
+  .menu-card::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg, rgba(215,166,63,0.08) 0 18px, transparent 18px 36px);
+    pointer-events:none;
+  }
+  .menu-card .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--wheat-gold);position:relative;z-index:1;
+  }
+  .menu-card h1{font-size:28px;color:var(--paper);margin:6px 0 14px;position:relative;z-index:1;}
+  .menu-tagline{font-size:13.5px;color:#cbb98c;line-height:1.5;margin:0 0 18px;position:relative;z-index:1;}
+  .menu-save-info{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--wheat-gold);
+    background:rgba(215,166,63,0.12);border-radius:8px;padding:8px 12px;margin-bottom:20px;
+    position:relative;z-index:1;
+  }
+  .menu-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
+  .menu-btn{
+    font-family:'Fraunces',serif;font-weight:600;font-size:15px;
+    padding:13px;border-radius:10px;cursor:pointer;border:1px solid rgba(238,227,200,0.35);
+    background:rgba(238,227,200,0.1);color:var(--paper);
+  }
+  .menu-btn:hover{background:rgba(238,227,200,0.2);}
+  .menu-btn.primary{background:var(--wheat-gold);color:var(--ink);border-color:var(--wheat-gold-deep);}
+  .menu-btn.primary:hover{background:#e2b451;}
+
+  /* ---------- TOAST ---------- */
+  #toast{
+    min-height:20px;
+    margin-top:10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--soil-dark);
+    background:var(--wheat-gold);
+    border-radius:7px;
+    padding:0;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:all .25s ease;
+  }
+  #toast.show{padding:8px 14px;max-height:40px;opacity:1;}
+
+  /* ---------- LAYOUT ---------- */
+  .layout{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px;}
+  @media (max-width:880px){.layout{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: var(--shadow);
+  }
+  .card > h2{
+    font-size:15px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--soil);border-bottom:2px solid var(--panel-line);
+    padding-bottom:8px;margin-bottom:12px;
+  }
+  .card > h2 .sub{
+    display:block;font-family:'Inter';text-transform:none;letter-spacing:0;
+    font-size:11.5px;color:#8a7a55;font-weight:400;margin-top:2px;
+  }
+
+  /* ---------- MAP ---------- */
+  .paddock-map{
+    background: var(--stubble);
+    border-radius:10px;
+    padding:14px;
+    display:flex;flex-direction:column;gap:0;
+    position:relative;
+    border:3px solid var(--soil-dark);
+  }
+  .field-row{display:flex;width:100%;min-height:112px;align-items:stretch;}
+  .field-row{margin-top:0;}
+
+  .road-h{
+    width:100%;height:22px;flex-shrink:0;
+    background:linear-gradient(to bottom,
+      var(--track-grass) 0%, var(--track-grass) 16%,
+      var(--track-dirt) 16%, var(--track-dirt) 38%,
+      var(--track-grass) 38%, var(--track-grass) 62%,
+      var(--track-dirt) 62%, var(--track-dirt) 84%,
+      var(--track-grass) 84%, var(--track-grass) 100%);
+  }
+  .road-v{
+    width:20px;flex-shrink:0;align-self:stretch;
+    background:linear-gradient(to right,
+      var(--track-grass) 0%, var(--track-grass) 16%,
+      var(--track-dirt) 16%, var(--track-dirt) 38%,
+      var(--track-grass) 38%, var(--track-grass) 62%,
+      var(--track-dirt) 62%, var(--track-dirt) 84%,
+      var(--track-grass) 84%, var(--track-grass) 100%);
+  }
+
+  .field-plot{
+    position:relative;
+    padding:10px;
+    cursor:pointer;
+    display:flex;flex-direction:column;justify-content:space-between;
+    transition:filter .1s ease;
+    min-width:70px;
+  }
+  .field-plot:hover{filter:brightness(1.06);}
+  .field-plot.selected{outline:3px solid var(--ink);outline-offset:-3px;}
+
+  .field-plot.state-unowned{background-color:#cabf9e;cursor:pointer;}
+  .field-plot.state-harvested{background-color:var(--stubble);}
+  .field-plot.state-cultivated{background-color:var(--tilled);}
+  .field-plot.state-sowed{background-color:var(--sown);}
+  .field-plot.state-growing1{background-color:var(--field-green-1);}
+  .field-plot.state-growing2{background-color:var(--field-green-2);}
+  .field-plot.state-growing3{background-color:var(--field-green-3);}
+  .field-plot.state-ready{background-color:var(--wheat-gold);}
+  .field-plot.state-withered{background-color:var(--withered);}
+  .field-plot.state-mowed{background-color:var(--hay-mowed);}
+  .field-plot.state-tedded{background-color:var(--hay-tedded);}
+  .field-plot.state-windrowed{background-color:var(--hay-windrowed);}
+  .field-plot.state-baled{background-color:var(--silage-baled);}
+
+  .field-plot .ftag{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    background:rgba(255,255,255,0.75);color:var(--ink);
+    padding:2px 6px;border-radius:5px;align-self:flex-start;
+    font-weight:600;
+  }
+  .field-plot .fname{font-family:'Fraunces',serif;font-weight:600;font-size:13px;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,0.35);}
+  .field-plot .fstate{font-size:10.5px;color:var(--ink);opacity:.85;}
+
+  .map-legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;font-size:11px;}
+  .map-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,0.25);}
+
+  /* ---------- BUILDINGS ROW ---------- */
+  .buildings-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .building-tile{
+    flex:1;min-width:130px;
+    background:var(--soil);
+    color:var(--paper);
+    border-radius:10px;
+    padding:10px 12px;
+    text-align:center;
+    cursor:pointer;
+    border:2px solid var(--soil-dark);
+  }
+  .building-tile.owned{background:var(--field-green-3);}
+  .building-tile .bicon{font-size:22px;display:block;margin-bottom:2px;}
+  .building-tile .bname{font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;}
+  .building-tile .bstatus{font-family:'IBM Plex Mono',monospace;font-size:10.5px;opacity:.85;margin-top:2px;}
+
+  .pen-plot{background-color:#cbb383 !important;}
+  .pen-plot.pen-unbuilt{background-color:#b8ab86 !important;}
+  .pen-silhouette{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:34px;opacity:0.28;pointer-events:none;}
+  .pen-silhouette.barn-silhouette{opacity:0.3;}
+  .barn-row{margin:2px 0;}
+  .barn-svg{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.25));}
+  .pen-icons{display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start;min-height:18px;}
+  .mini-animal{font-size:14px;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,0.2));}
+
+  /* ---------- TABS ---------- */
+  .tabs{display:flex;gap:6px;margin-bottom:12px;}
+  .tab-btn{
+    flex:1;background:var(--paper-deep);border:1px solid var(--panel-line);
+    padding:8px 6px;border-radius:8px;cursor:pointer;
+    font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;color:var(--soil);
+  }
+  .tab-btn.active{background:var(--wheat-gold);color:var(--ink);border-color:var(--wheat-gold-deep);}
+
+  /* ---------- OVERVIEW ---------- */
+  .map-mode-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .map-mode-btn{
+    background:var(--paper-deep);border:1px solid var(--panel-line);
+    padding:7px 12px;border-radius:20px;cursor:pointer;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:12px;color:var(--soil);
+  }
+  .map-mode-btn.active{background:var(--soil-dark);color:var(--paper);border-color:var(--soil-dark);}
+  .overview-table-wrap{margin-top:18px;overflow-x:auto;}
+  .overview-table-wrap h4{font-size:14px;margin-bottom:8px;}
+  .status-pill{
+    display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;
+    margin:1px 3px 1px 0;white-space:nowrap;
+  }
+  .status-pill.ok{background:rgba(58,125,58,0.15);color:var(--up);}
+  .status-pill.warn{background:rgba(182,131,42,0.18);color:var(--wheat-gold-deep);}
+  .status-pill.bad{background:rgba(163,55,46,0.15);color:var(--down);}
+  .status-pill.neutral{background:rgba(90,80,60,0.12);color:#6b5a3a;}
+  table.kiosk.overview-table td, table.kiosk.overview-table th{padding:7px 6px;}
+  tr.ov-unowned td{opacity:.6;}
+
+  /* ---------- FIELD PANEL ---------- */
+  .field-detail h3{font-size:17px;}
+  .fd-meta{display:flex;gap:14px;margin:8px 0 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6b5a3a;}
+  .progress-track{display:flex;gap:3px;margin:10px 0;}
+  .progress-seg{flex:1;height:8px;border-radius:3px;background:#d9cba0;}
+  .progress-seg.filled{background:var(--field-green-2);}
+  .action-btn{
+    width:100%;background:var(--wheat-gold-deep);color:#fff;border:none;
+    padding:10px;border-radius:8px;font-family:'Fraunces',serif;font-weight:600;
+    font-size:14px;cursor:pointer;margin-top:8px;
+  }
+  .action-btn:hover{background:#a17020;}
+  .action-btn:disabled{background:#b8ab86;cursor:not-allowed;}
+  select.crop-select{
+    width:100%;padding:9px;border-radius:8px;border:1px solid var(--panel-line);
+    font-family:'Inter';font-size:13.5px;background:#fff;margin-top:8px;
+  }
+  .empty-hint{color:#8a7a55;font-size:13px;line-height:1.5;padding:10px 0;}
+
+  .soil-panel{background:#fbf6e8;border:1px solid var(--panel-line);border-radius:10px;padding:10px 12px;margin:10px 0 4px;}
+  .soil-row{margin-bottom:9px;}
+  .soil-row:last-child{margin-bottom:0;}
+  .soil-label{display:flex;justify-content:space-between;font-size:11.5px;color:#6b5a3a;margin-bottom:4px;}
+  .soil-val{font-weight:600;font-size:12px;}
+  .soil-good{color:var(--up);}
+  .soil-ok{color:var(--wheat-gold-deep);}
+  .soil-poor{color:var(--down);}
+  .gauge{position:relative;height:8px;border-radius:4px;background:#e2d3ac;overflow:hidden;}
+  .gauge-fill{height:100%;border-radius:4px;transition:width .2s ease;}
+  .gauge-fill.soil-good{background:var(--up);}
+  .gauge-fill.soil-ok{background:var(--wheat-gold-deep);}
+  .gauge-fill.soil-poor{background:var(--down);}
+  .gauge-target{position:absolute;top:0;bottom:0;left:calc((6.5 - 4.2) / (8.0 - 4.2) * 100%);width:2px;background:var(--ink);opacity:.35;}
+  .outlook-row .soil-label{margin-bottom:0;}
+  .soil-actions{display:flex;gap:8px;margin-top:10px;}
+  .soil-btn{
+    flex:1;background:var(--soil);color:var(--paper);border:none;padding:8px 6px;
+    border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Inter';
+  }
+  .soil-btn:disabled{background:#b0a488;cursor:not-allowed;}
+  .soil-hint{font-size:10.5px;color:#8a7a55;margin-top:8px;line-height:1.4;}
+  .soil-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:4px;vertical-align:middle;}
+  .yield-mini .field-plot.yield-plot{color:#fff;}
+  .yield-mini .field-plot.yield-plot .fname,
+  .yield-mini .field-plot.yield-plot .fstate{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.45);}
+  .yield-mini .field-plot.yield-plot .ftag{background:rgba(255,255,255,0.85);color:var(--ink);}
+  .yield-log-title{font-family:'Fraunces',serif;font-size:14px;margin:16px 0 8px;color:var(--soil);}
+  table.yield-log{font-size:11.5px;}
+
+  /* ---------- KIOSK ---------- */
+  table.kiosk{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.kiosk th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.06em;color:#8a7a55;
+    border-bottom:1px solid var(--panel-line);padding:4px 4px 6px;
+  }
+  table.kiosk td{padding:7px 4px;border-bottom:1px dashed #d9cba0;vertical-align:middle;}
+  table.kiosk tr.section td{
+    font-family:'Fraunces',serif;font-weight:600;font-size:12px;
+    color:var(--soil);background:var(--paper-deep);border-bottom:none;padding:5px 4px;
+  }
+  .price-cell{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .trend-up{color:var(--up);}
+  .trend-down{color:var(--down);}
+  .trend-flat{color:#8a7a55;}
+  .qty-input{width:56px;padding:5px;border-radius:5px;border:1px solid var(--panel-line);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .sell-btn{background:var(--field-green-3);color:#fff;border:none;padding:6px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;margin-left:4px;}
+  .sell-btn:disabled{background:#c9c0a5;cursor:not-allowed;}
+  .stock-zero{color:#b3a684;}
+
+  /* ---------- PROCESSING ---------- */
+  .proc-card{border:1px solid var(--panel-line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fbf6e8;}
+  .proc-card-head{display:flex;align-items:flex-start;gap:10px;}
+  .proc-card-head h4{margin-top:2px;}
+  .proc-card h4{font-family:'Fraunces',serif;font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+  .proc-card .cap{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b5a3a;margin-top:2px;}
+  .proc-row{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;}
+  .proc-row .pname{flex:1;}
+  .mill-btn{background:var(--wheat-gold-deep);color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:11.5px;cursor:pointer;font-weight:600;}
+  .mill-btn:disabled{background:#c9c0a5;cursor:not-allowed;}
+  .buy-building-btn{
+    width:100%;background:var(--soil-dark);color:var(--paper);border:none;
+    padding:9px;border-radius:8px;font-family:'Fraunces',serif;font-weight:600;cursor:pointer;font-size:13.5px;
+  }
+  .buy-building-btn:disabled{background:#b0a488;cursor:not-allowed;}
+  .auto-toggle{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#6b5a3a;margin-top:8px;cursor:pointer;}
+  .auto-toggle input{cursor:pointer;}
+  .proc-note{font-size:11.5px;color:#6b5a3a;background:#f1e6c8;border-radius:6px;padding:6px 8px;margin-top:8px;line-height:1.4;}
+  .production-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:6px;margin-top:9px;}
+  .production-option{display:flex;align-items:center;gap:6px;background:#efe4c7;border:1px solid var(--panel-line);border-radius:6px;padding:6px 8px;font-size:11.5px;color:var(--soil);cursor:pointer;}
+  .production-option input{accent-color:var(--wheat-gold-deep);cursor:pointer;}
+  .finance-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0;}
+  .finance-stat{background:#fbf6e8;border:1px solid var(--panel-line);border-radius:9px;padding:10px;}
+  .finance-stat .label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8a7a55;}
+  .finance-stat .value{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;margin-top:3px;}
+  .finance-positive{color:var(--up)} .finance-negative{color:var(--down)}
+  .finance-table td,.finance-table th{padding:7px 6px;}
+  @media(max-width:650px){.finance-grid{grid-template-columns:1fr;}}
+  .stock-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .stock-chip{background:#eadfc0;border-radius:5px;padding:3px 7px;font-size:10.5px;color:var(--soil);}
+
+  footer.credits{text-align:center;margin-top:22px;font-size:11px;color:#8a7a55;font-family:'IBM Plex Mono',monospace;}
+</style>
+
+<style id="save-quit-header-style">
+.save-quit-group{display:flex;align-items:center;margin-left:12px;height:42px;border:1px solid #55432c;border-radius:3px;overflow:hidden;background:#17120d;box-shadow:0 1px 3px #0006}
+.header-savequit-btn{width:82px;height:42px;padding:3px 6px;border:0;border-right:1px solid #51402a;background:#17120d;color:#e7d7ad;font-family:Arial,sans-serif;font-weight:700;cursor:pointer;text-align:center}
+.header-savequit-btn:last-child{border-right:0}
+.header-savequit-btn:hover{background:#2a2117}
+.header-savequit-btn .sq-icon{display:block;font-size:14px;line-height:15px;color:#d9c58f}
+.header-savequit-btn .sq-label{display:block;font-size:7px;line-height:9px;letter-spacing:.2px;white-space:nowrap}
+.save-toast{position:fixed;top:74px;right:18px;z-index:9999;background:#28351f;color:#fff;border:1px solid #a88945;border-radius:7px;padding:10px 15px;box-shadow:0 4px 15px #0008;font-family:Arial,sans-serif;font-weight:bold;display:none}
+</style>
+
+<style id="realistic-menu-upgrade">
+.menu-screen{min-height:88vh;align-items:flex-end;justify-content:center;padding:24px 20px 34px;background:#8fb8d7;}
+.menu-hero{object-position:center center;filter:saturate(1.08) contrast(1.05) brightness(1.02);}
+.menu-hero-scrim{background:linear-gradient(to top,rgba(10,14,10,.62) 0%,rgba(10,14,10,.24) 30%,rgba(10,14,10,.03) 58%,transparent 75%);}
+.menu-card{max-width:520px;width:min(92%,520px);margin:0 auto; padding:16px 26px 18px; border-radius:12px; background:linear-gradient(180deg,rgba(30,37,31,.92),rgba(20,25,21,.94)); border:1px solid rgba(232,215,168,.55); box-shadow:0 14px 38px rgba(0,0,0,.48),0 3px 0 rgba(0,0,0,.28); backdrop-filter:blur(3px);}
+.menu-card .eyebrow{font-size:10px;letter-spacing:.2em;color:#e2c76b;}
+.menu-card h1{font-family:'Fraunces',serif;font-size:40px;line-height:1.05;letter-spacing:.01em;margin:4px 0 6px;text-align:center;text-shadow:0 3px 10px rgba(0,0,0,.55);}
+.menu-tagline{text-align:center;margin:0 0 12px;font-size:12px;color:#e5ddc8;letter-spacing:.08em;text-transform:uppercase;}
+.menu-save-info{margin:0 auto 12px;max-width:360px;padding:7px 10px;background:rgba(214,170,63,.14);border:1px solid rgba(214,170,63,.25);}
+.menu-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;max-width:420px;margin:0 auto;}
+.menu-btn{padding:11px 12px;font-size:14px;border-radius:7px;background:rgba(245,239,218,.11);}
+.menu-btn.primary{background:#d4a63f;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.2);}
+@media(max-width:600px){.menu-card h1{font-size:31px}.menu-actions{grid-template-columns:1fr}.menu-card{padding:14px 18px 16px;}}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const CROP_INFO = {
+  wheat:    {label:'Wheat',     seedCost:60, yieldPerHa:2.0,  base:260, product:'flour',        emoji:'🌾'},
+  barley:   {label:'Barley',    seedCost:55, yieldPerHa:1.75, base:230, product:'flour',        emoji:'🌾'},
+  oats:     {label:'Oats',      seedCost:52, yieldPerHa:2.1,  base:220, product:'flour',        emoji:'🌾'},
+  sorghum:  {label:'Sorghum',   seedCost:50, yieldPerHa:2.25, base:240, product:'flour',        emoji:'🌾'},
+  canola:   {label:'Canola',    seedCost:75, yieldPerHa:0.9,  base:620, product:'canolaOil',    emoji:'🌼'},
+  sunflower:{label:'Sunflower', seedCost:65, yieldPerHa:0.75, base:520, product:'sunflowerOil', emoji:'🌻'},
+  corn:     {label:'Corn',      seedCost:65, yieldPerHa:4.5,  base:200, product:'driedCorn',    emoji:'🌽'},
+  soybean:  {label:'Soybean',   seedCost:70, yieldPerHa:1.4,  base:480, product:null,           emoji:'🫘'},
+  grass:    {label:'Grass',     seedCost:25, yieldPerHa:2.5,  base:0,   product:null,           emoji:'🌱'}
+};
+const GRAIN_CROPS = ['wheat','barley','oats','sorghum'];
+const OIL_CROPS = ['canola','sunflower'];
+const FEED_PRIORITY = ['wheat','barley','oats','sorghum'];
+// wheat, barley & oats leave stubble behind that can be baled into straw after harvest
+const STRAW_CROPS = ['wheat','barley','oats'];
+const STRAW_TO_GRAIN_RATIO = 0.8; // roughly how much straw (by weight) comes off alongside the grain
+const STRAW_BALE_COST_HA = 15;
+
+// raw goods produced directly by animals (sellable as-is, not "grown")
+const RAW_GOODS_INFO = {
+  eggs:        {label:'Eggs',         base:2800, emoji:'🥚'},
+  milk:        {label:'Milk',         base:850,  emoji:'🥛'},
+  buffaloMilk: {label:'Buffalo Milk', base:9000, emoji:'🥛'},
+  goatMilk:    {label:'Goat Milk',    base:9000, emoji:'🥛'},
+  wool:        {label:'Wool',         base:3000, emoji:'🧶'}
+};
+
+// bales — counted individually (not by tonnage). sizeT is how many tonnes of raw
+// cut/stubble go into one bale, used only to convert yields into a bale count.
+const BALE_INFO = {
+  grassBale:  {label:'Grass Bale',  sizeT:0.30, base:18, emoji:'🌿'},
+  hayBale:    {label:'Hay Bale',    sizeT:0.25, base:22, emoji:'🟨'},
+  silageBale: {label:'Silage Bale', sizeT:0.50, base:45, emoji:'🟩'},
+  strawBale:  {label:'Straw Bale',  sizeT:0.20, base:12, emoji:'🌾'}
+};
+const BALE_KEYS = Object.keys(BALE_INFO);
+
+// manure — produced automatically when cows (not buffalo) are fed straw bales; spread on paddocks as free fertilizer
+const MANURE_PER_STRAW_T = 1.5;   // manure units produced per tonne of straw fed to cows
+const MANURE_N_BOOST_PER_UNIT = 3; // % nitrogen boost per unit of manure applied
+
+// processed goods made at a mill/bakery/dairy from raw crops or raw goods
+const PRODUCT_INFO = {
+  flour:             {label:'Flour',             base:480,  from:GRAIN_CROPS,     ratio:0.78, mill:'grainMill'},
+  canolaOil:         {label:'Canola Oil',         base:1450, from:['canola'],      ratio:0.42, mill:'oilMill'},
+  sunflowerOil:      {label:'Sunflower Oil',      base:1300, from:['sunflower'],   ratio:0.40, mill:'oilMill'},
+  bread:             {label:'Bread',              base:1050, from:['flour'],       ratio:1.25, mill:'bakery'},
+  cheese:            {label:'Cheese',             base:2200, from:['milk'],        ratio:0.12, mill:'dairy'},
+  butter:            {label:'Butter',             base:3400, from:['milk','goatMilk'], ratio:0.05, mill:'dairy'},
+  goatCheese:        {label:'Goat Cheese',        base:2600, from:['goatMilk'],    ratio:0.13, mill:'dairy'},
+  buffaloMozzarella: {label:'Buffalo Mozzarella', base:6500, from:['buffaloMilk'], ratio:0.11, mill:'dairy'},
+  driedCorn:         {label:'Dried Corn',         base:340,  from:['corn'],        ratio:0.85, mill:'cornDryer'}
+};
+
+const FIELD_STATE_ORDER = ['harvested','cultivated','sowed','growing1','growing2','growing3','ready'];
+const STATE_LABEL = {
+  harvested:'Harvested / Fallow', cultivated:'Cultivated', sowed:'Sown',
+  growing1:'Growing — Early', growing2:'Growing — Mid', growing3:'Growing — Late',
+  ready:'Ready to Harvest',
+  withered:'Withered — Crop Lost',
+  mowed:'Mowed — Choose Bale Type', tedded:'Tedded — Drying (Hay)', windrowed:'Windrowed — Ready to Bale',
+  baled:'Baled — Ready to Wrap (Silage)'
+};
+const CULTIVATE_COST_HA = 45;
+const HARVEST_COST_HA = 40;
+const SPRAY_COST_HA = 25;
+const SPRAY_YIELD_BONUS = 0.12; // +12% yield when weeds are sprayed out during growth
+const WITHER_AFTER_READY_DAYS = 2; // crops left unharvested past this many months wither (grass is exempt)
+const LIME_COST_HA = 90;
+const LIME_PH_BOOST = 1.0;
+const PH_CAP = 7.5;
+const PH_FLOOR = 4.2;
+const FERT_COST_HA = 75;
+const FERT_N_BOOST = 45;
+const N_CAP = 100;
+
+const CHICKEN_PEN_PRICE = 9000;
+const CHICKEN_PEN_CAPACITY = 30;
+const CHICKEN_COST = 15;
+const CHICKEN_FEED_PER_DAY = 0.00013; // tonnes of grain per chicken per day
+// User supplied production table: ~20 L/month/chicken
+const CHICKEN_L_PER_MONTH = 20;
+const CHICKEN_EGG_PER_DAY = (CHICKEN_L_PER_MONTH / 30) / 1000; // stored internally as tonnes
+
+const COW_PEN_PRICE = 254000;
+const COW_PEN_CAPACITY = 200;
+const COW_COST = 900;
+const COW_FEED_PER_DAY = 0.030;
+const COW_MILK_PER_DAY = (20 / 30) / 1000; // ~20 L/month/cow
+const BUFFALO_COST = 2800;
+const BUFFALO_FEED_PER_DAY = 0.032;
+const BUFFALO_MILK_PER_DAY = (20 / 30) / 1000; // ~20 L/month/buffalo
+
+const GOAT_SHEEP_PEN_PRICE = 54000;
+const GOAT_SHEEP_PEN_CAPACITY = 50;
+const GOAT_COST = 350;
+const GOAT_FEED_PER_DAY = 0.005;
+const GOAT_MILK_PER_DAY = (20 / 30) / 1000; // ~20 L/month/goat
+const SHEEP_COST = 180;
+const SHEEP_WOOL_PER_DAY = (60 / 30) / 1000; // ~60 L/month/sheep
+const SHEEP_FEED_PER_DAY = 0.0015;
+
+// grass & haymaking
+const GRASS_SEED_COST_HA = 25;
+const GRASS_YIELD_PER_HA = 2.5;
+const MOW_COST_HA = 15;
+const TEDD_COST_HA = 10;
+const WINDROW_COST_HA = 12;
+const BALE_COST_HA = 20;
+
+// silage — same mow/tedd/windrow pass, but baled wetter then wrapped instead of dried into hay
+const SILAGE_YIELD_MULTIPLIER = 1.3; // less moisture removed, so heavier per hectare than dry hay
+const WRAP_COST_HA = 18;
+
+// meadow grazing (built into the cow and goat/sheep pens) — always available, less efficient than baled hay/silage
+const MEADOW_COVERAGE = 0.5;   // meadow alone can cover up to 50% of an animal's daily feed need
+const MEADOW_EFFICIENCY = 0.6; // meadow-covered feed only counts for 60% as much production
+
+// livestock resale
+const LIVESTOCK_RESALE_FACTOR = 0.6; // selling an animal back returns 60% of its purchase price
+
+// greenhouse — grows produce year-round; instead of consuming a raw crop it spends daily upkeep cash.
+// Upkeep is deliberately steep (FS25-style) — you're paying for climate control, not land.
+const GREENHOUSE_UPKEEP_PER_UNIT = 600; // $ spent per capacity unit per day (heating, water, labour) — doubled
+const GREENHOUSE_YIELD_PER_UNIT = 0.85; // tonnes of produce per capacity unit per day at full funding, before the crop's own yield multiplier
+
+// crops a greenhouse can be activated to grow — prices pegged to Farming Simulator 25's easy-economy
+// tier for these greenhouse vegetables (tomato/lettuce are well documented; chilli/garlic are matched
+// to the same tier since exact published easy-economy figures for them weren't available)
+const GREENHOUSE_CROP_INFO = {
+  tomatoes: {label:'Tomatoes', emoji:'🍅', base:2000, yieldMultiplier:1.00},
+  lettuce:  {label:'Lettuce',  emoji:'🥬', base:2500, yieldMultiplier:0.95},
+  chilli:   {label:'Chilli',   emoji:'🌶️', base:2300, yieldMultiplier:0.50},
+  garlic:   {label:'Garlic',   emoji:'🧄', base:2100, yieldMultiplier:0.68}
+};
+const GREENHOUSE_CROP_KEYS = Object.keys(GREENHOUSE_CROP_INFO);
+
+// small hand-drawn-style fish icons used in place of a generic fish emoji
+const TROUT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" width="22" height="14" style="vertical-align:-3px" aria-label="Trout"><path d="M44 12 L60 2 L58 20 L60 38 L44 28 Z" fill="#2c5c8f"/><path d="M8 20c0-10 11-16 24-16 9 0 15 4 18 8 3 3 3 3 3 3l-3 5 3 5s0 0-3 3c-3 4-9 8-18 8-13 0-24-6-24-16z" fill="#3f7fbf" stroke="#2c5c8f" stroke-width="1.5"/><path d="M18 7c3-3 8-5 13-5" fill="none" stroke="#7fb2e0" stroke-width="3" stroke-linecap="round" opacity=".7"/><path d="M14 33c3 2 7 3 11 3" fill="none" stroke="#2c5c8f" stroke-width="2" stroke-linecap="round" opacity=".5"/><circle cx="17" cy="17" r="3.4" fill="#12233a"/><circle cx="18.2" cy="15.8" r="1.1" fill="#fff"/></svg>`;
+const SALMON_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" width="22" height="14" style="vertical-align:-3px" aria-label="Salmon"><path d="M44 12 L60 2 L58 20 L60 38 L44 28 Z" fill="#c9531f"/><path d="M8 20c0-10 11-16 24-16 9 0 15 4 18 8 3 3 3 3 3 3l-3 5 3 5s0 0-3 3c-3 4-9 8-18 8-13 0-24-6-24-16z" fill="#e8763f" stroke="#c9531f" stroke-width="1.5"/><path d="M18 7c3-3 8-5 13-5" fill="none" stroke="#f4a876" stroke-width="3" stroke-linecap="round" opacity=".7"/><path d="M14 33c3 2 7 3 11 3" fill="none" stroke="#c9531f" stroke-width="2" stroke-linecap="round" opacity=".5"/><circle cx="17" cy="17" r="3.4" fill="#3a1608"/><circle cx="18.2" cy="15.8" r="1.1" fill="#fff"/></svg>`;
+const FISH_LOGO_ICON = `<span style="display:inline-flex;align-items:center;gap:2px">${TROUT_ICON}${SALMON_ICON}</span>`;
+
+// buildings that sit off to the side (not tied to a paddock)
+const BUILDINGS_INFO = {
+  grainMill:  {label:'Grain Mill', price:120000, capacity:6, icon:'⚙️', desc:'Wheat, Barley &amp; Sorghum → Flour'},
+  oilMill:    {label:'Oil Mill',   price:80000,  capacity:4, icon:'🛢️', desc:'Canola &amp; Sunflower → Oil'},
+  bakery:     {label:'Bakery',     price:50000,  capacity:5, icon:'🍞', desc:'Flour → Bread'},
+  dairy:      {label:'Dairy',      price:210000, capacity:6, icon:'🥛', desc:'Milk, Goat Milk &amp; Buffalo Milk → Cheese, Butter, Goat Cheese &amp; Buffalo Mozzarella'},
+  cornDryer:      {label:'Corn Dryer',       price:45000,  capacity:8, icon:'🌽', desc:'Corn → Dried Corn (1.7× the raw corn price)'},
+  greenhouseSmall:{label:'Greenhouse (Small)', price:18000, capacity:1, icon:'🍅', desc:'Grows Tomatoes, Lettuce, Chilli or Garlic year-round — a cheap starter greenhouse, spends daily upkeep cash instead of consuming a crop'},
+  greenhouse:     {label:'Greenhouse (Large)', price:60000, capacity:4, icon:'🍅', desc:'Grows Tomatoes, Lettuce, Chilli or Garlic year-round — spends daily upkeep cash instead of consuming a crop'},
+  fishBreeding: {label:'Young Fish Breeding', price:95000, capacity:2, icon:FISH_LOGO_ICON, desc:'Breeds young Trout and Salmon. Choose one or both species to activate.'},
+  fishFarm: {label:'Fish Farm', price:125000, capacity:2, icon:FISH_LOGO_ICON, desc:'Raises young Trout and Salmon into larger fish that sell for more.'}
+};
+const GREENHOUSE_KEYS = ['greenhouseSmall','greenhouse'];
+
+// Monthly operating costs for production facilities. Greenhouses are intentionally excluded.
+const PRODUCTION_MONTHLY_COSTS = {
+  grainMill:4500, oilMill:4000, bakery:3000, dairy:7000, cornDryer:2500,
+  chickenProduction:500, cowProduction:3500, goatSheepProduction:1500,
+  fishBreeding:4000, fishFarm:6000
+};
+
+const FISH_INFO = {
+  youngTrout:{label:'Young Trout', emoji:TROUT_ICON, base:5000, species:'trout', type:'young'},
+  youngSalmon:{label:'Young Salmon', emoji:SALMON_ICON, base:6500, species:'salmon', type:'young'},
+  trout:{label:'Trout', emoji:TROUT_ICON, base:9000, species:'trout', type:'adult'},
+  salmon:{label:'Salmon', emoji:SALMON_ICON, base:11000, species:'salmon', type:'adult'}
+};
+const FISH_KEYS = Object.keys(FISH_INFO);
+const FISH_BREEDING_PRICE = 95000;
+const FISH_FARM_PRICE = 125000;
+const FISH_BREEDING_MONTHLY_OUTPUT = 1.5; // tonnes (1,500 L) per activated species
+const FISH_FARM_INPUT_PER_SPECIES = 1.0; // tonnes young fish/month per activated species
+const FISH_FARM_OUTPUT_RATIO = 0.8;
+
+function ownedFarmHa(){ return state.fields.filter(f=>f.owned).reduce((sum,f)=>sum+Number(f.size||0),0); }
+function fishFoodCost(key){
+  const sizeFactor = 1 + (ownedFarmHa()/100)*0.25;
+  return Math.round(PRODUCTION_MONTHLY_COSTS[key] * sizeFactor);
+}
+
+const PRODUCTION_OPTIONS = {
+  grainMill:GRAIN_CROPS.map(k=>({key:k,label:CROP_INFO[k].label,emoji:CROP_INFO[k].emoji})),
+  oilMill:OIL_CROPS.map(k=>({key:k,label:CROP_INFO[k].label,emoji:CROP_INFO[k].emoji})),
+  bakery:[{key:'bread',label:'Bread',emoji:'🍞'}],
+  dairy:[{key:'cheese',label:'Cheese',emoji:'🧀'},{key:'butter',label:'Butter',emoji:'🧈'},{key:'goatCheese',label:'Goat Cheese',emoji:'🧀'},{key:'buffaloMozzarella',label:'Buffalo Mozzarella',emoji:'🧀'}],
+  cornDryer:[{key:'driedCorn',label:'Dried Corn',emoji:'🌽'}],
+  fishBreeding:[{key:'trout',label:'Young Trout',emoji:TROUT_ICON},{key:'salmon',label:'Young Salmon',emoji:SALMON_ICON}],
+  fishFarm:[{key:'trout',label:'Trout',emoji:TROUT_ICON},{key:'salmon',label:'Salmon',emoji:SALMON_ICON}]
+};
+function activeList(key, fallback){
+  const b = state.buildings[key];
+  if(!b) return fallback.slice();
+  if(!Array.isArray(b.activeProducts)) b.activeProducts = fallback.slice();
+  return b.activeProducts;
+}
+function setProductionActive(key, product, checked){
+  const b=state.buildings[key]; if(!b) return;
+  const opts=PRODUCTION_OPTIONS[key]||[];
+  if(!Array.isArray(b.activeProducts)) b.activeProducts=opts.map(o=>o.key);
+  if(checked && !b.activeProducts.includes(product)) b.activeProducts.push(product);
+  if(!checked) b.activeProducts=b.activeProducts.filter(k=>k!==product);
+  saveGame(); render();
+}
+function productionOptionsHtml(key){
+  const opts=PRODUCTION_OPTIONS[key]||[];
+  const active=activeList(key,opts.map(o=>o.key));
+  if(opts.length<2) return opts.length ? `<div class="production-options">${opts.map(o=>`<label class="production-option"><input type="checkbox" ${active.includes(o.key)?'checked':''} onchange="setProductionActive('${key}','${o.key}',this.checked)"> ${o.emoji} ${o.label}</label>`).join('')}</div>` : '';
+  return `<div class="production-options">${opts.map(o=>`<label class="production-option"><input type="checkbox" ${active.includes(o.key)?'checked':''} onchange="setProductionActive('${key}','${o.key}',this.checked)"> ${o.emoji} ${o.label}</label>`).join('')}</div>`;
+}
+
+function recordFinance(type, category, amount, note){
+  if(!state.finances) state.finances={history:[]};
+  const a=Number(amount)||0;
+  if(!a) return;
+  state.finances.history.unshift({day:state.day,type,category,amount:a,note});
+  if(state.finances.history.length>250) state.finances.history.length=250;
+}
+function monthFinanceTotals(day){
+  const h=(state.finances&&state.finances.history)||[];
+  const rows=h.filter(r=>r.day===day);
+  return {income:rows.filter(r=>r.type==='income').reduce((a,r)=>a+r.amount,0),expense:rows.filter(r=>r.type==='expense').reduce((a,r)=>a+r.amount,0),rows};
+}
+
+// Animal production is handled by off-site pens and does NOT occupy farmland.
+// Animals are bought into the purchased off-site pens and the paddocks remain arable.
+const ANIMAL_PRODUCTION_INFO = {
+  chickenProduction: {label:'Chicken Production', capacity:CHICKEN_PEN_CAPACITY, icon:'🐔'},
+  cowProduction: {label:'Cow Production', capacity:COW_PEN_CAPACITY, icon:'🐄'},
+  goatSheepProduction: {label:'Goat & Sheep Production', capacity:GOAT_SHEEP_PEN_CAPACITY, icon:'🐐'}
+};
+
+
+/* ============================= STATE ============================= */
+function defaultState(){
+  return {
+    day:1,
+    hour:7,
+    wakeHour:6,
+    money:75000,
+    fields:[
+      {id:0,  size:5,  price:27000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:1,  size:17, price:90000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:2,  size:8,  price:44000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:3,  size:24, price:126000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:4,  size:30, price:156000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:5,  size:6,  price:33000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:6,  size:20, price:105000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:7,  size:11, price:60000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:8,  size:3,  price:17000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:9,  size:40, price:200000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:10, size:13, price:70000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:11, size:26, price:136000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:12, size:9,  price:48500,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:13, size:50, price:245000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:14, size:15, price:80000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:15, size:7,  price:38000,  owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:19, size:22, price:115000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, strawAvailable:false, strawPotential:0, baleType:null},
+      {id:20, size:120, price:510000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, displayNumber:17, strawAvailable:false, strawPotential:0, baleType:null}
+    ],
+    manure:0,
+    buildings:{
+      grainMill:{owned:false, auto:true}, oilMill:{owned:false, auto:true},
+      bakery:{owned:false, auto:true}, dairy:{owned:false, auto:true}, cornDryer:{owned:false, auto:true},
+      greenhouse:{owned:false, auto:true, activeCrop:'tomatoes'}, greenhouseSmall:{owned:false, auto:true, activeCrop:'tomatoes'},
+      fishBreeding:{owned:false, auto:true, activeProducts:['trout','salmon']}, fishFarm:{owned:false, auto:true, activeProducts:['trout','salmon']}
+    },
+    pens:{
+      chickenPen:{owned:false, chickenCount:0},
+      cowPen:{owned:false, cows:0, buffaloCows:0},
+      goatSheepPen:{owned:false, goats:0, sheep:0}
+    },
+    animalProduction:{
+      chickenProduction:{owned:false},
+      cowProduction:{owned:false},
+      goatSheepProduction:{owned:false}
+    },
+    capacityUsed:{grainMill:0, oilMill:0, bakery:0, dairy:0, cornDryer:0, greenhouse:0, greenhouseSmall:0, fishBreeding:0, fishFarm:0},
+    lastProcessed:{grainMill:null, oilMill:null, bakery:null, dairy:null, cornDryer:null, greenhouse:null, greenhouseSmall:null, fishBreeding:null, fishFarm:null, chickenPen:null, cowPen:null, goatSheepPen:null},
+    inventory:{
+      wheat:0, barley:0, oats:0, sorghum:0, canola:0, sunflower:0, corn:0, soybean:0,
+      flour:0, canolaOil:0, sunflowerOil:0, bread:0, driedCorn:0,
+      eggs:0, milk:0, buffaloMilk:0, goatMilk:0, wool:0, tomatoes:0, lettuce:0, chilli:0, garlic:0,
+      grassBale:0, hayBale:0, silageBale:0, strawBale:0,
+      cheese:0, butter:0, goatCheese:0, buffaloMozzarella:0, youngTrout:0, youngSalmon:0, trout:0, salmon:0
+    },
+    prices:{
+      wheat:260, barley:230, oats:220, sorghum:240, canola:620, sunflower:520, corn:200, soybean:480,
+      flour:480, canolaOil:1450, sunflowerOil:1300, bread:1050, driedCorn:340,
+      eggs:2800, milk:850, buffaloMilk:9000, goatMilk:9000, wool:3000,
+      tomatoes:2000, lettuce:2500, chilli:2300, garlic:2100,
+      grassBale:18, hayBale:22, silageBale:45, strawBale:12,
+      cheese:2200, butter:3400, goatCheese:2600, buffaloMozzarella:6500, youngTrout:5000, youngSalmon:6500, trout:9000, salmon:11000
+    },
+    prevPrices:{
+      wheat:260, barley:230, oats:220, sorghum:240, canola:620, sunflower:520, corn:200, soybean:480,
+      flour:480, canolaOil:1450, sunflowerOil:1300, bread:1050, driedCorn:340,
+      eggs:2800, milk:850, buffaloMilk:9000, goatMilk:9000, wool:3000,
+      tomatoes:2000, lettuce:2500, chilli:2300, garlic:2100,
+      grassBale:18, hayBale:22, silageBale:45, strawBale:12,
+      cheese:2200, butter:3400, goatCheese:2600, buffaloMozzarella:6500, youngTrout:5000, youngSalmon:6500, trout:9000, salmon:11000
+    },
+    harvestLog:[],
+    selectedField:null,
+    activeTab:'kiosk',
+    pendingCrop:{}, // fieldId -> crop chosen in dropdown
+    pendingChickens:100,
+    pendingCows:10,
+    pendingBuffalo:5,
+    pendingGoats:10,
+    pendingSheep:10,
+    toastMsg:''
+  };
+}
+let state = defaultState();
+let uiScreen = 'menu'; // 'menu' shows the title/slot screen, 'game' shows the farm
+let overviewMapMode = 'care'; // 'care' | 'growth' | 'ownership' — which overlay the Overview tab's map uses
+let hasSave = false;
+let sleepBusy = false;
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function farmYear(){ return Math.floor((Math.max(1,state.day)-1)/12)+1; }
+function farmMonthIndex(){ return (Math.max(1,state.day)-1)%12; }
+function farmMonth(){ return MONTH_NAMES[farmMonthIndex()]; }
+function timeLabel(){ return `Yr ${farmYear()} · ${farmMonth()}`; }
+function timeShort(){ return `Year ${farmYear()} · Month ${farmMonthIndex()+1}`; }
+function formatHour(h){
+  h = ((Math.round(h)%24)+24)%24;
+  const period = h<12 ? 'AM' : 'PM';
+  let hh = h%12; if(hh===0) hh=12;
+  return `${hh}:00 ${period}`;
+}
+function hoursToSleep(from,to){
+  let diff = (to-from+24)%24;
+  if(diff===0) diff = 24;
+  return diff;
+}
+function clockLabel(){ return formatHour(state.hour); }
+
+/* ---------- persistence ---------- */
+async function saveGame(){
+  try{
+    await window.storage.set('munyara-downs-save', JSON.stringify(state), false);
+  }catch(e){ /* best effort, ignore */ }
+}
+async function loadGame(){
+  try{
+    const res = await window.storage.get('munyara-downs-save', false);
+    if(res && res.value){
+      const loaded = JSON.parse(res.value);
+      state = Object.assign(defaultState(), loaded);
+      // migrate saves from earlier versions
+      if(!state.pens) state.pens = {chickenPen:{owned:false,chickenCount:0}, cowPen:{owned:false,cows:0,buffaloCows:0}, goatSheepPen:{owned:false,goats:0,sheep:0}};
+      state.pens.chickenPen.owned = !!state.pens.chickenPen.owned;
+      state.pens.cowPen.owned = !!state.pens.cowPen.owned;
+      state.pens.goatSheepPen.owned = !!state.pens.goatSheepPen.owned;
+      if(!state.animalProduction) state.animalProduction = {
+        chickenProduction:{owned:false},
+        cowProduction:{owned:false},
+        goatSheepProduction:{owned:false}
+      };
+      // Migrate old paddock pens to off-field production facilities.
+      state.animalProduction.chickenProduction.owned = !!state.pens.chickenPen?.owned;
+      state.animalProduction.cowProduction.owned = !!state.pens.cowPen?.owned;
+      state.animalProduction.goatSheepProduction.owned = !!state.pens.goatSheepPen?.owned;
+      state.fields.forEach(f=>{ delete f.penType; });
+      if(state.buildings.chickenPen){ // very old save had the pen under buildings
+        state.pens.chickenPen = state.buildings.chickenPen;
+        delete state.buildings.chickenPen;
+      }
+      if(!state.buildings.dairy) state.buildings.dairy = {owned:false, auto:true};
+      if(!state.buildings.cornDryer) state.buildings.cornDryer = {owned:false, auto:true};
+      if(!state.buildings.greenhouse) state.buildings.greenhouse = {owned:false, auto:true};
+      if(!state.buildings.greenhouseSmall) state.buildings.greenhouseSmall = {owned:false, auto:true};
+      if(!state.buildings.fishBreeding) state.buildings.fishBreeding = {owned:false, auto:true, activeProducts:['trout','salmon']};
+      if(!state.buildings.fishFarm) state.buildings.fishFarm = {owned:false, auto:true, activeProducts:['trout','salmon']};
+      if(!Array.isArray(state.buildings.fishBreeding.activeProducts)) state.buildings.fishBreeding.activeProducts=['trout','salmon'];
+      if(!Array.isArray(state.buildings.fishFarm.activeProducts)) state.buildings.fishFarm.activeProducts=['trout','salmon'];
+      ['fishBreeding','fishFarm'].forEach(k=>{ if(state.capacityUsed[k]===undefined) state.capacityUsed[k]=0; if(state.lastProcessed[k]===undefined) state.lastProcessed[k]=null; });
+      if(!state.finances) state.finances={history:[]};
+      const fishInvDefaults={youngTrout:0,youngSalmon:0,trout:0,salmon:0};
+      Object.keys(fishInvDefaults).forEach(k=>{if(state.inventory[k]===undefined) state.inventory[k]=0;});
+      const fishPriceDefaults={youngTrout:5000,youngSalmon:6500,trout:9000,salmon:11000};
+      Object.keys(fishPriceDefaults).forEach(k=>{if(state.prices[k]===undefined) state.prices[k]=fishPriceDefaults[k]; if(state.prevPrices[k]===undefined) state.prevPrices[k]=fishPriceDefaults[k];});
+      ['grainMill','oilMill','bakery','dairy','cornDryer','greenhouse','greenhouseSmall'].forEach(k=>{ if(state.buildings[k].auto===undefined) state.buildings[k].auto = true; });
+      const invDefaults = {eggs:0, milk:0, buffaloMilk:0, goatMilk:0, wool:0, hayBale:0, silageBale:0, tomatoes:0, cheese:0, butter:0, goatCheese:0, buffaloMozzarella:0, youngTrout:0, youngSalmon:0, trout:0, salmon:0, corn:0, soybean:0, driedCorn:0};
+      Object.keys(invDefaults).forEach(k=>{ if(state.inventory[k]===undefined) state.inventory[k]=invDefaults[k]; });
+      const priceDefaults = {eggs:2800, milk:650, buffaloMilk:1900, goatMilk:900, wool:4500, hayBale:90, silageBale:300, tomatoes:900, cheese:2200, butter:3400, goatCheese:2600, buffaloMozzarella:6500, youngTrout:5000, youngSalmon:6500, trout:9000, salmon:11000, corn:200, soybean:480, driedCorn:340};
+      Object.keys(priceDefaults).forEach(k=>{
+        if(state.prices[k]===undefined) state.prices[k]=priceDefaults[k];
+        if(state.prevPrices[k]===undefined) state.prevPrices[k]=priceDefaults[k];
+      });
+      if(state.capacityUsed.dairy===undefined) state.capacityUsed.dairy = 0;
+      if(state.capacityUsed.cornDryer===undefined) state.capacityUsed.cornDryer = 0;
+      if(state.capacityUsed.greenhouse===undefined) state.capacityUsed.greenhouse = 0;
+      if(state.capacityUsed.greenhouseSmall===undefined) state.capacityUsed.greenhouseSmall = 0;
+      if(!state.lastProcessed) state.lastProcessed = {};
+      if(!state.animalProduction) state.animalProduction = {
+        chickenProduction:{owned:false},
+        cowProduction:{owned:false},
+        goatSheepProduction:{owned:false}
+      };
+      if(!state.animalProduction.chickenProduction) state.animalProduction.chickenProduction = {owned:true};
+      if(!state.animalProduction.cowProduction) state.animalProduction.cowProduction = {owned:true};
+      if(!state.animalProduction.goatSheepProduction) state.animalProduction.goatSheepProduction = {owned:true};
+      // All paddocks are arable; animal production is now off-field.
+      // add the 120ha paddock for saves from before it existed
+      if(!state.fields.some(f=>f.id===20)){
+        state.fields.push({id:20, size:120, price:510000, owned:false, state:'harvested', crop:null, ph:6.0, nitrogen:50, displayNumber:17});
+      }
+      // paddock 21 (120ha) has taken over paddocks 17, 18 and 19 (ids 16/17/18) — remove them if present
+      state.fields = state.fields.filter(f=>![16,17,18].includes(f.id));
+      state.fields.forEach(f=>{ delete f.penType; });
+      if(state.pendingChickens===undefined) state.pendingChickens = 100;
+      if(state.pendingCows===undefined) state.pendingCows = 10;
+      if(state.pendingBuffalo===undefined) state.pendingBuffalo = 5;
+      if(state.pendingGoats===undefined) state.pendingGoats = 10;
+      if(state.pendingSheep===undefined) state.pendingSheep = 10;
+
+      // --- oats / bale-count / manure migration ---
+      if(state.inventory.oats===undefined) state.inventory.oats = 0;
+      if(state.inventory.grassBale===undefined) state.inventory.grassBale = 0;
+      if(state.inventory.strawBale===undefined) state.inventory.strawBale = 0;
+      if(state.manure===undefined) state.manure = 0;
+      if(state.prices.oats===undefined){ state.prices.oats = CROP_INFO.oats.base; state.prevPrices.oats = CROP_INFO.oats.base; }
+      if(state.prices.grassBale===undefined){ state.prices.grassBale = BALE_INFO.grassBale.base; state.prevPrices.grassBale = BALE_INFO.grassBale.base; }
+      if(state.prices.strawBale===undefined){ state.prices.strawBale = BALE_INFO.strawBale.base; state.prevPrices.strawBale = BALE_INFO.strawBale.base; }
+      if(!state._baleMigration){
+        // older saves stored hay/silage by tonnage at per-tonne prices — reset to per-bale pricing,
+        // and roughly carry over existing stock as a bale count
+        state.inventory.hayBale = Math.round(state.inventory.hayBale||0);
+        state.inventory.silageBale = Math.round(state.inventory.silageBale||0);
+        state.prices.hayBale = BALE_INFO.hayBale.base; state.prevPrices.hayBale = BALE_INFO.hayBale.base;
+        state.prices.silageBale = BALE_INFO.silageBale.base; state.prevPrices.silageBale = BALE_INFO.silageBale.base;
+        state._baleMigration = true;
+      }
+      if(!state._priceMigration2){
+        // milk/wool prices rebased to match current market reference points
+        state.prices.milk = RAW_GOODS_INFO.milk.base; state.prevPrices.milk = RAW_GOODS_INFO.milk.base;
+        state.prices.goatMilk = RAW_GOODS_INFO.goatMilk.base; state.prevPrices.goatMilk = RAW_GOODS_INFO.goatMilk.base;
+        state.prices.buffaloMilk = RAW_GOODS_INFO.buffaloMilk.base; state.prevPrices.buffaloMilk = RAW_GOODS_INFO.buffaloMilk.base;
+        state.prices.wool = RAW_GOODS_INFO.wool.base; state.prevPrices.wool = RAW_GOODS_INFO.wool.base;
+        state._priceMigration2 = true;
+      }
+      state.fields.forEach(f=>{
+        if(f.strawAvailable===undefined) f.strawAvailable = false;
+        if(f.strawPotential===undefined) f.strawPotential = 0;
+        if(f.baleType===undefined) f.baleType = null;
+      });
+
+      // --- greenhouse crop selection + repriced produce migration ---
+      ['greenhouse','greenhouseSmall'].forEach(k=>{
+        if(state.buildings[k] && state.buildings[k].activeCrop===undefined) state.buildings[k].activeCrop = 'tomatoes';
+      });
+      if(state.inventory.lettuce===undefined) state.inventory.lettuce = 0;
+      if(state.inventory.chilli===undefined) state.inventory.chilli = 0;
+      if(state.inventory.garlic===undefined) state.inventory.garlic = 0;
+      if(!state._greenhouseMigration){
+        // tomatoes are repriced to match the new FS25-tier produce lineup
+        state.prices.tomatoes = GREENHOUSE_CROP_INFO.tomatoes.base;
+        state.prevPrices.tomatoes = GREENHOUSE_CROP_INFO.tomatoes.base;
+        state._greenhouseMigration = true;
+      }
+      GREENHOUSE_CROP_KEYS.forEach(k=>{
+        if(state.prices[k]===undefined){ state.prices[k] = GREENHOUSE_CROP_INFO[k].base; state.prevPrices[k] = GREENHOUSE_CROP_INFO[k].base; }
+      });
+
+      state.toastMsg='';
+      hasSave = true;
+    }
+  }catch(e){ /* no save yet, ignore */ }
+  render();
+}
+
+function continueGame(){
+  uiScreen = 'game';
+  render();
+}
+
+function newGamePrompt(){
+  if(hasSave){
+    const sure = confirm('Start a new game? This will overwrite your existing save — all money, paddocks, buildings and livestock will be lost. This cannot be undone.');
+    if(!sure) return;
+  }
+  state = defaultState();
+  hasSave = true;
+  uiScreen = 'game';
+  saveGame();
+  render();
+}
+
+async function saveAndQuit(){
+  await saveGame();
+  uiScreen = 'menu';
+  render();
+}
+
+/* ============================= HELPERS ============================= */
+function money(n){ return '$' + Math.round(n).toLocaleString(); }
+// look up a field by its `id` property — the fields array is NOT guaranteed
+// to have array-index === id (paddocks can be removed from the middle), so
+// this must never be replaced with state.fields[id]
+function getField(id){ return state.fields.find(f=>f.id===id); }
+// the number shown to the player — normally id+1, but overridable per field
+// (e.g. the 120ha paddock displays as 17 even though its internal id is 20)
+function paddockLabel(f){ return f.displayNumber || (f.id+1); }
+function tonnes(n){
+  // Internal quantities remain in tonnes for calculations; UI displays litres.
+  const litres = Number(n || 0) * 1000;
+  return litres.toLocaleString(undefined,{maximumFractionDigits:1}) + ' L';
+}
+function litres(n){ return tonnes(n); }
+function toast(msg){ state.toastMsg = msg; render(); setTimeout(()=>{ state.toastMsg=''; renderToastOnly(); }, 3200); }
+
+function phFactor(ph){
+  const f = 1.1 - Math.abs(ph-6.5)*0.25;
+  return Math.max(0.5, Math.min(1.1, f));
+}
+function nFactor(n){
+  const f = 0.55 + Math.min(n,100)/100*0.55;
+  return Math.max(0.55, Math.min(1.1, f));
+}
+function yieldOutlook(f){
+  return Math.round(phFactor(f.ph) * nFactor(f.nitrogen) * 100);
+}
+function soilTier(pct){
+  if(pct>=90) return 'good';
+  if(pct>=65) return 'ok';
+  return 'poor';
+}
+
+function allBuildingKeysFor(itemKey){
+  // which building processes this raw item
+  if(GRAIN_CROPS.includes(itemKey)) return 'grainMill';
+  if(OIL_CROPS.includes(itemKey)) return 'oilMill';
+  if(itemKey==='flour') return 'bakery';
+  return null;
+}
+
+/* ============================= ACTIONS ============================= */
+function buyField(id){
+  const f = getField(id);
+  if(f.owned) return;
+  if(state.money < f.price){ toast("Not enough cash to buy that paddock."); return; }
+  state.money -= f.price;
+  f.owned = true;
+  f.ph = Math.round((5.7 + Math.random()*0.8)*10)/10;
+  f.nitrogen = Math.round(40 + Math.random()*20);
+  state.selectedField = id;
+  state.activeTab='field';
+  recordFinance('expense','Land purchase',f.price,`Purchased ${f.size} ha paddock ${paddockLabel ? paddockLabel(f) : f.displayNumber||id}`);
+  toast(`Purchased ${f.size} ha paddock for ${money(f.price)}. Soil test: pH ${f.ph}, N ${f.nitrogen}%.`);
+  saveGame(); render();
+}
+
+function cultivateField(id){
+  const f = getField(id);
+  if(!f.owned || (f.state!=='harvested' && f.state!=='withered')) return;
+  const wasWithered = f.state==='withered';
+  const cost = Math.round(CULTIVATE_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to cultivate."); return; }
+  state.money -= cost;
+  f.state = 'cultivated';
+  f.crop = null;
+  f.readyDays = 0;
+  f.strawAvailable = false;
+  f.strawPotential = 0;
+  toast(wasWithered ? `Cleared the withered crop and cultivated ${f.size} ha for ${money(cost)}.` : `Cultivated ${f.size} ha for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function applyLime(id){
+  const f = getField(id);
+  if(!f.owned) return;
+  const actualBoost = Math.max(0, Math.min(LIME_PH_BOOST, PH_CAP - f.ph));
+  if(actualBoost <= 0.01){ toast("Soil pH is already at target — no lime needed."); return; }
+  const cost = Math.round(LIME_COST_HA * f.size * (actualBoost/LIME_PH_BOOST));
+  if(state.money < cost){ toast("Not enough cash for lime."); return; }
+  state.money -= cost;
+  f.ph = Math.round(Math.min(PH_CAP, f.ph + actualBoost)*100)/100;
+  toast(`Spread lime on ${f.size} ha for ${money(cost)} (pH +${actualBoost.toFixed(2)}). Soil pH now ${f.ph}.`);
+  saveGame(); render();
+}
+
+function applyFertilizer(id){
+  const f = getField(id);
+  if(!f.owned) return;
+  const actualBoost = Math.max(0, Math.min(FERT_N_BOOST, N_CAP - f.nitrogen));
+  if(actualBoost <= 0.5){ toast("Nitrogen is already at target — no fertilizer needed."); return; }
+  const cost = Math.round(FERT_COST_HA * f.size * (actualBoost/FERT_N_BOOST));
+  if(state.money < cost){ toast("Not enough cash for fertilizer."); return; }
+  state.money -= cost;
+  f.nitrogen = Math.round(Math.min(N_CAP, f.nitrogen + actualBoost));
+  toast(`Applied nitrogen fertilizer on ${f.size} ha for ${money(cost)} (N +${Math.round(actualBoost)}%). Soil N now ${f.nitrogen}%.`);
+  saveGame(); render();
+}
+
+function sowField(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='cultivated') return;
+  const cropKey = state.pendingCrop[id] || 'wheat';
+  const info = CROP_INFO[cropKey];
+  const cost = Math.round(info.seedCost * f.size);
+  if(state.money < cost){ toast("Not enough cash for seed."); return; }
+  state.money -= cost;
+  f.state = 'sowed';
+  f.crop = cropKey;
+  f.sprayed = false;
+  toast(`Sowed ${info.label} on ${f.size} ha for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function sprayField(id){
+  const f = getField(id);
+  if(!f.owned) return;
+  if(!['growing1','growing2','growing3'].includes(f.state)) return;
+  if(f.sprayed){ toast("Already sprayed this cycle."); return; }
+  const cost = Math.round(SPRAY_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to spray."); return; }
+  state.money -= cost;
+  f.sprayed = true;
+  toast(`Sprayed ${f.size} ha for weeds for ${money(cost)} — expect a better yield.`);
+  saveGame(); render();
+}
+
+function harvestField(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='ready' || f.crop==='grass') return;
+  const cost = Math.round(HARVEST_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to run the header."); return; }
+  const info = CROP_INFO[f.crop];
+  const variance = 0.95 + Math.random()*0.1;
+  const quality = phFactor(f.ph) * nFactor(f.nitrogen);
+  const sprayBonus = f.sprayed ? (1+SPRAY_YIELD_BONUS) : 1;
+  const yieldT = f.size * info.yieldPerHa * quality * variance * sprayBonus;
+  state.money -= cost;
+  state.inventory[f.crop] += yieldT;
+  state.harvestLog.unshift({
+    day: state.day, fieldId: id, size: f.size, crop: f.crop,
+    yieldT: yieldT, ph: f.ph, nitrogen: f.nitrogen, quality: Math.round(quality*100)
+  });
+  if(state.harvestLog.length > 60) state.harvestLog.length = 60;
+  f.nitrogen = Math.max(0, Math.round(f.nitrogen - 15));
+  let strawMsg = '';
+  if(STRAW_CROPS.includes(f.crop)){
+    f.strawAvailable = true;
+    f.strawPotential = yieldT * STRAW_TO_GRAIN_RATIO;
+    strawMsg = ` Stubble is left behind — bale it for straw, or cultivate it straight back into the soil.`;
+  } else {
+    f.strawAvailable = false;
+    f.strawPotential = 0;
+  }
+  toast(`Harvested ${tonnes(yieldT)} of ${info.label}${f.sprayed?' (weeds sprayed — yield boosted)':''} (soil quality ${Math.round(quality*100)}%).${strawMsg}`);
+  f.state='harvested';
+  f.crop=null;
+  f.readyDays=0;
+  f.sprayed=false;
+  saveGame(); render();
+}
+
+function baleStraw(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='harvested' || !f.strawAvailable) return;
+  const cost = Math.round(STRAW_BALE_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to bale straw."); return; }
+  state.money -= cost;
+  const bales = Math.max(0, Math.round((f.strawPotential||0) / BALE_INFO.strawBale.sizeT));
+  state.inventory.strawBale += bales;
+  f.strawAvailable = false;
+  f.strawPotential = 0;
+  toast(`Baled ${bales} straw bale${bales!==1?'s':''} for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function mowField(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='ready' || f.crop!=='grass') return;
+  const cost = Math.round(MOW_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to mow."); return; }
+  state.money -= cost;
+  const quality = phFactor(f.ph) * nFactor(f.nitrogen);
+  const variance = 0.95 + Math.random()*0.1;
+  const sprayBonus = f.sprayed ? (1+SPRAY_YIELD_BONUS) : 1;
+  f.hayYield = f.size * GRASS_YIELD_PER_HA * quality * variance * sprayBonus;
+  f.nitrogen = Math.max(0, Math.round(f.nitrogen - 15));
+  f.state = 'mowed';
+  f.sprayed = false;
+  toast(`Mowed ${f.size} ha of grass for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+// From 'mowed', the player chooses which bale type to make:
+//   Grass Bale  — Mow → Windrow → Bale
+//   Hay Bale    — Mow → Tedd → Windrow → Bale
+//   Silage Bale — Mow → Windrow → Bale → Wrap
+function chooseBaleType(id, type){
+  const f = getField(id);
+  if(!f.owned || f.state!=='mowed') return;
+  if(!['grass','hay','silage'].includes(type)) return;
+  let cost, nextState;
+  if(type==='hay'){
+    cost = Math.round(TEDD_COST_HA * f.size);
+    nextState = 'tedded';
+  } else {
+    cost = Math.round(WINDROW_COST_HA * f.size);
+    nextState = 'windrowed';
+  }
+  if(state.money < cost){ toast("Not enough cash for that step."); return; }
+  state.money -= cost;
+  f.baleType = type;
+  f.state = nextState;
+  const label = type==='grass' ? 'a grass bale' : type==='hay' ? 'hay' : 'silage';
+  toast(`Started making ${label} on ${f.size} ha for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+// hay only: tedded -> windrowed
+function continueToWindrow(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='tedded' || f.baleType!=='hay') return;
+  const cost = Math.round(WINDROW_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to windrow."); return; }
+  state.money -= cost;
+  f.state = 'windrowed';
+  toast(`Windrowed ${f.size} ha for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+// from 'windrowed': grass/hay finish here as bales; silage moves to 'baled' awaiting wrap
+function baleField(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='windrowed') return;
+  const cost = Math.round(BALE_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to bale."); return; }
+  state.money -= cost;
+  if(f.baleType==='silage'){
+    f.silageYield = (f.hayYield || 0) * SILAGE_YIELD_MULTIPLIER;
+    f.state = 'baled';
+    toast(`Baled ${f.size} ha for silage for ${money(cost)}. Wrap it to finish the fermentation.`);
+    saveGame(); render();
+    return;
+  }
+  const key = f.baleType==='grass' ? 'grassBale' : 'hayBale';
+  const yieldT = f.hayYield || 0;
+  const bales = Math.max(0, Math.round(yieldT / BALE_INFO[key].sizeT));
+  state.inventory[key] += bales;
+  state.harvestLog.unshift({
+    day: state.day, fieldId: id, size: f.size, crop: 'grass',
+    yieldT: yieldT, ph: f.ph, nitrogen: f.nitrogen, quality: Math.round(phFactor(f.ph)*nFactor(f.nitrogen)*100), bales, baleKind:key
+  });
+  if(state.harvestLog.length > 60) state.harvestLog.length = 60;
+  toast(`Baled ${bales} ${BALE_INFO[key].label}${bales!==1?'s':''} for ${money(cost)}.`);
+  f.state = 'harvested';
+  f.crop = null;
+  f.hayYield = 0;
+  f.baleType = null;
+  saveGame(); render();
+}
+
+// silage only: baled -> wrapped
+function wrapField(id){
+  const f = getField(id);
+  if(!f.owned || f.state!=='baled') return;
+  const cost = Math.round(WRAP_COST_HA * f.size);
+  if(state.money < cost){ toast("Not enough cash to wrap."); return; }
+  state.money -= cost;
+  const yieldT = f.silageYield || 0;
+  const bales = Math.max(0, Math.round(yieldT / BALE_INFO.silageBale.sizeT));
+  state.inventory.silageBale += bales;
+  state.harvestLog.unshift({
+    day: state.day, fieldId: id, size: f.size, crop: 'grass',
+    yieldT: yieldT, ph: f.ph, nitrogen: f.nitrogen, quality: Math.round(phFactor(f.ph)*nFactor(f.nitrogen)*100), bales, baleKind:'silageBale'
+  });
+  if(state.harvestLog.length > 60) state.harvestLog.length = 60;
+  toast(`Wrapped ${bales} silage bale${bales!==1?'s':''} for ${money(cost)}.`);
+  f.state = 'harvested';
+  f.crop = null;
+  f.hayYield = 0;
+  f.silageYield = 0;
+  f.baleType = null;
+  saveGame(); render();
+}
+
+function consumeFeed(amountNeeded){
+  let remaining = amountNeeded;
+  const consumed = {};
+  FEED_PRIORITY.forEach(crop=>{
+    if(remaining<=0) return;
+    const amt = Math.min(remaining, state.inventory[crop]);
+    if(amt>0){
+      state.inventory[crop] -= amt;
+      consumed[crop] = (consumed[crop]||0) + amt;
+      remaining -= amt;
+    }
+  });
+  const fed = amountNeeded - remaining;
+  return {fed, consumed, feedFactor: amountNeeded>0 ? fed/amountNeeded : 0};
+}
+
+// Cattle (cows & buffalo) can eat grass, hay, silage & straw bales — in that order of
+// preference (silage highest quality, straw lowest) — then fall back to meadow grazing.
+// Feeding straw to a COW (not buffalo) also produces manure, usable as free fertilizer.
+function consumeCattleFeed(amountNeeded, producesManure){
+  let remaining = amountNeeded;
+  const used = {};
+  ['silageBale','hayBale','grassBale','strawBale'].forEach(baleKey=>{
+    if(remaining<=0) return;
+    const sizeT = BALE_INFO[baleKey].sizeT;
+    const availableT = state.inventory[baleKey] * sizeT;
+    const takeT = Math.min(remaining, availableT);
+    if(takeT>0){
+      const balesUsed = takeT / sizeT;
+      state.inventory[baleKey] -= balesUsed;
+      used[baleKey] = (used[baleKey]||0) + takeT;
+      remaining -= takeT;
+    }
+  });
+  const realFed = amountNeeded - remaining;
+  const meadowCap = amountNeeded * MEADOW_COVERAGE;
+  const meadowUsed = Math.min(remaining, meadowCap);
+  const effectiveFeed = realFed + meadowUsed * MEADOW_EFFICIENCY;
+  const feedFactor = amountNeeded>0 ? Math.min(1, effectiveFeed/amountNeeded) : 0;
+  const strawT = used.strawBale || 0;
+  let manureProduced = 0;
+  if(producesManure && strawT>0){
+    manureProduced = strawT * MANURE_PER_STRAW_T;
+    state.manure = Math.round((state.manure + manureProduced)*100)/100;
+  }
+  return {used, meadowUsed, fed:realFed, feedFactor, needed:amountNeeded, manureProduced};
+}
+
+// Sheep & goats are restricted to grass or hay bales only — no silage, straw, or grain —
+// then fall back to meadow grazing like cattle.
+function consumeSheepGoatFeed(amountNeeded){
+  let remaining = amountNeeded;
+  const used = {};
+  ['hayBale','grassBale'].forEach(baleKey=>{
+    if(remaining<=0) return;
+    const sizeT = BALE_INFO[baleKey].sizeT;
+    const availableT = state.inventory[baleKey] * sizeT;
+    const takeT = Math.min(remaining, availableT);
+    if(takeT>0){
+      const balesUsed = takeT / sizeT;
+      state.inventory[baleKey] -= balesUsed;
+      used[baleKey] = (used[baleKey]||0) + takeT;
+      remaining -= takeT;
+    }
+  });
+  const realFed = amountNeeded - remaining;
+  const meadowCap = amountNeeded * MEADOW_COVERAGE;
+  const meadowUsed = Math.min(remaining, meadowCap);
+  const effectiveFeed = realFed + meadowUsed * MEADOW_EFFICIENCY;
+  const feedFactor = amountNeeded>0 ? Math.min(1, effectiveFeed/amountNeeded) : 0;
+  return {used, meadowUsed, fed:realFed, feedFactor, needed:amountNeeded};
+}
+
+function applyManure(id){
+  const f = getField(id);
+  if(!f.owned) return;
+  if(state.manure<=0){ toast("No manure available — feed straw to your cows to produce some."); return; }
+  const neededBoost = N_CAP - f.nitrogen;
+  if(neededBoost<=0.5){ toast("Nitrogen is already at target — no manure needed."); return; }
+  const maxBoostFromStock = state.manure * MANURE_N_BOOST_PER_UNIT;
+  const actualBoost = Math.min(neededBoost, maxBoostFromStock);
+  const unitsUsed = actualBoost / MANURE_N_BOOST_PER_UNIT;
+  state.manure = Math.round((state.manure - unitsUsed)*100)/100;
+  f.nitrogen = Math.round(Math.min(N_CAP, f.nitrogen + actualBoost));
+  toast(`Spread ${unitsUsed.toFixed(2)} units of manure on ${f.size} ha (N +${Math.round(actualBoost)}%). Soil N now ${f.nitrogen}%.`);
+  saveGame(); render();
+}
+
+function autoProcessAll(){
+  const summary = {};
+
+  if(state.buildings.grainMill.owned && state.buildings.grainMill.auto){
+    let remaining = BUILDINGS_INFO.grainMill.capacity;
+    const consumed = {}; let produced = 0;
+    const active=activeList('grainMill',GRAIN_CROPS);
+    GRAIN_CROPS.forEach(crop=>{
+      if(!active.includes(crop)) return;
+      if(remaining<=0) return;
+      const amt = Math.min(remaining, state.inventory[crop]);
+      if(amt>0){
+        state.inventory[crop] -= amt;
+        const out = amt * PRODUCT_INFO.flour.ratio;
+        state.inventory.flour += out;
+        consumed[crop] = amt;
+        produced += out;
+        remaining -= amt;
+      }
+    });
+    state.capacityUsed.grainMill = BUILDINGS_INFO.grainMill.capacity - remaining;
+    summary.grainMill = {consumed, produced};
+  }
+
+  if(state.buildings.oilMill.owned && state.buildings.oilMill.auto){
+    let remaining = BUILDINGS_INFO.oilMill.capacity;
+    const consumed = {}; const produced = {canolaOil:0, sunflowerOil:0};
+    const active=activeList('oilMill',OIL_CROPS);
+    OIL_CROPS.forEach(crop=>{
+      if(!active.includes(crop)) return;
+      if(remaining<=0) return;
+      const amt = Math.min(remaining, state.inventory[crop]);
+      if(amt>0){
+        state.inventory[crop] -= amt;
+        const productKey = CROP_INFO[crop].product;
+        const out = amt * PRODUCT_INFO[productKey].ratio;
+        state.inventory[productKey] += out;
+        consumed[crop] = amt;
+        produced[productKey] += out;
+        remaining -= amt;
+      }
+    });
+    state.capacityUsed.oilMill = BUILDINGS_INFO.oilMill.capacity - remaining;
+    summary.oilMill = {consumed, produced};
+  }
+
+  if(state.buildings.bakery.owned && state.buildings.bakery.auto && activeList('bakery',['bread']).includes('bread')){
+    const amt = Math.min(BUILDINGS_INFO.bakery.capacity, state.inventory.flour);
+    const out = amt * PRODUCT_INFO.bread.ratio;
+    if(amt>0){ state.inventory.flour -= amt; state.inventory.bread += out; }
+    state.capacityUsed.bakery = amt;
+    summary.bakery = {consumed:amt, produced:out};
+  }
+
+  // Chicken pen — eggs
+  const cp = state.pens.chickenPen;
+  if(cp.owned && cp.chickenCount>0){
+    const needed = cp.chickenCount * CHICKEN_FEED_PER_DAY;
+    const r = consumeFeed(needed);
+    const eggsOut = cp.chickenCount * CHICKEN_EGG_PER_DAY * r.feedFactor;
+    state.inventory.eggs += eggsOut;
+    summary.chickenPen = {needed, fed:r.fed, consumed:r.consumed, eggsOut, feedFactor:r.feedFactor};
+  }
+
+  // Cow pen — regular + buffalo milk. Cattle eat silage, hay, grass or straw bales (then meadow).
+  // Only regular cows (not buffalo) produce manure, and only when fed straw.
+  const cowPen = state.pens.cowPen;
+  if(cowPen.owned){
+    const cowSummary = {};
+    if(cowPen.cows>0){
+      const needed = cowPen.cows * COW_FEED_PER_DAY;
+      const r = consumeCattleFeed(needed, true);
+      const milkOut = cowPen.cows * COW_MILK_PER_DAY * r.feedFactor;
+      state.inventory.milk += milkOut;
+      cowSummary.regular = {needed, fed:r.fed, used:r.used, meadowUsed:r.meadowUsed, milkOut, feedFactor:r.feedFactor, manureProduced:r.manureProduced};
+    }
+    if(cowPen.buffaloCows>0){
+      const needed = cowPen.buffaloCows * BUFFALO_FEED_PER_DAY;
+      const r = consumeCattleFeed(needed, false);
+      const milkOut = cowPen.buffaloCows * BUFFALO_MILK_PER_DAY * r.feedFactor;
+      state.inventory.buffaloMilk += milkOut;
+      cowSummary.buffalo = {needed, fed:r.fed, used:r.used, meadowUsed:r.meadowUsed, milkOut, feedFactor:r.feedFactor};
+    }
+    summary.cowPen = cowSummary;
+  }
+
+  // Goat & sheep pen — goat milk + wool. Sheep and goats can only eat hay or grass bales (then meadow).
+  const gsPen = state.pens.goatSheepPen;
+  if(gsPen.owned){
+    const gsSummary = {};
+    if(gsPen.goats>0){
+      const needed = gsPen.goats * GOAT_FEED_PER_DAY;
+      const r = consumeSheepGoatFeed(needed);
+      const milkOut = gsPen.goats * GOAT_MILK_PER_DAY * r.feedFactor;
+      state.inventory.goatMilk += milkOut;
+      gsSummary.goats = {needed, fed:r.fed, used:r.used, meadowUsed:r.meadowUsed, milkOut, feedFactor:r.feedFactor};
+    }
+    if(gsPen.sheep>0){
+      const needed = gsPen.sheep * SHEEP_FEED_PER_DAY;
+      const r = consumeSheepGoatFeed(needed);
+      const woolOut = gsPen.sheep * SHEEP_WOOL_PER_DAY * r.feedFactor;
+      state.inventory.wool += woolOut;
+      gsSummary.sheep = {needed, fed:r.fed, used:r.used, meadowUsed:r.meadowUsed, woolOut, feedFactor:r.feedFactor};
+    }
+    summary.goatSheepPen = gsSummary;
+  }
+
+  // Corn dryer — corn dried at 1.7x the raw price
+  if(state.buildings.cornDryer.owned && state.buildings.cornDryer.auto && activeList('cornDryer',['driedCorn']).includes('driedCorn')){
+    const amt = Math.min(BUILDINGS_INFO.cornDryer.capacity, state.inventory.corn);
+    const out = amt * PRODUCT_INFO.driedCorn.ratio;
+    if(amt>0){ state.inventory.corn -= amt; state.inventory.driedCorn += out; }
+    state.capacityUsed.cornDryer = amt;
+    summary.cornDryer = {consumed:amt, produced:out};
+  }
+
+  // Greenhouses (small + large) — grow whichever crop is activated (tomato/lettuce/chilli/garlic);
+  // they spend daily upkeep cash instead of consuming a raw crop.
+  // Processed smallest-first so a tight cash day funds the cheap one before the big one.
+  GREENHOUSE_KEYS.forEach(key=>{
+    if(state.buildings[key].owned && state.buildings[key].auto){
+      const cap = BUILDINGS_INFO[key].capacity;
+      const crop = state.buildings[key].activeCrop || 'tomatoes';
+      const cropInfo = GREENHOUSE_CROP_INFO[crop] || GREENHOUSE_CROP_INFO.tomatoes;
+      const fullUpkeep = cap * GREENHOUSE_UPKEEP_PER_UNIT;
+      const upkeepPaid = Math.min(fullUpkeep, Math.max(0, state.money));
+      const fundedFraction = fullUpkeep>0 ? upkeepPaid/fullUpkeep : 0;
+      state.money -= upkeepPaid;
+      const cropOut = cap * GREENHOUSE_YIELD_PER_UNIT * cropInfo.yieldMultiplier * fundedFraction;
+      state.inventory[crop] += cropOut;
+      state.capacityUsed[key] = cap * fundedFraction;
+      summary[key] = {upkeepPaid, fullUpkeep, fundedFraction, crop, cropOut};
+      if(upkeepPaid>0) recordFinance('expense','Greenhouse upkeep',upkeepPaid,`${BUILDINGS_INFO[key].label} upkeep growing ${cropInfo.label}`);
+    }
+  });
+
+  // Dairy — buffalo milk is processed first (highest value), then regular milk, then goat milk
+  if(state.buildings.dairy.owned && state.buildings.dairy.auto && activeList('dairy',['cheese','butter','goatCheese','buffaloMozzarella']).length>0){
+    let remaining = BUILDINGS_INFO.dairy.capacity;
+    const consumed = {}; const produced = {};
+    if(remaining>0 && state.inventory.buffaloMilk>0 && activeList('dairy',['cheese','butter','goatCheese','buffaloMozzarella']).includes('buffaloMozzarella')){
+      const amt = Math.min(remaining, state.inventory.buffaloMilk);
+      state.inventory.buffaloMilk -= amt;
+      const out = amt * PRODUCT_INFO.buffaloMozzarella.ratio;
+      state.inventory.buffaloMozzarella += out;
+      consumed.buffaloMilk = amt; produced.buffaloMozzarella = out;
+      remaining -= amt;
+    }
+    if(remaining>0 && state.inventory.milk>0){
+      const amt = Math.min(remaining, state.inventory.milk);
+      state.inventory.milk -= amt;
+      const active=activeList('dairy',['cheese','butter','goatCheese','buffaloMozzarella']);
+      const cheeseShare=active.includes('cheese') ? (active.includes('butter')?0.6:1) : 0;
+      const butterShare=active.includes('butter') ? (active.includes('cheese')?0.4:1) : 0;
+      const cheeseOut = (amt*cheeseShare) * PRODUCT_INFO.cheese.ratio;
+      const butterOut = (amt*butterShare) * PRODUCT_INFO.butter.ratio;
+      state.inventory.cheese += cheeseOut; state.inventory.butter += butterOut;
+      consumed.milk = amt; if(cheeseOut>0) produced.cheese = cheeseOut; if(butterOut>0) produced.butter = (produced.butter||0)+butterOut;
+      remaining -= amt;
+    }
+    if(remaining>0 && state.inventory.goatMilk>0){
+      const amt = Math.min(remaining, state.inventory.goatMilk);
+      state.inventory.goatMilk -= amt;
+      const active=activeList('dairy',['cheese','butter','goatCheese','buffaloMozzarella']);
+      const gcShare=active.includes('goatCheese') ? (active.includes('butter')?0.6:1) : 0;
+      const bShare=active.includes('butter') ? (active.includes('goatCheese')?0.4:1) : 0;
+      const gcOut = (amt*gcShare) * PRODUCT_INFO.goatCheese.ratio;
+      const bOut = (amt*bShare) * PRODUCT_INFO.butter.ratio;
+      state.inventory.goatCheese += gcOut; state.inventory.butter += bOut;
+      consumed.goatMilk = amt; if(gcOut>0) produced.goatCheese=gcOut; if(bOut>0) produced.butter=(produced.butter||0)+bOut;
+      remaining -= amt;
+    }
+    state.capacityUsed.dairy = BUILDINGS_INFO.dairy.capacity - remaining;
+    summary.dairy = {consumed, produced};
+  }
+
+  // Fish breeding — produces young Trout/Salmon and pays a monthly feed/operating cost.
+  if(state.buildings.fishBreeding.owned && state.buildings.fishBreeding.auto){
+    const active=activeList('fishBreeding',['trout','salmon']);
+    const cost=fishFoodCost('fishBreeding');
+    const paid=Math.min(cost,Math.max(0,state.money));
+    state.money-=paid;
+    const produced={};
+    active.forEach(species=>{ const k=species==='trout'?'youngTrout':'youngSalmon'; state.inventory[k]+=FISH_BREEDING_MONTHLY_OUTPUT; produced[k]=FISH_BREEDING_MONTHLY_OUTPUT; });
+    state.capacityUsed.fishBreeding=active.length;
+    summary.fishBreeding={cost,paid,produced,farmHa:ownedFarmHa()};
+    if(paid>0) recordFinance('expense','Fish food & breeding',paid,`Young Fish Breeding monthly cost (${ownedFarmHa()} ha farm)`);
+  }
+  // Fish farm — converts young fish into larger fish. Feed/operating cost scales with farm size.
+  if(state.buildings.fishFarm.owned && state.buildings.fishFarm.auto){
+    const active=activeList('fishFarm',['trout','salmon']);
+    const cost=fishFoodCost('fishFarm');
+    const paid=Math.min(cost,Math.max(0,state.money));
+    state.money-=paid;
+    const consumed={},produced={};
+    active.forEach(species=>{
+      const inKey=species==='trout'?'youngTrout':'youngSalmon'; const outKey=species;
+      const amt=Math.min(FISH_FARM_INPUT_PER_SPECIES,state.inventory[inKey]);
+      if(amt>0){ state.inventory[inKey]-=amt; state.inventory[outKey]+=amt*FISH_FARM_OUTPUT_RATIO; consumed[inKey]=amt; produced[outKey]=amt*FISH_FARM_OUTPUT_RATIO; }
+    });
+    state.capacityUsed.fishFarm=active.length;
+    summary.fishFarm={cost,paid,consumed,produced,farmHa:ownedFarmHa()};
+    if(paid>0) recordFinance('expense','Fish food & farm',paid,`Fish Farm monthly cost (${ownedFarmHa()} ha farm)`);
+  }
+
+  // Monthly operating costs for all non-greenhouse production facilities.
+  const monthlyKeys=['grainMill','oilMill','bakery','dairy','cornDryer'];
+  monthlyKeys.forEach(key=>{
+    if(state.buildings[key]?.owned && state.buildings[key]?.auto){
+      const cost=PRODUCTION_MONTHLY_COSTS[key];
+      const paid=Math.min(cost,Math.max(0,state.money)); state.money-=paid;
+      if(paid>0) recordFinance('expense','Production operating costs',paid,`${BUILDINGS_INFO[key].label} monthly operating cost`);
+      summary[key]=Object.assign(summary[key]||{},{monthlyCost:cost,paid});
+    }
+  });
+  if(state.pens.chickenPen.owned && state.pens.chickenPen.chickenCount>0){ const paid=Math.min(PRODUCTION_MONTHLY_COSTS.chickenProduction,Math.max(0,state.money)); state.money-=paid; if(paid>0) recordFinance('expense','Livestock production',paid,'Chicken production monthly cost'); }
+  if(state.pens.cowPen.owned && (state.pens.cowPen.cows+state.pens.cowPen.buffaloCows)>0){ const paid=Math.min(PRODUCTION_MONTHLY_COSTS.cowProduction,Math.max(0,state.money)); state.money-=paid; if(paid>0) recordFinance('expense','Livestock production',paid,'Cow & Buffalo production monthly cost'); }
+  if(state.pens.goatSheepPen.owned && (state.pens.goatSheepPen.goats+state.pens.goatSheepPen.sheep)>0){ const paid=Math.min(PRODUCTION_MONTHLY_COSTS.goatSheepProduction,Math.max(0,state.money)); state.money-=paid; if(paid>0) recordFinance('expense','Livestock production',paid,'Goat & Sheep production monthly cost'); }
+
+  state.lastProcessed = summary;
+}
+
+function advanceMonth(){
+  // advance fields
+  state.fields.forEach(f=>{
+    if(!f.owned) return;
+    const idx = FIELD_STATE_ORDER.indexOf(f.state);
+    const growingNow = ['sowed','growing1','growing2','growing3'].includes(f.state);
+    if(growingNow){
+      f.nitrogen = Math.max(0, Math.round((f.nitrogen - 3)*10)/10);
+      f.ph = Math.round(Math.max(PH_FLOOR, f.ph - 0.03)*100)/100;
+    }
+    if(f.state==='sowed' || f.state==='growing1' || f.state==='growing2'){
+      f.state = FIELD_STATE_ORDER[idx+1];
+    } else if(f.state==='growing3'){
+      f.state = 'ready';
+    }
+    // crops left unharvested too long wither and can no longer be harvested — grass is exempt
+    if(f.crop!=='grass'){
+      if(f.state==='ready'){
+        f.readyDays = (f.readyDays||0) + 1;
+        if(f.readyDays > WITHER_AFTER_READY_DAYS){
+          f.state = 'withered';
+        }
+      } else {
+        f.readyDays = 0;
+      }
+    }
+  });
+  // reset capacity, then auto-run mills/bakery/dairy/animal productions for the new month
+  state.capacityUsed = {grainMill:0, oilMill:0, bakery:0, dairy:0, cornDryer:0, greenhouse:0, greenhouseSmall:0, fishBreeding:0, fishFarm:0};
+  autoProcessAll();
+  // fluctuate prices
+  state.prevPrices = Object.assign({}, state.prices);
+  Object.keys(state.prices).forEach(k=>{
+    let base = (CROP_INFO[k]||PRODUCT_INFO[k]||RAW_GOODS_INFO[k]||BALE_INFO[k]||GREENHOUSE_CROP_INFO[k]||FISH_INFO[k]).base;
+    let pct = (Math.random()-0.5)*0.12;
+    if(Math.random() < 0.12){ pct += (Math.random()<0.5?-1:1)*0.15; }
+    let np = state.prices[k] * (1+pct);
+    np = Math.max(base*0.55, Math.min(base*1.9, np));
+    state.prices[k] = np;
+  });
+  state.day += 1;
+  toast(`${timeLabel()} begins. Monthly productions, animals and markets have updated.`);
+  saveGame(); render();
+}
+
+function buyBuilding(key){
+  const b = state.buildings[key];
+  const info = BUILDINGS_INFO[key];
+  if(b.owned) return;
+  if(state.money < info.price){ toast(`Not enough cash to build the ${info.label}.`); return; }
+  state.money -= info.price;
+  b.owned = true;
+  recordFinance('expense','Building purchase',info.price,`Built the ${info.label}`);
+  toast(`Built the ${info.label} for ${money(info.price)}.`);
+  saveGame(); render();
+}
+
+function toggleAuto(key){
+  state.buildings[key].auto = !state.buildings[key].auto;
+  toast(`${BUILDINGS_INFO[key].label} automatic processing ${state.buildings[key].auto?'enabled':'paused'}.`);
+  saveGame(); render();
+}
+
+function setGreenhouseCrop(key, crop){
+  if(!GREENHOUSE_CROP_INFO[crop]) return;
+  const b = state.buildings[key];
+  if(!b || !b.owned) return;
+  b.activeCrop = crop;
+  toast(`${BUILDINGS_INFO[key].label} activated to grow ${GREENHOUSE_CROP_INFO[crop].label}.`);
+  saveGame(); render();
+}
+
+function buyAnimalPen(penKey){
+  const info = {
+    chickenPen:{label:'Chicken Pen', price:CHICKEN_PEN_PRICE, capacity:CHICKEN_PEN_CAPACITY},
+    cowPen:{label:'Cow & Buffalo Pen', price:COW_PEN_PRICE, capacity:COW_PEN_CAPACITY},
+    goatSheepPen:{label:'Sheep & Goat Pen', price:GOAT_SHEEP_PEN_PRICE, capacity:GOAT_SHEEP_PEN_CAPACITY}
+  }[penKey];
+  const pen = state.pens[penKey];
+  if(!info || pen.owned) return;
+  if(state.money < info.price){ toast(`Not enough money for the ${info.label}.`); return; }
+  state.money -= info.price;
+  pen.owned = true;
+  recordFinance('expense','Pen purchase',info.price,`Purchased the ${info.label}`);
+  toast(`Purchased the ${info.label} for ${money(info.price)}. It is off-site and does not use a field.`);
+  saveGame(); render();
+}
+
+function buyChickens(amountStr){
+  const cp = state.pens.chickenPen;
+  const prod = state.animalProduction.chickenProduction;
+  if(!cp.owned) { toast('Purchase the Chicken Pen first.'); return; }
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  n = Math.min(n, CHICKEN_PEN_CAPACITY - cp.chickenCount);
+  if(n<=0){ toast("Chicken production is full."); return; }
+  const cost = n * CHICKEN_COST;
+  if(state.money < cost){ toast("Not enough cash for that many chickens."); return; }
+  state.money -= cost;
+  cp.chickenCount += n;
+  recordFinance('expense','Livestock purchase',cost,`Bought ${n} chickens`);
+  toast(`Bought ${n} chickens for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function sellChickens(amountStr){
+  const cp = state.pens.chickenPen;
+  if(!cp.owned) return;
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  n = Math.min(n, cp.chickenCount);
+  if(n<=0){ toast("No chickens to sell."); return; }
+  const revenue = Math.round(n * CHICKEN_COST * LIVESTOCK_RESALE_FACTOR);
+  cp.chickenCount -= n;
+  state.money += revenue;
+  recordFinance('income','Livestock sale',revenue,`Sold ${n} chickens`);
+  toast(`Sold ${n} chickens for ${money(revenue)}.`);
+  saveGame(); render();
+}
+
+function buyCows(kind, amountStr){
+  const pen = state.pens.cowPen;
+  if(!pen.owned){ toast('Purchase the Cow & Buffalo Pen first.'); return; }
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  const capLeft = ANIMAL_PRODUCTION_INFO.cowProduction.capacity - (pen.cows + pen.buffaloCows);
+  n = Math.min(n, capLeft);
+  if(n<=0){ toast("Cow production is full."); return; }
+  const unitCost = kind==='buffalo' ? BUFFALO_COST : COW_COST;
+  const cost = n * unitCost;
+  if(state.money < cost){ toast("Not enough cash for that many cows."); return; }
+  state.money -= cost;
+  if(kind==='buffalo'){ pen.buffaloCows += n; } else { pen.cows += n; }
+  recordFinance('expense','Livestock purchase',cost,`Bought ${n} ${kind==='buffalo'?'buffalo':'regular'} cows`);
+  toast(`Bought ${n} ${kind==='buffalo'?'buffalo':'regular'} cows for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function sellCows(kind, amountStr){
+  const pen = state.pens.cowPen;
+  if(!pen.owned) return;
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  const have = kind==='buffalo' ? pen.buffaloCows : pen.cows;
+  n = Math.min(n, have);
+  if(n<=0){ toast("No cows of that type to sell."); return; }
+  const unitCost = kind==='buffalo' ? BUFFALO_COST : COW_COST;
+  const revenue = Math.round(n * unitCost * LIVESTOCK_RESALE_FACTOR);
+  if(kind==='buffalo'){ pen.buffaloCows -= n; } else { pen.cows -= n; }
+  state.money += revenue;
+  recordFinance('income','Livestock sale',revenue,`Sold ${n} ${kind==='buffalo'?'buffalo':'regular'} cows`);
+  toast(`Sold ${n} ${kind==='buffalo'?'buffalo':'regular'} cows for ${money(revenue)}.`);
+  saveGame(); render();
+}
+
+function buyGoatsSheep(kind, amountStr){
+  const pen = state.pens.goatSheepPen;
+  if(!pen.owned){ toast('Purchase the Sheep & Goat Pen first.'); return; }
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  const capLeft = ANIMAL_PRODUCTION_INFO.goatSheepProduction.capacity - (pen.goats + pen.sheep);
+  n = Math.min(n, capLeft);
+  if(n<=0){ toast("Goat & sheep production is full."); return; }
+  const unitCost = kind==='sheep' ? SHEEP_COST : GOAT_COST;
+  const cost = n * unitCost;
+  if(state.money < cost){ toast("Not enough cash for that many animals."); return; }
+  state.money -= cost;
+  if(kind==='sheep'){ pen.sheep += n; } else { pen.goats += n; }
+  recordFinance('expense','Livestock purchase',cost,`Bought ${n} ${kind==='sheep'?'sheep':'goats'}`);
+  toast(`Bought ${n} ${kind==='sheep'?'sheep':'goats'} for ${money(cost)}.`);
+  saveGame(); render();
+}
+
+function sellGoatsSheep(kind, amountStr){
+  const pen = state.pens.goatSheepPen;
+  if(!pen.owned) return;
+  let n = Math.floor(parseFloat(amountStr));
+  if(isNaN(n) || n<=0) return;
+  const have = kind==='sheep' ? pen.sheep : pen.goats;
+  n = Math.min(n, have);
+  if(n<=0){ toast("No animals of that type to sell."); return; }
+  const unitCost = kind==='sheep' ? SHEEP_COST : GOAT_COST;
+  const revenue = Math.round(n * unitCost * LIVESTOCK_RESALE_FACTOR);
+  if(kind==='sheep'){ pen.sheep -= n; } else { pen.goats -= n; }
+  state.money += revenue;
+  recordFinance('income','Livestock sale',revenue,`Sold ${n} ${kind==='sheep'?'sheep':'goats'}`);
+  toast(`Sold ${n} ${kind==='sheep'?'sheep':'goats'} for ${money(revenue)}.`);
+  saveGame(); render();
+}
+
+function sellItem(key, amountStr){
+  let amt = parseFloat(amountStr);
+  if(isNaN(amt) || amt<=0) return;
+  amt = Math.min(amt, state.inventory[key]);
+  if(amt<=0) return;
+  const revenue = amt * state.prices[key];
+  state.inventory[key] -= amt;
+  state.money += revenue;
+  const label = (CROP_INFO[key]||PRODUCT_INFO[key]||RAW_GOODS_INFO[key]||GREENHOUSE_CROP_INFO[key]||BALE_INFO[key]||FISH_INFO[key]).label;
+  recordFinance('income','Crop & product sales',revenue,`Sold ${tonnes(amt)} ${label}`);
+  toast(`Sold ${tonnes(amt)} ${label} for ${money(revenue)}.`);
+  saveGame(); render();
+}
+
+function sellBale(key, amountStr){
+  let amt = Math.floor(parseFloat(amountStr));
+  if(isNaN(amt) || amt<=0) return;
+  amt = Math.min(amt, Math.floor(state.inventory[key]||0));
+  if(amt<=0) return;
+  const revenue = Math.round(amt * state.prices[key]);
+  state.inventory[key] -= amt;
+  state.money += revenue;
+  recordFinance('income','Bale sales',revenue,`Sold ${amt} ${BALE_INFO[key].label}`);
+  toast(`Sold ${amt} ${BALE_INFO[key].label}${amt!==1?'s':''} for ${money(revenue)}.`);
+  saveGame(); render();
+}
+
+function selectField(id){
+  state.selectedField = id;
+  state.activeTab='field';
+  render();
+}
+function setTab(tab){ state.activeTab = tab; render(); }
+function setOverviewMapMode(mode){ overviewMapMode = mode; render(); }
+function setPendingCrop(id, crop){ state.pendingCrop[id]=crop; render(); }
+
+/* ============================= RENDER ============================= */
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+
+function renderMap(){
+  const rows = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[20,19]];
+  let html = '<div class="paddock-map">';
+  rows.forEach((row,rowIdx)=>{
+    if(rowIdx>0) html += '<div class="road-h"></div>';
+    html += '<div class="field-row">';
+    row.forEach((id,colIdx)=>{
+      if(colIdx>0) html += '<div class="road-v"></div>';
+      const f = getField(id);
+      const stateClass = f.owned ? 'state-'+f.state : 'state-unowned';
+      const grow = f.size; // flex-grow proportional to hectares
+      const tier = f.owned ? soilTier(yieldOutlook(f)) : null;
+      const soilDot = f.owned ? `<span class="soil-dot" style="background:${tier==='good'?'var(--up)':tier==='ok'?'var(--wheat-gold-deep)':'var(--down)'}" title="Soil quality ${yieldOutlook(f)}%"></span>` : '';
+      html += `<div class="field-plot ${stateClass} ${state.selectedField===id?'selected':''}" style="flex-grow:${grow}" onclick="selectField(${id})">
+        <span class="ftag">${f.size} ha ${soilDot}</span>
+        <div>
+          <div class="fname">Paddock ${paddockLabel(f)}</div>
+          <div class="fstate">${f.owned ? STATE_LABEL[f.state] + (f.crop? ' · '+CROP_INFO[f.crop].label : '') : 'Unclaimed · '+money(f.price)}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += `<div class="map-legend">
+    <span><span class="swatch" style="background:var(--stubble)"></span>Harvested</span>
+    <span><span class="swatch" style="background:var(--tilled)"></span>Cultivated</span>
+    <span><span class="swatch" style="background:var(--sown)"></span>Sown</span>
+    <span><span class="swatch" style="background:var(--field-green-1)"></span>Growing (early)</span>
+    <span><span class="swatch" style="background:var(--field-green-2)"></span>Growing (mid)</span>
+    <span><span class="swatch" style="background:var(--field-green-3)"></span>Growing (late)</span>
+    <span><span class="swatch" style="background:var(--wheat-gold)"></span>Ready</span>
+    <span><span class="swatch" style="background:var(--withered)"></span>Withered</span>
+    <span><span class="swatch" style="background:var(--hay-mowed)"></span>Mowed</span>
+    <span><span class="swatch" style="background:var(--hay-tedded)"></span>Tedded</span>
+    <span><span class="swatch" style="background:var(--hay-windrowed)"></span>Windrowed</span>
+    <span><span class="swatch" style="background:var(--silage-baled)"></span>Baled (pre-wrap)</span>
+    <span><span class="swatch" style="background:#cabf9e"></span>Unclaimed</span>
+    <span><span class="soil-dot" style="background:var(--up)"></span>Soil dot = yield outlook</span>
+  </div>`;
+
+  // buildings row
+  html += '<div class="buildings-row">';
+  Object.keys(BUILDINGS_INFO).forEach(key=>{
+    const b = state.buildings[key];
+    const info = BUILDINGS_INFO[key];
+    html += `<div class="building-tile ${b.owned?'owned':''}" onclick="setTab('processing')">
+      <span class="bicon">${info.icon}</span>
+      <div class="bname">${info.label}</div>
+      <div class="bstatus">${b.owned ? 'Operating' : money(info.price)}</div>
+    </div>`;
+  });
+  html += `<div class="building-tile owned" onclick="setTab('kiosk')">
+      <span class="bicon">🧺</span>
+      <div class="bname">Farmers Kiosk</div>
+      <div class="bstatus">Always open</div>
+    </div>`;
+  html += '</div>';
+  return html;
+}
+
+function renderSoilPanel(f, id){
+  const phPct = Math.max(0, Math.min(100, (f.ph-4.2)/(8.0-4.2)*100));
+  const phTier = (f.ph>=6.0 && f.ph<=7.0) ? 'good' : (f.ph>=5.3 && f.ph<7.5) ? 'ok' : 'poor';
+  const nTier = soilTier(f.nitrogen);
+  const outlook = yieldOutlook(f);
+  const outlookTier = outlook>=90?'good':outlook>=65?'ok':'poor';
+  const limeBoost = Math.max(0, Math.min(LIME_PH_BOOST, PH_CAP - f.ph));
+  const limeCost = Math.round(LIME_COST_HA*f.size*(limeBoost/LIME_PH_BOOST));
+  const limeNeeded = limeBoost > 0.01;
+  const fertBoost = Math.max(0, Math.min(FERT_N_BOOST, N_CAP - f.nitrogen));
+  const fertCost = Math.round(FERT_COST_HA*f.size*(fertBoost/FERT_N_BOOST));
+  const fertNeeded = fertBoost > 0.5;
+  return `<div class="soil-panel">
+    <div class="soil-row">
+      <div class="soil-label">Soil pH <span class="mono soil-val soil-${phTier}">${f.ph.toFixed(1)}</span></div>
+      <div class="gauge"><div class="gauge-fill soil-${phTier}" style="width:${phPct}%"></div><div class="gauge-target"></div></div>
+    </div>
+    <div class="soil-row">
+      <div class="soil-label">Nitrogen <span class="mono soil-val soil-${nTier}">${f.nitrogen}%</span></div>
+      <div class="gauge"><div class="gauge-fill soil-${nTier}" style="width:${f.nitrogen}%"></div></div>
+    </div>
+    <div class="soil-row outlook-row">
+      <div class="soil-label">Yield outlook <span class="mono soil-val soil-${outlookTier}">${outlook}%</span></div>
+    </div>
+    <div class="soil-actions">
+      <button class="soil-btn" ${(!limeNeeded || state.money<limeCost)?'disabled':''} onclick="applyLime(${id})">🪨 ${limeNeeded ? `Apply Lime — ${money(limeCost)}` : 'pH is optimal'}</button>
+      <button class="soil-btn" ${(!fertNeeded || state.money<fertCost)?'disabled':''} onclick="applyFertilizer(${id})">💧 ${fertNeeded ? `Apply Fertilizer — ${money(fertCost)}` : 'N is optimal'}</button>
+    </div>
+    <div class="soil-actions">
+      <button class="soil-btn" ${(state.manure<=0 || !fertNeeded)?'disabled':''} onclick="applyManure(${id})">🐄 ${state.manure>0 ? `Spread Manure (${state.manure.toFixed(2)} avail)` : 'No manure available'}</button>
+    </div>
+    <div class="soil-hint">Cost scales with how much correction is actually needed — topping up a nearly-full tank costs only a fraction of the full rate. Manure is free — it's produced automatically when cows are fed straw bales.</div>
+  </div>`;
+}
+
+function renderFieldPanel(){
+  const id = state.selectedField;
+  if(id===null || id===undefined){
+    return `<div class="empty-hint">Select a paddock on the map to buy, cultivate, sow or harvest it.</div>`;
+  }
+  const f = getField(id);
+  if(!f.owned){
+    return `<div class="field-detail">
+      <h3>Paddock ${paddockLabel(f)} — ${f.size} ha</h3>
+      <div class="fd-meta"><span>Unclaimed land</span></div>
+      <p class="empty-hint">This block runs ${f.size} hectares. Buy it to start rotating crops through it.</p>
+      <button class="action-btn" ${state.money<f.price?'disabled':''} onclick="buyField(${id})">Buy Paddock — ${money(f.price)}</button>
+    </div>`;
+  }
+
+  let body = `<div class="field-detail">
+    <h3>Paddock ${paddockLabel(f)} — ${f.size} ha</h3>
+    <div class="fd-meta"><span>${STATE_LABEL[f.state]}</span>${f.crop?`<span>${CROP_INFO[f.crop].label}</span>`:''}</div>
+    ${renderSoilPanel(f, id)}`;
+
+  if(f.state==='sowed'||f.state==='growing1'||f.state==='growing2'||f.state==='growing3'){
+    const idx = FIELD_STATE_ORDER.indexOf(f.state) - 2; // sowed=0
+    body += `<div class="progress-track">`;
+    for(let i=0;i<4;i++){ body += `<div class="progress-seg ${i<=idx?'filled':''}"></div>`; }
+    body += `</div><p class="empty-hint">${CROP_INFO[f.crop].label} is developing. Advance the day to keep it growing.</p>`;
+    const canSpray = ['growing1','growing2','growing3'].includes(f.state);
+    if(canSpray){
+      if(f.sprayed){
+        body += `<p class="empty-hint" style="color:var(--up);">✓ Sprayed for weeds — yield boosted this cycle.</p>`;
+      } else {
+        const sprayCost = Math.round(SPRAY_COST_HA*f.size);
+        body += `<button class="action-btn" ${state.money<sprayCost?'disabled':''} onclick="sprayField(${id})">Spray for Weeds — ${money(sprayCost)}</button>`;
+      }
+    }
+  }
+
+  if(f.state==='harvested'){
+    const cost = Math.round(CULTIVATE_COST_HA*f.size);
+    if(f.strawAvailable){
+      const strawCost = Math.round(STRAW_BALE_COST_HA*f.size);
+      const estBales = Math.max(0, Math.round((f.strawPotential||0)/BALE_INFO.strawBale.sizeT));
+      body += `<p class="empty-hint">Stubble is left in the paddock — roughly ${estBales} straw bale${estBales!==1?'s':''} could be baled, or you can cultivate it straight back into the soil.</p>
+        <button class="action-btn" ${state.money<strawCost?'disabled':''} onclick="baleStraw(${id})">🌾 Bale Straw — ${money(strawCost)}</button>
+        <button class="action-btn" ${state.money<cost?'disabled':''} onclick="cultivateField(${id})" style="margin-top:6px;">Cultivate — ${money(cost)}</button>`;
+    } else {
+      body += `<p class="empty-hint">Ground is bare. Cultivate before sowing a new crop.</p>
+        <button class="action-btn" ${state.money<cost?'disabled':''} onclick="cultivateField(${id})">Cultivate — ${money(cost)}</button>`;
+    }
+  }
+
+  if(f.state==='cultivated'){
+    const chosen = state.pendingCrop[id] || 'wheat';
+    const seedCost = Math.round(CROP_INFO[chosen].seedCost * f.size);
+    body += `<select class="crop-select" onchange="setPendingCrop(${id}, this.value)">`;
+    Object.keys(CROP_INFO).forEach(k=>{
+      body += `<option value="${k}" ${chosen===k?'selected':''}>${CROP_INFO[k].emoji} ${CROP_INFO[k].label} (seed ${money(CROP_INFO[k].seedCost)}/ha)</option>`;
+    });
+    body += `</select>
+      <button class="action-btn" ${state.money<seedCost?'disabled':''} onclick="sowField(${id})">Sow ${CROP_INFO[chosen].label} — ${money(seedCost)}</button>`;
+  }
+
+  if(f.state==='ready'){
+    if(f.crop==='grass'){
+      const cost = Math.round(MOW_COST_HA*f.size);
+      const estYield = (f.size * GRASS_YIELD_PER_HA).toFixed(1);
+      body += `<p class="empty-hint">Grass is ready to cut — roughly ${estYield} t of hay expected.</p>
+        <button class="action-btn" ${state.money<cost?'disabled':''} onclick="mowField(${id})">Mow — ${money(cost)}</button>`;
+    } else {
+      const cost = Math.round(HARVEST_COST_HA*f.size);
+      const estYield = (f.size * CROP_INFO[f.crop].yieldPerHa).toFixed(1);
+      const daysLeft = WITHER_AFTER_READY_DAYS - (f.readyDays||0);
+      const warn = daysLeft<=1
+        ? `<p class="empty-hint" style="color:var(--down);">⚠ Ripe for ${f.readyDays||0} month(s) — it will wither if not harvested very soon!</p>`
+        : `<p class="empty-hint">${CROP_INFO[f.crop].label} is ripe — roughly ${estYield} t expected. Harvest within ${daysLeft} month(s) before it withers.</p>`;
+      body += `${warn}
+        <button class="action-btn" ${state.money<cost?'disabled':''} onclick="harvestField(${id})">Harvest — ${money(cost)}</button>`;
+    }
+  }
+
+  if(f.state==='withered'){
+    const cost = Math.round(CULTIVATE_COST_HA*f.size);
+    body += `<p class="empty-hint" style="color:var(--down);">This ${f.crop?CROP_INFO[f.crop].label+' ':''}crop sat unharvested too long and has withered — it can no longer be harvested. Cultivate to prepare the ground for next season.</p>
+      <button class="action-btn" ${state.money<cost?'disabled':''} onclick="cultivateField(${id})">Cultivate — ${money(cost)}</button>`;
+  }
+
+  if(f.state==='mowed'){
+    const windrowCost = Math.round(WINDROW_COST_HA*f.size);
+    const teddCost = Math.round(TEDD_COST_HA*f.size);
+    body += `<p class="empty-hint">Cut grass is lying in the paddock — roughly ${(f.hayYield||0).toFixed(1)} t of raw cut. Choose what to make with it.</p>
+      <button class="action-btn" ${state.money<windrowCost?'disabled':''} onclick="chooseBaleType(${id},'grass')">🌿 Grass Bale (Windrow) — ${money(windrowCost)}</button>
+      <button class="action-btn" ${state.money<teddCost?'disabled':''} onclick="chooseBaleType(${id},'hay')" style="margin-top:6px;">🟨 Hay Bale (Tedd) — ${money(teddCost)}</button>
+      <button class="action-btn" ${state.money<windrowCost?'disabled':''} onclick="chooseBaleType(${id},'silage')" style="margin-top:6px;">🟩 Silage Bale (Windrow) — ${money(windrowCost)}</button>`;
+  }
+
+  if(f.state==='tedded' && f.baleType==='hay'){
+    const cost = Math.round(WINDROW_COST_HA*f.size);
+    body += `<p class="empty-hint">Tedded and fluffed, drying for hay — roughly ${(f.hayYield||0).toFixed(1)} t expected.</p>
+      <button class="action-btn" ${state.money<cost?'disabled':''} onclick="continueToWindrow(${id})">Windrow — ${money(cost)}</button>`;
+  }
+
+  if(f.state==='windrowed'){
+    const cost = Math.round(BALE_COST_HA*f.size);
+    const key = f.baleType==='grass' ? 'grassBale' : f.baleType==='silage' ? 'silageBale' : 'hayBale';
+    const rawYield = (f.hayYield||0) * (f.baleType==='silage' ? SILAGE_YIELD_MULTIPLIER : 1);
+    const estBales = Math.max(0, Math.round(rawYield / BALE_INFO[key].sizeT));
+    const typeLabel = f.baleType==='grass' ? 'Grass Bale' : f.baleType==='silage' ? 'Silage Bale (then wrap)' : 'Hay Bale';
+    body += `<p class="empty-hint">Windrowed, ready to bale — roughly ${estBales} ${BALE_INFO[key].label.toLowerCase()}${estBales!==1?'s':''} expected.</p>
+      <button class="action-btn" ${state.money<cost?'disabled':''} onclick="baleField(${id})">Bale (${typeLabel}) — ${money(cost)}</button>`;
+  }
+
+  if(f.state==='baled'){
+    const cost = Math.round(WRAP_COST_HA*f.size);
+    const estBales = Math.max(0, Math.round((f.silageYield||0)/BALE_INFO.silageBale.sizeT));
+    body += `<p class="empty-hint">Baled and ready to wrap — roughly ${estBales} silage bale${estBales!==1?'s':''} once sealed.</p>
+      <button class="action-btn" ${state.money<cost?'disabled':''} onclick="wrapField(${id})">Wrap — ${money(cost)}</button>`;
+  }
+
+  body += '</div>';
+  return body;
+}
+
+function trendArrow(key){
+  const cur = state.prices[key], prev = state.prevPrices[key];
+  if(cur>prev*1.001) return '<span class="trend-up">▲</span>';
+  if(cur<prev*0.999) return '<span class="trend-down">▼</span>';
+  return '<span class="trend-flat">–</span>';
+}
+
+function renderKiosk(){
+  let html = `<table class="kiosk"><thead><tr><th>Item</th><th>Stock</th><th>Price</th><th></th></tr></thead><tbody>`;
+  html += `<tr class="section"><td colspan="4">Crops</td></tr>`;
+  Object.keys(CROP_INFO).forEach(k=>{
+    if(k==='grass') return; // grass isn't sold raw — it's baled
+    html += kioskRow(k, CROP_INFO[k].label, CROP_INFO[k].emoji);
+  });
+  html += `<tr class="section"><td colspan="4">Livestock Goods</td></tr>`;
+  Object.keys(RAW_GOODS_INFO).forEach(k=>{
+    if(k==='tomatoes') return; // tomatoes get their own section below
+    html += kioskRow(k, RAW_GOODS_INFO[k].label, RAW_GOODS_INFO[k].emoji);
+  });
+  html += `<tr class="section"><td colspan="4">Fish</td></tr>`;
+  FISH_KEYS.forEach(k=>{ html += kioskRow(k,FISH_INFO[k].label,FISH_INFO[k].emoji); });
+  html += `<tr class="section"><td colspan="4">Bales</td></tr>`;
+  BALE_KEYS.forEach(k=>{
+    html += kioskBaleRow(k);
+  });
+  html += `<tr class="section"><td colspan="4">Greenhouse</td></tr>`;
+  GREENHOUSE_CROP_KEYS.forEach(k=>{
+    html += kioskRow(k, GREENHOUSE_CROP_INFO[k].label, GREENHOUSE_CROP_INFO[k].emoji);
+  });
+  html += `<tr class="section"><td colspan="4">Processed Products</td></tr>`;
+  Object.keys(PRODUCT_INFO).forEach(k=>{
+    html += kioskRow(k, PRODUCT_INFO[k].label, '');
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+function kioskRow(key, label, emoji){
+  const stock = state.inventory[key];
+  const price = state.prices[key];
+  const disabled = stock<=0 ? 'disabled' : '';
+  return `<tr>
+    <td>${emoji?emoji+' ':''}${label}</td>
+    <td class="mono ${stock<=0?'stock-zero':''}">${tonnes(stock)}</td>
+    <td class="price-cell">${trendArrow(key)} ${money(price)}</td>
+    <td>
+      <input type="number" class="qty-input" id="qty-${key}" min="0" max="${stock}" step="0.1" placeholder="t" value="${stock>0?stock.toFixed(2):''}">
+      <button class="sell-btn" ${disabled} onclick="sellItem('${key}', document.getElementById('qty-${key}').value)">Sell</button>
+    </td>
+  </tr>`;
+}
+function kioskBaleRow(key){
+  const info = BALE_INFO[key];
+  const stock = Math.floor(state.inventory[key]||0);
+  const price = state.prices[key];
+  const disabled = stock<=0 ? 'disabled' : '';
+  return `<tr>
+    <td>${info.emoji} ${info.label}</td>
+    <td class="mono ${stock<=0?'stock-zero':''}">${stock} bale${stock!==1?'s':''}</td>
+    <td class="price-cell">${trendArrow(key)} ${money(price)} ea</td>
+    <td>
+      <input type="number" class="qty-input" id="qty-${key}" min="0" max="${stock}" step="1" value="${stock>0?stock:''}">
+      <button class="sell-btn" ${disabled} onclick="sellBale('${key}', document.getElementById('qty-${key}').value)">Sell</button>
+    </td>
+  </tr>`;
+}
+
+function renderProcessing(){
+  let html = '';
+  html += buildingCard('grainMill', GRAIN_CROPS, false);
+  html += buildingCard('oilMill', OIL_CROPS, false);
+  html += buildingCard('bakery', ['flour'], true);
+  html += renderDairyCard();
+  html += renderCornDryerCard();
+  html += renderGreenhouseCard('greenhouseSmall');
+  html += renderGreenhouseCard('greenhouse');
+  html += renderFishCard('fishBreeding');
+  html += renderFishCard('fishFarm');
+  return html;
+}
+function buildingCard(buildingKey, rawKeys, isBakery){
+  const info = BUILDINGS_INFO[buildingKey];
+  const b = state.buildings[buildingKey];
+  let html = `<div class="proc-card"><h4>${info.icon} ${info.label} <span class="mono" style="font-size:11px;font-weight:400;">${b.owned?'':money(info.price)}</span></h4>
+    <div class="cap">${info.desc}</div>`;
+  if(!b.owned){
+    html += `<button class="buy-building-btn" ${state.money<info.price?'disabled':''} onclick="buyBuilding('${buildingKey}')">Build — ${money(info.price)}</button>`;
+  } else {
+    const used = state.capacityUsed[buildingKey];
+    const cap = info.capacity;
+    html += `<div class="cap">Monthly operating cost: <b>${money(PRODUCTION_MONTHLY_COSTS[buildingKey]||0)}</b></div>`;
+    html += `<label class="auto-toggle"><input type="checkbox" ${b.auto?'checked':''} onchange="toggleAuto('${buildingKey}')"> Activate production</label>`;
+    html += productionOptionsHtml(buildingKey);
+    html += `<div class="cap">Processed today: ${used.toFixed(2)} / ${cap} t</div>`;
+    const lp = state.lastProcessed[buildingKey];
+    if(!b.auto){
+      html += `<div class="proc-note">Paused — raw material will sit in the silo until you switch this back on.</div>`;
+    } else if(lp && (isBakery ? lp.consumed>0 : Object.keys(lp.consumed).length>0)){
+      if(isBakery){
+        html += `<div class="proc-note">Milled ${tonnes(lp.consumed)} flour into ${tonnes(lp.produced)} bread.</div>`;
+      } else {
+        const parts = Object.keys(lp.consumed).map(k=>`${tonnes(lp.consumed[k])} ${CROP_INFO[k].label}`).join(', ');
+        const outParts = typeof lp.produced === 'number' ? tonnes(lp.produced)+' flour' : Object.keys(lp.produced).filter(k=>lp.produced[k]>0).map(k=>`${tonnes(lp.produced[k])} ${PRODUCT_INFO[k].label}`).join(', ');
+        html += `<div class="proc-note">Milled ${parts} into ${outParts}.</div>`;
+      }
+    } else {
+      html += `<div class="proc-note">No matching stock on hand yesterday — nothing to process.</div>`;
+    }
+    html += `<div class="stock-list">`;
+    rawKeys.forEach(rk=>{
+      const label = isBakery ? 'Flour' : CROP_INFO[rk].label;
+      html += `<span class="mono stock-chip">${label}: ${tonnes(state.inventory[rk])}</span>`;
+    });
+    html += `</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderDairyCard(){
+  const info = BUILDINGS_INFO.dairy;
+  const b = state.buildings.dairy;
+  let html = `<div class="proc-card"><h4>${info.icon} ${info.label} <span class="mono" style="font-size:11px;font-weight:400;">${b.owned?'':money(info.price)}</span></h4>
+    <div class="cap">${info.desc}</div>`;
+  if(!b.owned){
+    html += `<button class="buy-building-btn" ${state.money<info.price?'disabled':''} onclick="buyBuilding('dairy')">Build — ${money(info.price)}</button>`;
+  } else {
+    const used = state.capacityUsed.dairy;
+    const cap = info.capacity;
+    html += `<div class="cap">Monthly operating cost: <b>${money(PRODUCTION_MONTHLY_COSTS.dairy)}</b></div>`;
+    html += `<label class="auto-toggle"><input type="checkbox" ${b.auto?'checked':''} onchange="toggleAuto('dairy')"> Activate production</label>`;
+    html += productionOptionsHtml('dairy');
+    html += `<div class="cap">Processed today: ${used.toFixed(2)} / ${cap} t</div>`;
+    const lp = state.lastProcessed.dairy;
+    if(!b.auto){
+      html += `<div class="proc-note">Paused — milk will sit in the cold room until you switch this back on.</div>`;
+    } else if(lp && Object.keys(lp.consumed).length>0){
+      const parts = Object.keys(lp.consumed).map(k=>`${tonnes(lp.consumed[k])} ${RAW_GOODS_INFO[k].label}`).join(', ');
+      const outParts = Object.keys(lp.produced).filter(k=>lp.produced[k]>0).map(k=>`${tonnes(lp.produced[k])} ${PRODUCT_INFO[k].label}`).join(', ');
+      html += `<div class="proc-note">Processed ${parts} into ${outParts}.</div>`;
+    } else {
+      html += `<div class="proc-note">No milk on hand yesterday — nothing to process.</div>`;
+    }
+    html += `<div class="stock-list">
+      <span class="mono stock-chip">Milk: ${tonnes(state.inventory.milk)}</span>
+      <span class="mono stock-chip">Buffalo Milk: ${tonnes(state.inventory.buffaloMilk)}</span>
+      <span class="mono stock-chip">Goat Milk: ${tonnes(state.inventory.goatMilk)}</span>
+      <span class="mono stock-chip">Cheese: ${tonnes(state.inventory.cheese)}</span>
+      <span class="mono stock-chip">Butter: ${tonnes(state.inventory.butter)}</span>
+      <span class="mono stock-chip">Goat Cheese: ${tonnes(state.inventory.goatCheese)}</span>
+      <span class="mono stock-chip">Buffalo Mozzarella: ${tonnes(state.inventory.buffaloMozzarella)}</span>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderCornDryerCard(){
+  const info = BUILDINGS_INFO.cornDryer;
+  const b = state.buildings.cornDryer;
+  let html = `<div class="proc-card"><h4>${info.icon} ${info.label} <span class="mono" style="font-size:11px;font-weight:400;">${b.owned?'':money(info.price)}</span></h4>
+    <div class="cap">${info.desc}</div>`;
+  if(!b.owned){
+    html += `<button class="buy-building-btn" ${state.money<info.price?'disabled':''} onclick="buyBuilding('cornDryer')">Build — ${money(info.price)}</button>`;
+  } else {
+    const used = state.capacityUsed.cornDryer;
+    const cap = info.capacity;
+    html += `<div class="cap">Monthly operating cost: <b>${money(PRODUCTION_MONTHLY_COSTS.cornDryer)}</b></div>`;
+    html += `<label class="auto-toggle"><input type="checkbox" ${b.auto?'checked':''} onchange="toggleAuto('cornDryer')"> Activate production</label>`;
+    html += productionOptionsHtml('cornDryer');
+    html += `<div class="cap">Processed today: ${used.toFixed(2)} / ${cap} t</div>`;
+    const lp = state.lastProcessed.cornDryer;
+    if(!b.auto){
+      html += `<div class="proc-note">Paused — corn will sit in the silo until you switch this back on.</div>`;
+    } else if(lp && lp.consumed>0){
+      html += `<div class="proc-note">Dried ${tonnes(lp.consumed)} corn into ${tonnes(lp.produced)} dried corn.</div>`;
+    } else {
+      html += `<div class="proc-note">No corn on hand yesterday — nothing to dry.</div>`;
+    }
+    html += `<div class="stock-list">
+      <span class="mono stock-chip">Corn: ${tonnes(state.inventory.corn)}</span>
+      <span class="mono stock-chip">Dried Corn: ${tonnes(state.inventory.driedCorn)}</span>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderFishCard(key){
+  const info=BUILDINGS_INFO[key]; const b=state.buildings[key];
+  const active=activeList(key,['trout','salmon']);
+  let html=`<div class="proc-card"><h4>${info.icon} ${info.label} <span class="mono" style="font-size:11px;font-weight:400;">${b.owned?'':money(info.price)}</span></h4>
+    <div class="cap">${info.desc}</div>`;
+  if(!b.owned){ html+=`<button class="buy-building-btn" ${state.money<info.price?'disabled':''} onclick="buyBuilding('${key}')">Build — ${money(info.price)}</button>`; }
+  else {
+    const cost=fishFoodCost(key); const lp=state.lastProcessed[key];
+    html+=`<div class="proc-note">🐟 Monthly fish food &amp; operating cost: <b>${money(cost)}</b> at your current ${ownedFarmHa()} ha farm. Larger farms cost more to feed.</div>`;
+    html+=`<label class="auto-toggle"><input type="checkbox" ${b.auto?'checked':''} onchange="toggleAuto('${key}')"> Activate production</label>`;
+    html+=productionOptionsHtml(key);
+    html+=`<div class="cap">Active: ${active.length}/2 production lines</div>`;
+    if(key==='fishBreeding'){
+      html+=`<div class="proc-note">Produces ${FISH_BREEDING_MONTHLY_OUTPUT*1000} L/month of each activated species: young Trout or young Salmon.</div>`;
+    } else {
+      html+=`<div class="proc-note">Uses up to ${FISH_FARM_INPUT_PER_SPECIES*1000} L of young fish per activated species and returns ${FISH_FARM_OUTPUT_RATIO*100}% as larger fish.</div>`;
+    }
+    if(lp) html+=`<div class="proc-note">Last month: ${money(lp.paid||0)} paid for fish food. ${Object.keys(lp.produced||{}).length?Object.keys(lp.produced).map(k=>`${tonnes(lp.produced[k])} ${FISH_INFO[k].label}`).join(', '):'No fish processed.'}</div>`;
+    html+=`<div class="stock-list"><span class="mono stock-chip">Young Trout: ${tonnes(state.inventory.youngTrout)}</span><span class="mono stock-chip">Young Salmon: ${tonnes(state.inventory.youngSalmon)}</span><span class="mono stock-chip">Trout: ${tonnes(state.inventory.trout)}</span><span class="mono stock-chip">Salmon: ${tonnes(state.inventory.salmon)}</span></div>`;
+  }
+  return html+'</div>';
+}
+
+function renderGreenhouseCard(key){
+  const info = BUILDINGS_INFO[key];
+  const b = state.buildings[key];
+  let html = `<div class="proc-card"><h4>${info.icon} ${info.label} <span class="mono" style="font-size:11px;font-weight:400;">${b.owned?'':money(info.price)}</span></h4>
+    <div class="cap">${info.desc}</div>`;
+  if(!b.owned){
+    html += `<button class="buy-building-btn" ${state.money<info.price?'disabled':''} onclick="buyBuilding('${key}')">Build — ${money(info.price)}</button>`;
+  } else {
+    const cap = info.capacity;
+    const crop = b.activeCrop || 'tomatoes';
+    const cropInfo = GREENHOUSE_CROP_INFO[crop] || GREENHOUSE_CROP_INFO.tomatoes;
+    const fullUpkeep = cap * GREENHOUSE_UPKEEP_PER_UNIT;
+    const used = state.capacityUsed[key];
+    html += `<select class="crop-select" onchange="setGreenhouseCrop('${key}', this.value)">`;
+    GREENHOUSE_CROP_KEYS.forEach(k=>{
+      html += `<option value="${k}" ${crop===k?'selected':''}>${GREENHOUSE_CROP_INFO[k].emoji} ${GREENHOUSE_CROP_INFO[k].label}</option>`;
+    });
+    html += `</select>`;
+    html += `<label class="auto-toggle"><input type="checkbox" ${b.auto?'checked':''} onchange="toggleAuto('${key}')"> Activate production (spends up to ${money(fullUpkeep)}/day on heating &amp; water)</label>`;
+    html += `<div class="cap">Funded: ${used.toFixed(2)} / ${cap} beds — growing ${cropInfo.label}</div>`;
+    const lp = state.lastProcessed[key];
+    if(!b.auto){
+      html += `<div class="proc-note">Paused — vines sit dormant until you activate production again.</div>`;
+    } else if(lp && lp.cropOut>0){
+      const lpCropInfo = GREENHOUSE_CROP_INFO[lp.crop] || cropInfo;
+      html += `<div class="proc-note">Spent ${money(lp.upkeepPaid)} on upkeep (${Math.round(lp.fundedFraction*100)}% funded) → grew ${tonnes(lp.cropOut)} of ${lpCropInfo.label}.</div>`;
+    } else {
+      html += `<div class="proc-note">Not enough cash on hand yesterday to fund this greenhouse — nothing grew.</div>`;
+    }
+    html += `<div class="stock-list">`;
+    GREENHOUSE_CROP_KEYS.forEach(k=>{
+      html += `<span class="mono stock-chip">${GREENHOUSE_CROP_INFO[k].label}: ${tonnes(state.inventory[k])}</span>`;
+    });
+    html += `</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderLivestock(){
+  const cp = state.pens.chickenPen;
+  const cow = state.pens.cowPen;
+  const gs = state.pens.goatSheepPen;
+
+  let html = `<p class="empty-hint">Purchase a pen first. The pens are managed off-site, so they do not take up any arable fields.</p>`;
+
+  // Pen purchase cards
+  const pens = [
+    {key:'cowPen', icon:'🐄', name:'Cow & Buffalo Pen', price:COW_PEN_PRICE, capacity:COW_PEN_CAPACITY,
+      desc:'Houses cows and buffalo.', owned:cow.owned, used:cow.cows+cow.buffaloCows},
+    {key:'goatSheepPen', icon:'🐑', name:'Sheep & Goat Pen', price:GOAT_SHEEP_PEN_PRICE, capacity:GOAT_SHEEP_PEN_CAPACITY,
+      desc:'Houses sheep and goats.', owned:gs.owned, used:gs.sheep+gs.goats},
+    {key:'chickenPen', icon:'🐔', name:'Chicken Pen', price:CHICKEN_PEN_PRICE, capacity:CHICKEN_PEN_CAPACITY,
+      desc:'Houses chickens.', owned:cp.owned, used:cp.chickenCount}
+  ];
+
+  pens.forEach(p=>{
+    html += `<div class="proc-card">
+      <h4>${p.icon} ${p.name} <span class="mono" style="font-size:11px;font-weight:400;">${p.owned?'Owned':money(p.price)}</span></h4>
+      <div class="cap">${p.desc} · Capacity: ${p.capacity} animals · ${p.used} / ${p.capacity} occupied</div>
+      ${p.owned
+        ? `<div class="proc-note">✓ Pen purchased. You can now buy animals for this pen.</div>`
+        : `<button class="buy-building-btn" ${state.money<p.price?'disabled':''} onclick="buyAnimalPen('${p.key}')">Purchase Pen — ${money(p.price)}</button>`}
+    </div>`;
+  });
+
+  html += `<div class="proc-card">
+    <h4>📊 Production Rates</h4>
+    <table class="kiosk"><thead><tr><th>Animal</th><th>Product</th><th>Production rate</th></tr></thead><tbody>
+      <tr><td>🐄 Cows</td><td>Milk</td><td><b>~20 L/month per cow</b></td></tr>
+      <tr><td>🐃 Buffalo</td><td>Milk</td><td><b>~20 L/month per buffalo</b></td></tr>
+      <tr><td>🐑 Sheep</td><td>Wool</td><td><b>~60 L/month per sheep</b></td></tr>
+      <tr><td>🐐 Goats</td><td>Milk</td><td><b>~20 L/month per goat</b></td></tr>
+      <tr><td>🐔 Chickens</td><td>Eggs</td><td><b>~20 L/month per chicken</b></td></tr>
+    </tbody></table>
+  </div>`;
+
+  // Animal management cards only appear after the relevant pen is purchased.
+  if(cow.owned){
+    const capLeft = Math.max(0,COW_PEN_CAPACITY-(cow.cows+cow.buffaloCows));
+    html += `<div class="proc-card"><h4>🐄 Cows & 🐃 Buffalo</h4>
+      <div class="cap">${cow.cows+cow.buffaloCows} / ${COW_PEN_CAPACITY} animals</div>
+      <div class="proc-row"><span class="pname mono">Buy Cows</span>
+        <input type="number" class="qty-input" id="animal-cow-buy" min="1" max="${Math.max(1,capLeft)}" value="1">
+        <button class="mill-btn" ${capLeft<=0?'disabled':''} onclick="buyCows('regular',document.getElementById('animal-cow-buy').value)">Buy — ${money(COW_COST)} each</button></div>
+      <div class="proc-row"><span class="pname mono">Buy Buffalo</span>
+        <input type="number" class="qty-input" id="animal-buffalo-buy" min="1" max="${Math.max(1,capLeft)}" value="1">
+        <button class="mill-btn" ${capLeft<=0?'disabled':''} onclick="buyCows('buffalo',document.getElementById('animal-buffalo-buy').value)">Buy — ${money(BUFFALO_COST)} each</button></div>
+      <div class="proc-note">Cows: ${cow.cows} · Buffalo: ${cow.buffaloCows} · Milk is produced automatically each day according to the monthly rate above. Cattle eat silage, hay, grass or straw bales — buffalo do not produce manure.</div>
+      <div class="proc-note">🐄 Manure stockpile: ${state.manure.toFixed(2)} units — produced automatically when cows (not buffalo) are fed straw bales. Spread it for free on any paddock from the Paddock tab.</div>
+    </div>`;
+  }
+
+  if(gs.owned){
+    const capLeft = Math.max(0,GOAT_SHEEP_PEN_CAPACITY-(gs.goats+gs.sheep));
+    html += `<div class="proc-card"><h4>🐑 Sheep & 🐐 Goats</h4>
+      <div class="cap">${gs.goats+gs.sheep} / ${GOAT_SHEEP_PEN_CAPACITY} animals</div>
+      <div class="proc-row"><span class="pname mono">Buy Sheep</span>
+        <input type="number" class="qty-input" id="animal-sheep-buy" min="1" max="${Math.max(1,capLeft)}" value="1">
+        <button class="mill-btn" ${capLeft<=0?'disabled':''} onclick="buyGoatsSheep('sheep',document.getElementById('animal-sheep-buy').value)">Buy — ${money(SHEEP_COST)} each</button></div>
+      <div class="proc-row"><span class="pname mono">Buy Goats</span>
+        <input type="number" class="qty-input" id="animal-goat-buy" min="1" max="${Math.max(1,capLeft)}" value="1">
+        <button class="mill-btn" ${capLeft<=0?'disabled':''} onclick="buyGoatsSheep('goat',document.getElementById('animal-goat-buy').value)">Buy — ${money(GOAT_COST)} each</button></div>
+      <div class="proc-note">Sheep: ${gs.sheep} · Goats: ${gs.goats} · Production is automatic. Sheep and goats can only eat grass or hay bales.</div>
+    </div>`;
+  }
+
+  if(cp.owned){
+    const capLeft = Math.max(0,CHICKEN_PEN_CAPACITY-cp.chickenCount);
+    html += `<div class="proc-card"><h4>🐔 Chickens</h4>
+      <div class="cap">${cp.chickenCount} / ${CHICKEN_PEN_CAPACITY} chickens</div>
+      <div class="proc-row"><span class="pname mono">Buy Chickens</span>
+        <input type="number" class="qty-input" id="animal-chicken-buy" min="1" max="${Math.max(1,capLeft)}" value="1">
+        <button class="mill-btn" ${capLeft<=0?'disabled':''} onclick="buyChickens(document.getElementById('animal-chicken-buy').value)">Buy — ${money(CHICKEN_COST)} each</button></div>
+      <div class="proc-note">Chickens: ${cp.chickenCount} · Eggs are produced automatically at ~20 L/month per chicken.</div>
+    </div>`;
+  }
+
+  return html;
+}
+
+function fieldAvgQuality(id){
+  const recs = state.harvestLog.filter(r=>r.fieldId===id);
+  if(recs.length===0) return null;
+  return Math.round(recs.reduce((s,r)=>s+r.quality,0)/recs.length);
+}
+function qualityColor(q){
+  if(q===null) return '#cabf9e';
+  const hue = Math.max(0, Math.min(120, q*1.2));
+  return `hsl(${hue}, 55%, 45%)`;
+}
+
+function renderYieldMap(){
+  const rows = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[20,19]];
+  let html = `<p class="empty-hint" style="padding-top:0;">Shaded by average yield quality achieved on each paddock — a record of how well your lime and fertilizer rates matched the crop.</p>`;
+  html += '<div class="paddock-map yield-mini">';
+  rows.forEach((row,rowIdx)=>{
+    if(rowIdx>0) html += '<div class="road-h"></div>';
+    html += '<div class="field-row">';
+    row.forEach((id,colIdx)=>{
+      if(colIdx>0) html += '<div class="road-v"></div>';
+      const f = getField(id);
+      const q = f.owned ? fieldAvgQuality(id) : null;
+      const label = q===null ? (f.owned?'No harvests yet':'Unclaimed') : q+'%';
+      html += `<div class="field-plot yield-plot" style="flex-grow:${f.size};background-color:${f.owned?qualityColor(q):'#cabf9e'}" onclick="selectField(${id})">
+        <span class="ftag">${f.size} ha</span>
+        <div>
+          <div class="fname">Paddock ${paddockLabel(f)}</div>
+          <div class="fstate">${label}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += `<div class="map-legend">
+    <span><span class="swatch" style="background:hsl(15,55%,45%)"></span>Low yield quality</span>
+    <span><span class="swatch" style="background:hsl(60,55%,45%)"></span>Moderate</span>
+    <span><span class="swatch" style="background:hsl(120,55%,45%)"></span>High yield quality</span>
+    <span><span class="swatch" style="background:#cabf9e"></span>No data</span>
+  </div>`;
+
+  html += '<h4 class="yield-log-title">Harvest History</h4>';
+  if(state.harvestLog.length===0){
+    html += `<p class="empty-hint">No harvests recorded yet. Bring a crop through to ready and harvest it to start building this record.</p>`;
+  } else {
+    html += `<table class="kiosk yield-log"><thead><tr><th>Day</th><th>Paddock</th><th>Crop</th><th>Yield</th><th>pH</th><th>N%</th><th>Quality</th></tr></thead><tbody>`;
+    state.harvestLog.slice(0,20).forEach(r=>{
+      html += `<tr>
+        <td class="mono">${r.day}</td>
+        <td>${paddockLabel(getField(r.fieldId))}</td>
+        <td>${CROP_INFO[r.crop].label}</td>
+        <td class="mono">${tonnes(r.yieldT)}</td>
+        <td class="mono">${r.ph.toFixed(1)}</td>
+        <td class="mono">${r.nitrogen}%</td>
+        <td class="mono" style="color:${qualityColor(r.quality)}">${r.quality}%</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  return html;
+}
+
+/* ---------- OVERVIEW: map-mode selector + care/ownership grid + field table ---------- */
+function fieldCareStatus(f){
+  if(!f.owned) return {owned:false, issues:[]};
+  const needsSpray = ['growing1','growing2','growing3'].includes(f.state) && !f.sprayed;
+  const lowN = f.nitrogen < 40;
+  const phTier = (f.ph>=6.0 && f.ph<=7.0) ? 'good' : (f.ph>=5.3 && f.ph<7.5) ? 'ok' : 'poor';
+  const offPh = phTier==='poor';
+  const issues = [];
+  if(needsSpray) issues.push('Needs spray');
+  if(lowN) issues.push('Low nitrogen');
+  if(offPh) issues.push('Off pH');
+  return {owned:true, needsSpray, lowN, offPh, issues};
+}
+const STATE_COLOR_VAR = {
+  harvested:'--stubble', cultivated:'--tilled', sowed:'--sown',
+  growing1:'--field-green-1', growing2:'--field-green-2', growing3:'--field-green-3',
+  ready:'--wheat-gold', withered:'--withered', mowed:'--hay-mowed', tedded:'--hay-tedded',
+  windrowed:'--hay-windrowed', baled:'--silage-baled'
+};
+function overviewFieldStyle(f, mode){
+  if(mode==='growth'){
+    return f.owned ? `var(${STATE_COLOR_VAR[f.state]||'--stubble'})` : '#cabf9e';
+  }
+  if(mode==='ownership'){
+    return f.owned ? 'var(--field-green-2)' : '#cabf9e';
+  }
+  // care mode
+  if(!f.owned) return '#cabf9e';
+  const status = fieldCareStatus(f);
+  if(status.issues.length>=2) return 'var(--down)';
+  if(status.issues.length===1) return 'var(--wheat-gold-deep)';
+  return 'var(--up)';
+}
+function overviewFieldLabel(f, mode){
+  if(!f.owned) return 'Unclaimed · '+money(f.price);
+  if(mode==='growth') return STATE_LABEL[f.state] + (f.crop? ' · '+CROP_INFO[f.crop].label : '');
+  if(mode==='ownership') return (f.crop? CROP_INFO[f.crop].label : 'No crop sown') + ' · ' + STATE_LABEL[f.state];
+  const status = fieldCareStatus(f);
+  return status.issues.length ? status.issues.join(' · ') : 'All good';
+}
+function renderOverviewMap(mode){
+  const rows = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[20,19]];
+  let html = '<div class="paddock-map yield-mini">';
+  rows.forEach((row,rowIdx)=>{
+    if(rowIdx>0) html += '<div class="road-h"></div>';
+    html += '<div class="field-row">';
+    row.forEach((id,colIdx)=>{
+      if(colIdx>0) html += '<div class="road-v"></div>';
+      const f = getField(id);
+      html += `<div class="field-plot yield-plot ${state.selectedField===id?'selected':''}" style="flex-grow:${f.size};background-color:${overviewFieldStyle(f,mode)}" onclick="selectField(${id})">
+        <span class="ftag">${f.size} ha</span>
+        <div>
+          <div class="fname">Paddock ${paddockLabel(f)}</div>
+          <div class="fstate">${overviewFieldLabel(f,mode)}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  if(mode==='care'){
+    html += `<div class="map-legend">
+      <span><span class="swatch" style="background:var(--up)"></span>No issues</span>
+      <span><span class="swatch" style="background:var(--wheat-gold-deep)"></span>One issue (spray / N / pH)</span>
+      <span><span class="swatch" style="background:var(--down)"></span>Multiple issues — needs attention</span>
+      <span><span class="swatch" style="background:#cabf9e"></span>Unclaimed</span>
+    </div>`;
+  } else if(mode==='ownership'){
+    html += `<div class="map-legend">
+      <span><span class="swatch" style="background:var(--field-green-2)"></span>Owned</span>
+      <span><span class="swatch" style="background:#cabf9e"></span>Unclaimed</span>
+    </div>`;
+  } else {
+    html += `<div class="map-legend">
+      <span><span class="swatch" style="background:var(--stubble)"></span>Harvested</span>
+      <span><span class="swatch" style="background:var(--tilled)"></span>Cultivated</span>
+      <span><span class="swatch" style="background:var(--sown)"></span>Sown</span>
+      <span><span class="swatch" style="background:var(--field-green-2)"></span>Growing</span>
+      <span><span class="swatch" style="background:var(--wheat-gold)"></span>Ready</span>
+      <span><span class="swatch" style="background:var(--withered)"></span>Withered</span>
+      <span><span class="swatch" style="background:#cabf9e"></span>Unclaimed</span>
+    </div>`;
+  }
+  return html;
+}
+function renderOverviewTable(){
+  let html = `<div class="overview-table-wrap"><h4>All Paddocks — State, Ownership &amp; Crop</h4>
+    <table class="kiosk overview-table"><thead><tr>
+      <th>Paddock</th><th>Size</th><th>Owned</th><th>State</th><th>Crop</th><th>Care</th>
+    </tr></thead><tbody>`;
+  state.fields.slice().sort((a,b)=>paddockLabel(a)-paddockLabel(b)).forEach(f=>{
+    const status = fieldCareStatus(f);
+    let carePills;
+    if(!f.owned){
+      carePills = `<span class="status-pill neutral">—</span>`;
+    } else if(status.issues.length===0){
+      carePills = `<span class="status-pill ok">✓ Good</span>`;
+    } else {
+      carePills = status.issues.map(iss=>`<span class="status-pill ${iss==='Needs spray'?'warn':'bad'}">${iss}</span>`).join('');
+    }
+    html += `<tr class="${f.owned?'':'ov-unowned'}">
+      <td>${paddockLabel(f)}</td>
+      <td class="mono">${f.size} ha</td>
+      <td>${f.owned ? '✓ Owned' : 'Unowned'}</td>
+      <td>${f.owned ? STATE_LABEL[f.state] : '—'}</td>
+      <td>${f.owned && f.crop ? CROP_INFO[f.crop].label : (f.owned ? '—' : '—')}</td>
+      <td>${carePills}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+function renderOverview(){
+  let html = `<p class="empty-hint" style="padding-top:0;">Switch the map view to spot paddocks that need spraying or are low on nitrogen or pH, then check the table below for every paddock's ownership, state and crop.</p>`;
+  html += `<div class="map-mode-row">
+    <div class="map-mode-btn ${overviewMapMode==='care'?'active':''}" onclick="setOverviewMapMode('care')">🚜 Care Needed</div>
+    <div class="map-mode-btn ${overviewMapMode==='growth'?'active':''}" onclick="setOverviewMapMode('growth')">🌱 Growth Stage</div>
+    <div class="map-mode-btn ${overviewMapMode==='ownership'?'active':''}" onclick="setOverviewMapMode('ownership')">🗺️ Ownership &amp; Crop</div>
+  </div>`;
+  html += renderOverviewMap(overviewMapMode);
+  html += renderOverviewTable();
+  return html;
+}
+
+function renderMenuHero(){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8fc4"/><stop offset=".55" stop-color="#a7c9db"/><stop offset="1" stop-color="#dbe6d8"/></linearGradient>
+ <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#6f9c4c"/><stop offset="1" stop-color="#3f6933"/></linearGradient>
+ <linearGradient id="road" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a89a80"/><stop offset="1" stop-color="#8a7a5f"/></linearGradient>
+ <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4c6253"/><stop offset="1" stop-color="#273b32"/></linearGradient>
+ <linearGradient id="roofLight" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#eef0ea"/><stop offset="1" stop-color="#b3b9ae"/></linearGradient>
+ <linearGradient id="barnRed" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#b6403a"/><stop offset="1" stop-color="#742522"/></linearGradient>
+ <linearGradient id="barnRedShade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8f322d"/><stop offset="1" stop-color="#5c1e1b"/></linearGradient>
+ <linearGradient id="siloBody" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#c3cac4"/><stop offset=".5" stop-color="#eef1ec"/><stop offset="1" stop-color="#9aa39c"/></linearGradient>
+ <linearGradient id="siloShade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#8c948d"/><stop offset=".5" stop-color="#b7bdb6"/><stop offset="1" stop-color="#6f776f"/></linearGradient>
+ <radialGradient id="light" cx="46%" cy="24%"><stop stop-color="#fff8dd" stop-opacity=".65"/><stop offset="1" stop-color="#fff8dd" stop-opacity="0"/></radialGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="9"/></filter>
+ <clipPath id="barnClip"><path d="M105 680 L105 490 L200 425 L440 425 L535 490 L535 680Z M192 425 L320 300 L448 425Z"/></clipPath>
+</defs>
+<rect width="1600" height="900" fill="url(#sky)"/>
+<ellipse cx="740" cy="190" rx="520" ry="260" fill="url(#light)"/>
+<!-- soft clouds -->
+<g fill="#fff" opacity=".55">
+ <ellipse cx="220" cy="150" rx="90" ry="26"/><ellipse cx="290" cy="140" rx="60" ry="20"/>
+ <ellipse cx="1330" cy="120" rx="100" ry="26"/><ellipse cx="1410" cy="132" rx="60" ry="18"/>
+</g>
+<!-- distant hills -->
+<path d="M0 470 Q220 400 440 460 T860 445 T1280 430 T1600 460 V560 H0Z" fill="#7a9a6f"/>
+<!-- autumn tree line -->
+<g>
+ <g fill="#2f5230"><circle cx="70" cy="465" r="70"/><circle cx="150" cy="450" r="85"/><circle cx="250" cy="465" r="72"/></g>
+ <g fill="#8a6a2c"><circle cx="115" cy="460" r="46"/><circle cx="205" cy="450" r="40"/></g>
+ <g fill="#b6812f"><circle cx="45" cy="475" r="34"/><circle cx="290" cy="475" r="38"/></g>
+ <g fill="#33582f"><circle cx="1330" cy="455" r="80"/><circle cx="1430" cy="445" r="90"/><circle cx="1540" cy="465" r="70"/></g>
+ <g fill="#94702e"><circle cx="1380" cy="450" r="42"/><circle cx="1490" cy="460" r="38"/></g>
+ <g fill="#c2913a"><circle cx="1300" cy="470" r="30"/><circle cx="1560" cy="475" r="32"/></g>
+</g>
+<g fill="#264b28" opacity=".85"><circle cx="30" cy="505" r="46"/><circle cx="230" cy="505" r="55"/><circle cx="1370" cy="505" r="55"/><circle cx="1580" cy="505" r="46"/></g>
+<!-- grass field -->
+<rect y="530" width="1600" height="370" fill="url(#grass)"/>
+<path d="M0 610 Q400 560 800 610 T1600 595" fill="none" stroke="#86a957" stroke-width="4" opacity=".35"/>
+<path d="M0 650 Q400 600 800 650 T1600 635" fill="none" stroke="#86a957" stroke-width="4" opacity=".35"/>
+<!-- gravel road across the foreground -->
+<path d="M0 780 Q500 745 800 760 T1600 745 V900 H0Z" fill="url(#road)"/>
+<g fill="#6f6250" opacity=".5">
+ <circle cx="60" cy="830" r="4"/><circle cx="140" cy="855" r="3"/><circle cx="240" cy="815" r="4"/><circle cx="340" cy="845" r="3"/>
+ <circle cx="470" cy="820" r="4"/><circle cx="600" cy="850" r="3"/><circle cx="740" cy="815" r="4"/><circle cx="900" cy="845" r="3"/>
+ <circle cx="1040" cy="820" r="4"/><circle cx="1180" cy="850" r="3"/><circle cx="1320" cy="815" r="4"/><circle cx="1460" cy="845" r="3"/><circle cx="1560" cy="820" r="4"/>
+</g>
+<!-- barn, set back on the left -->
+<ellipse cx="380" cy="700" rx="330" ry="34" fill="#16221a" opacity=".3" filter="url(#shadow)"/>
+<!-- lean-to / lower shed extension attached to the right of the barn, per the sketch -->
+<path d="M535 495 L740 545 L740 680 L535 680Z" fill="url(#barnRedShade)" stroke="#51211d" stroke-width="6"/>
+<path d="M535 495 L740 545" stroke="#eceee7" stroke-width="6"/>
+<path d="M535 495 L740 545" stroke="#f4f5f0" stroke-width="2" opacity=".6"/>
+<g stroke="#5c1e1b" stroke-width="1.5" opacity=".4"><path d="M560 512V680M590 519V680M620 526V680M650 533V680M680 540V680M710 546V680"/></g>
+<path d="M735 552 L740 545 L740 680 L720 680 L720 560Z" fill="#3f1512" opacity=".55"/>
+<path d="M105 680 L105 490 L200 425 L440 425 L535 490 L535 680Z" fill="url(#barnRed)" stroke="#51211d" stroke-width="7"/>
+<path d="M192 425 L320 300 L448 425Z" fill="url(#barnRed)" stroke="#51211d" stroke-width="7"/>
+<!-- weathered vertical plank texture, clipped to the barn silhouette -->
+<g clip-path="url(#barnClip)">
+ <g stroke="#8f2f29" stroke-width="2" opacity=".4">
+  <path d="M120 300V690M136 300V690M152 300V690M168 300V690M184 300V690M200 300V690M216 300V690M232 300V690M248 300V690M264 300V690M280 300V690M296 300V690M312 300V690M328 300V690M344 300V690M360 300V690M376 300V690M392 300V690M408 300V690M424 300V690M440 300V690M456 300V690M472 300V690M488 300V690M504 300V690M520 300V690"/>
+ </g>
+ <g stroke="#e8998c" stroke-width="1.5" opacity=".22">
+  <path d="M128 300V690M160 300V690M192 300V690M224 300V690M256 300V690M288 300V690M320 300V690M352 300V690M384 300V690M416 300V690M448 300V690M480 300V690M512 300V690"/>
+ </g>
+ <!-- faded/weathered paint patches -->
+ <ellipse cx="160" cy="615" rx="72" ry="58" fill="#e8b3a8" opacity=".22"/>
+ <ellipse cx="475" cy="555" rx="52" ry="68" fill="#7a241f" opacity=".18"/>
+ <ellipse cx="305" cy="365" rx="88" ry="38" fill="#c56a5e" opacity=".16"/>
+ <ellipse cx="140" cy="500" rx="45" ry="30" fill="#f0d3c9" opacity=".2"/>
+</g>
+<!-- roof, light metal with white fascia trim -->
+<path d="M170 428 L320 300 L470 428 L440 436 L320 328 L200 436Z" fill="url(#roofLight)" stroke="#8b9088" stroke-width="6"/>
+<path d="M170 428 L200 436 M470 428 L440 436 M200 436 L440 436" stroke="#f4f5f0" stroke-width="5" opacity=".9"/>
+<!-- cupola: louvered vents under a small pediment roof, matching the sketch -->
+<path d="M288 300 L352 300 L338 314 L302 314 Z" fill="url(#roofLight)" stroke="#8b9088" stroke-width="3"/>
+<rect x="299" y="280" width="44" height="30" fill="#eceee7" stroke="#8b9088" stroke-width="4"/>
+<path d="M296 280 L321 258 L346 280Z" fill="#c7ccc3" stroke="#8b9088" stroke-width="4"/>
+<g stroke="#8b9088" stroke-width="2.5"><path d="M306 284V306M314 284V306M322 284V306M330 284V306M336 284V306"/></g>
+<!-- hay loft: brace door beside a glass window, white-trimmed -->
+<rect x="246" y="392" width="152" height="60" fill="#f4ede0" stroke="#c9bfa0" stroke-width="5"/>
+<rect x="252" y="398" width="66" height="48" fill="#b6403a" stroke="#f4ede0" stroke-width="4"/>
+<path d="M252 398 L318 446 M318 398 L252 446" stroke="#f4ede0" stroke-width="4"/>
+<rect x="326" y="398" width="66" height="48" fill="#2c393e" stroke="#f4ede0" stroke-width="4"/>
+<path d="M359 398V446 M326 422H392" stroke="#f4ede0" stroke-width="3"/>
+<!-- decorative lattice header above the main doors -->
+<rect x="238" y="503" width="164" height="34" fill="#f4ede0" stroke="#c9bfa0" stroke-width="4"/>
+<g stroke="#c9bfa0" stroke-width="2.5">
+ <path d="M258 503V537M278 503V537M298 503V537M318 503V537M338 503V537M358 503V537M378 503V537"/>
+ <path d="M238 512H402M238 522H402M238 531H402"/>
+</g>
+<!-- main double doors, white trim with X bracing -->
+<rect x="238" y="540" width="164" height="140" fill="#e7ddc4" stroke="#c9bfa0" stroke-width="6"/>
+<rect x="246" y="548" width="70" height="124" fill="#efe6cc" stroke="#f4ede0" stroke-width="5"/>
+<rect x="320" y="548" width="70" height="124" fill="#efe6cc" stroke="#f4ede0" stroke-width="5"/>
+<path d="M246 548 L316 672 M316 548 L246 672" stroke="#c9bfa0" stroke-width="6"/>
+<path d="M320 548 L390 672 M390 548 L320 672" stroke="#c9bfa0" stroke-width="6" fill="none"/>
+
+<!-- silo shadow -->
+<ellipse cx="900" cy="770" rx="150" ry="26" fill="#16221a" opacity=".32" filter="url(#shadow)"/>
+<!-- silo domed roof (rounded, not pointed) -->
+<path d="M800 209 Q803 108 900 87 Q997 108 1000 209 Z" fill="#7d8880" stroke="#525b55" stroke-width="6"/>
+<path d="M900 87 Q944 106 960 165" fill="none" stroke="#aab3ac" stroke-width="4" opacity=".55"/>
+<!-- roof vent cap -->
+<rect x="884" y="54" width="32" height="36" rx="3" fill="#8f9890" stroke="#525b55" stroke-width="5"/>
+<path d="M880 54 Q900 30 920 54Z" fill="#a3aca4" stroke="#525b55" stroke-width="4"/>
+<!-- checkerboard safety band, wraps the cylinder right under the dome -->
+<g>
+ <rect x="800" y="209" width="200" height="36" fill="#151515"/>
+ <g fill="#f4f2ec">
+  <rect x="800" y="209" width="20" height="18"/><rect x="840" y="209" width="20" height="18"/><rect x="880" y="209" width="20" height="18"/><rect x="920" y="209" width="20" height="18"/><rect x="960" y="209" width="20" height="18"/>
+  <rect x="820" y="227" width="20" height="18"/><rect x="860" y="227" width="20" height="18"/><rect x="900" y="227" width="20" height="18"/><rect x="940" y="227" width="20" height="18"/><rect x="980" y="227" width="20" height="18"/>
+ </g>
+</g>
+<!-- silo body (corrugated cylinder) -->
+<rect x="800" y="245" width="200" height="509" fill="url(#siloBody)" stroke="#5f6660" stroke-width="6"/>
+<rect x="800" y="245" width="46" height="509" fill="url(#siloShade)" opacity=".7"/>
+<rect x="954" y="245" width="46" height="509" fill="url(#siloShade)" opacity=".55"/>
+<!-- vertical corrugation ribs, dominant texture of real metal grain bins -->
+<g stroke="#7b8580" stroke-width="2" opacity=".45">
+ <path d="M812 245V754M826 245V754M840 245V754M854 245V754M868 245V754M882 245V754M896 245V754M910 245V754M924 245V754M938 245V754M952 245V754M966 245V754M980 245V754M994 245V754"/>
+</g>
+<!-- horizontal seam rings -->
+<g stroke="#7b8580" stroke-width="3" opacity=".4">
+ <path d="M800 320H1000"/><path d="M800 395H1000"/><path d="M800 470H1000"/><path d="M800 545H1000"/><path d="M800 620H1000"/><path d="M800 695H1000"/>
+</g>
+<!-- fill spout on the right, echoing the sketch's angled pipe -->
+<path d="M998 350 L1040 368 L1040 398 L998 416" fill="none" stroke="#5f6660" stroke-width="8"/>
+<!-- bent unload pipe on the left, matching the sketch -->
+<path d="M802 300 L748 322 L742 366" fill="none" stroke="#5f6660" stroke-width="9" stroke-linecap="round"/>
+<circle cx="742" cy="366" r="7" fill="#7d8880" stroke="#525b55" stroke-width="3"/>
+<!-- hopper base -->
+<rect x="878" y="700" width="44" height="60" fill="#7d8880" stroke="#525b55" stroke-width="5"/>
+
+<!-- second silo, smaller, slightly behind -->
+<ellipse cx="1090" cy="790" rx="90" ry="18" fill="#16221a" opacity=".28" filter="url(#shadow)"/>
+<path d="M1035 300 Q1038 238 1090 220 Q1142 238 1145 300Z" fill="#7d8880" stroke="#525b55" stroke-width="5"/>
+<rect x="1078" y="196" width="24" height="26" rx="2" fill="#8f9890" stroke="#525b55" stroke-width="4"/>
+<path d="M1075 196 Q1090 178 1105 196Z" fill="#a3aca4" stroke="#525b55" stroke-width="3"/>
+<g>
+ <rect x="1035" y="300" width="110" height="28" fill="#151515"/>
+ <g fill="#f4f2ec">
+  <rect x="1035" y="300" width="18" height="14"/><rect x="1071" y="300" width="18" height="14"/><rect x="1107" y="300" width="18" height="14"/>
+  <rect x="1053" y="314" width="18" height="14"/><rect x="1089" y="314" width="18" height="14"/><rect x="1125" y="300" width="18" height="14"/>
+ </g>
+</g>
+<rect x="1035" y="328" width="110" height="412" fill="url(#siloBody)" stroke="#5f6660" stroke-width="5"/>
+<g stroke="#7b8580" stroke-width="1.5" opacity=".4">
+ <path d="M1045 328V740M1057 328V740M1069 328V740M1081 328V740M1093 328V740M1105 328V740M1117 328V740M1129 328V740M1141 328V740"/>
+</g>
+<g stroke="#7b8580" stroke-width="2.5" opacity=".5">
+ <path d="M1035 375H1145"/><path d="M1035 435H1145"/><path d="M1035 495H1145"/><path d="M1035 555H1145"/><path d="M1035 615H1145"/><path d="M1035 675H1145"/>
+</g>
+
+<!-- feed bag leaning at the base of the silo, matching the sketch -->
+<g transform="translate(700,745) rotate(-9)">
+ <ellipse cx="0" cy="42" rx="46" ry="10" fill="#16221a" opacity=".25"/>
+ <rect x="-42" y="-22" width="84" height="60" rx="18" fill="#d9c9a1" stroke="#7d6a44" stroke-width="4"/>
+ <path d="M-30 -8 Q0 -20 30 -8" fill="none" stroke="#7d6a44" stroke-width="3" opacity=".7"/>
+ <g stroke="#7d6a44" stroke-width="3" opacity=".55"><path d="M-30 -18V32M-15 -20V36M0 -21V37M15 -20V36M30 -18V32"/></g>
+ <path d="M-18 -22 Q0 -34 18 -22Z" fill="#c2ac7c" stroke="#7d6a44" stroke-width="3"/>
+</g>
+
+<!-- foreground grass tufts -->
+<g stroke="#2f552e" stroke-width="4" opacity=".6"><path d="M40 890L52 850M90 890L108 845M1500 890L1482 848M1550 890L1532 855M1200 895L1215 858"/></g>
+<rect width="1600" height="900" fill="#fff3cf" opacity=".05"/>
+</svg>`;
+  const src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  return `<img class="menu-hero" src="${src}" alt="Green Acre Farms red barn, lean-to and grain silos title screen">`;
+}
+
+function renderMenuScreen(){
+  return `
+  <div class="menu-screen">
+    ${renderMenuHero()}
+    <div class="menu-hero-scrim"></div>
+    <div class="menu-card">
+      <span class="eyebrow">Your Farm • Your Story</span>
+      <h1 class="farm-logo">🌾 Green Acre Farms 🌾</h1>
+      <p class="menu-tagline">Build • Grow • Prosper</p>
+      ${hasSave ? `<div class="menu-save-info">Continuing: ${timeShort()} · ${money(state.money)}</div>` : ''}
+      <div class="menu-actions">
+        ${hasSave ? `<button class="menu-btn primary" onclick="continueGame()">▶ Continue</button>` : ''}
+        <button class="menu-btn ${hasSave?'':'primary'}" onclick="newGamePrompt()">🌱 New Game</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let pendingWakeHour = 6;
+let sleepAnimFrom = 7;
+let sleepAnimTo = 6;
+let sleepAnimDurationMs = 2600;
+
+function openSleepMenu(){
+  if(uiScreen!=='game' || sleepBusy) return;
+  pendingWakeHour = (typeof state.wakeHour==='number') ? state.wakeHour : 6;
+  uiScreen = 'sleepSetup';
+  render();
+}
+function chooseWakeHour(h){
+  pendingWakeHour = h;
+  render();
+}
+function cancelSleepMenu(){
+  uiScreen = 'game';
+  render();
+}
+
+function renderSleepSetupScreen(){
+  const options = [4,5,6,7,8,9,10,11];
+  const selected = (typeof pendingWakeHour==='number') ? pendingWakeHour : (state.wakeHour ?? 6);
+  const optsHtml = options.map(h=>`<button class="wake-opt ${h===selected?'active':''}" onclick="chooseWakeHour(${h})">${formatHour(h)}</button>`).join('');
+  return `<div class="sleep-screen setup">
+    <div class="sleep-stars-static"></div>
+    <div class="sleep-card">
+      <div class="sleep-moon">🌙</div>
+      <div class="sleep-title">Head to bed</div>
+      <div class="sleep-sub">Choose what time to wake up</div>
+      <div class="wake-options">${optsHtml}</div>
+      <div class="sleep-time">Currently ${formatHour(state.hour)}</div>
+      <div class="sleep-setup-actions">
+        <button class="menu-btn" onclick="cancelSleepMenu()">Cancel</button>
+        <button class="menu-btn primary" onclick="sleepFarm()">😴 Sleep until ${formatHour(selected)}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSleepScreen(){
+  const currentMonth = Math.max(1, Number(state.day) || 1);
+  const nextMonthIndex = currentMonth % 12;
+  const nextYear = Math.floor((currentMonth-1)/12)+1 + (nextMonthIndex===0 ? 1 : 0);
+  const nextMonth = MONTH_NAMES[nextMonthIndex];
+  const dur = (sleepAnimDurationMs/1000).toFixed(2)+'s';
+  const stars = Array.from({length:40}).map(()=>{
+    const top = (Math.random()*72).toFixed(1);
+    const left = (Math.random()*100).toFixed(1);
+    const size = (Math.random()*1.8+1).toFixed(1);
+    const delay = (Math.random()*4).toFixed(2);
+    const twinkleDur = (1.6+Math.random()*2.4).toFixed(2);
+    return `<div class="sleep-star" style="top:${top}%;left:${left}%;width:${size}px;height:${size}px;animation-delay:${delay}s;animation-duration:${twinkleDur}s;"></div>`;
+  }).join('');
+  const clouds = Array.from({length:4}).map(()=>{
+    const top = (6+Math.random()*32).toFixed(1);
+    const scale = (0.65+Math.random()*0.85).toFixed(2);
+    const cloudDur = (sleepAnimDurationMs/1000*(0.6+Math.random()*0.8)).toFixed(2);
+    const delay = (-Math.random()*sleepAnimDurationMs/1000).toFixed(2);
+    const opacity = (0.16+Math.random()*0.22).toFixed(2);
+    return `<div class="sleep-cloud-wrap" style="top:${top}%;animation-duration:${cloudDur}s;animation-delay:${delay}s;">
+      <span class="sleep-cloud" style="transform:scale(${scale});opacity:${opacity};">☁️</span>
+    </div>`;
+  }).join('');
+  return `<div class="sleep-screen" style="--sleep-dur:${dur};">
+    <div class="sleep-dusk-overlay"></div>
+    <div class="sleep-dawn-overlay"></div>
+    <div class="sleep-stars">${stars}</div>
+    <div class="sleep-clouds">${clouds}</div>
+    <div class="sleep-moon-arc"><div class="sleep-moon">🌙</div></div>
+    <div class="sleep-card">
+      <div class="sleep-title">Sleeping...</div>
+      <div class="sleep-sub">Time is advancing like Farming Simulator</div>
+      <div class="sleep-clock mono" id="sleepClock">${formatHour(sleepAnimFrom)}</div>
+      <div class="sleep-time">${timeLabel()} → ${`Yr ${nextYear} · ${nextMonth}`} · wake at ${formatHour(sleepAnimTo)}</div>
+      <div class="sleep-bar"><div class="sleep-bar-fill"></div></div>
+      <div class="sleep-hint">Advancing one month • Productions and farm growth are being processed</div>
+    </div>
+  </div>`;
+}
+
+function animateSleep(fromHour,totalHours,durationMs){
+  return new Promise(resolve=>{
+    const startTs = performance.now();
+    const clockEl = document.getElementById('sleepClock');
+    const tick = (now)=>{
+      const t = Math.min(1, (now-startTs)/durationMs);
+      if(clockEl){ clockEl.textContent = formatHour(fromHour + totalHours*t); }
+      if(t<1){ requestAnimationFrame(tick); } else { resolve(); }
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+async function sleepFarm(){
+  if(uiScreen!=='sleepSetup' || sleepBusy) return;
+  sleepBusy = true;
+  const fromHour = state.hour;
+  const toHour = pendingWakeHour;
+  const totalHours = hoursToSleep(fromHour,toHour);
+  state.wakeHour = toHour;
+  sleepAnimFrom = fromHour;
+  sleepAnimTo = toHour;
+  sleepAnimDurationMs = Math.min(5200, Math.max(2400, 1800 + totalHours*140));
+  uiScreen = 'sleep';
+  render();
+  await animateSleep(fromHour,totalHours,sleepAnimDurationMs);
+  state.hour = toHour;
+  advanceMonth();
+  sleepBusy = false;
+  uiScreen = 'game';
+  render();
+}
+
+function showMapOverview(){
+  if(uiScreen!=='game') return;
+  uiScreen = 'overview';
+  render();
+}
+function backToFarm(){
+  uiScreen = 'game';
+  render();
+}
+function showFinances(){ if(uiScreen!=='game' && uiScreen!=='overview') return; uiScreen='finances'; render(); }
+function renderFinancesScreen(){
+  const totals=monthFinanceTotals(state.day);
+  const h=(state.finances&&state.finances.history)||[];
+  const lastMonths=[];
+  for(let d=state.day; d>=Math.max(1,state.day-11); d--){ const t=monthFinanceTotals(d); if(t.income||t.expense) lastMonths.push({day:d,...t}); }
+  const net=totals.income-totals.expense;
+
+  // ---- Build a full overhead breakdown across every building & pen the player can own ----
+  let overheadTotal = 0;
+  const PROC_KEYS = ['grainMill','oilMill','bakery','dairy','cornDryer'];
+  const GH_KEYS = ['greenhouseSmall','greenhouse'];
+  const FISH_KEYS_B = ['fishBreeding','fishFarm'];
+  const overheadRows = [];
+  PROC_KEYS.forEach(k=>{
+    const b=state.buildings[k]; const owned=b?.owned;
+    const cost = PRODUCTION_MONTHLY_COSTS[k]||0;
+    const active = owned && b.auto;
+    if(active) overheadTotal += cost;
+    overheadRows.push({key:k, icon:BUILDINGS_INFO[k].icon, label:BUILDINGS_INFO[k].label, price:BUILDINGS_INFO[k].price, owned,
+      cost, note: !owned ? 'Not built yet' : (b.auto ? 'Running — applied when there is input to process' : 'Paused — production switched off')});
+  });
+  GH_KEYS.forEach(k=>{
+    const b=state.buildings[k]; const owned=b?.owned;
+    const cap = BUILDINGS_INFO[k].capacity;
+    const fullUpkeep = cap * GREENHOUSE_UPKEEP_PER_UNIT;
+    const active = owned && b.auto;
+    if(active) overheadTotal += fullUpkeep;
+    overheadRows.push({key:k, icon:BUILDINGS_INFO[k].icon, label:BUILDINGS_INFO[k].label, price:BUILDINGS_INFO[k].price, owned,
+      cost: fullUpkeep, note: !owned ? 'Not built yet' : (b.auto ? `Up to ${money(fullUpkeep)}/month for heating & water` : 'Paused — production switched off')});
+  });
+  FISH_KEYS_B.forEach(k=>{
+    const b=state.buildings[k]; const owned=b?.owned;
+    const cost = owned ? fishFoodCost(k) : (PRODUCTION_MONTHLY_COSTS[k]||0);
+    const active = owned && b.auto;
+    if(active) overheadTotal += cost;
+    overheadRows.push({key:k, icon:BUILDINGS_INFO[k].icon, label:BUILDINGS_INFO[k].label, price:BUILDINGS_INFO[k].price, owned,
+      cost, note: !owned ? 'Not built yet' : (b.auto ? `Feed cost scales with your ${ownedFarmHa()} ha farm` : 'Paused — production switched off')});
+  });
+  const PEN_INFO = {
+    chickenPen:{label:'Chicken Pen', icon:'🐔', price:CHICKEN_PEN_PRICE, count:()=>state.pens.chickenPen.chickenCount, prodKey:'chickenProduction'},
+    cowPen:{label:'Cow & Buffalo Pen', icon:'🐄', price:COW_PEN_PRICE, count:()=>state.pens.cowPen.cows+state.pens.cowPen.buffaloCows, prodKey:'cowProduction'},
+    goatSheepPen:{label:'Sheep & Goat Pen', icon:'🐑', price:GOAT_SHEEP_PEN_PRICE, count:()=>state.pens.goatSheepPen.goats+state.pens.goatSheepPen.sheep, prodKey:'goatSheepProduction'}
+  };
+  Object.keys(PEN_INFO).forEach(k=>{
+    const info=PEN_INFO[k]; const pen=state.pens[k]; const owned=pen?.owned; const n=owned?info.count():0;
+    const cost = n>0 ? (PRODUCTION_MONTHLY_COSTS[info.prodKey]||0) : 0;
+    if(cost>0) overheadTotal += cost;
+    overheadRows.push({key:k, icon:info.icon, label:info.label, price:info.price, owned,
+      cost, note: !owned ? 'Not purchased yet' : (n>0 ? `${n} animal${n!==1?'s':''} housed` : 'No animals yet — cost is $0')});
+  });
+
+  let html=`<header class="topbar"><div class="brand"><span class="eyebrow">Paddock to Pantry</span><h1 class="farm-logo">💰 Finances</h1></div><div class="stat-cluster"><button class="icon-btn" onclick="showFinances()">💰 Finances</button><button class="icon-btn" onclick="backToFarm()">← Back to Farm</button></div></header>`;
+  html+=`<div class="card" style="margin-top:14px"><h2>Finances <span class="sub">FS25-style overview of income, building &amp; pen overhead, and monthly results.</span></h2>`;
+  html+=`<div class="finance-grid">
+    <div class="finance-stat"><div class="label">Income — ${timeLabel()}</div><div class="value finance-positive">+${money(totals.income)}</div></div>
+    <div class="finance-stat"><div class="label">Costs — ${timeLabel()}</div><div class="value finance-negative">-${money(totals.expense)}</div></div>
+    <div class="finance-stat"><div class="label">Monthly balance</div><div class="value ${net>=0?'finance-positive':'finance-negative'}">${net>=0?'+':'-'}${money(Math.abs(net))}</div></div>
+    <div class="finance-stat"><div class="label">Fixed monthly overhead</div><div class="value finance-negative">-${money(overheadTotal)}</div></div>
+  </div>`;
+
+  html+=`<h3 style="font-size:15px;margin:14px 0 8px">Owned buildings &amp; pens — monthly overhead</h3><table class="kiosk finance-table"><thead><tr><th>Building / Pen</th><th>Built for</th><th>Monthly cost</th><th>Status</th></tr></thead><tbody>`;
+  overheadRows.forEach(r=>{
+    html+=`<tr><td>${r.icon} ${r.label}</td><td class="mono">${r.owned?'Owned':money(r.price)}</td><td class="mono ${r.owned&&r.cost>0?'finance-negative':''}">${r.owned?(r.cost>0?'-'+money(r.cost):money(0)):'—'}</td><td>${r.note}</td></tr>`;
+  });
+  html+=`<tr style="font-weight:700"><td>Total fixed overhead</td><td></td><td class="mono finance-negative">-${money(overheadTotal)}</td><td>Sum of active, owned buildings &amp; pens this month</td></tr>`;
+  html+=`</tbody></table>`;
+
+  html+=`<h3 style="font-size:15px;margin:16px 0 8px">Recent finance history</h3>`;
+  if(!h.length) html+=`<p class="empty-hint">No finance entries yet. Sell products, buy a building, or advance a month to build your history.</p>`;
+  else { html+=`<table class="kiosk finance-table"><thead><tr><th>Month</th><th>Type</th><th>Category</th><th>Amount</th><th>Details</th></tr></thead><tbody>`; h.slice(0,60).forEach(r=>{html+=`<tr><td>${r.day}</td><td>${r.type==='income'?'Income':'Cost'}</td><td>${r.category}</td><td class="mono ${r.type==='income'?'finance-positive':'finance-negative'}">${r.type==='income'?'+':'-'}${money(r.amount)}</td><td>${r.note}</td></tr>`}); html+=`</tbody></table>`; }
+  html+=`</div><footer class="credits">Green Acre Farms — finances are saved with your farm.</footer>`; return html;
+}
+
+
+function renderOverviewScreen(){
+  return `
+    <header class="topbar">
+      <div class="brand">
+        <span class="eyebrow">Paddock to Pantry</span>
+        <h1 class="farm-logo">🗺️ Map Overview</h1>
+      </div>
+      <div class="stat-cluster">
+        <button class="icon-btn" onclick="showFinances()">💰 Finances</button><button class="icon-btn" onclick="backToFarm()">← Back to Farm</button>
+      </div>
+    </header>
+    <div id="toast" class="${state.toastMsg?'show':''}">${state.toastMsg}</div>
+    <div class="card" style="margin-top:14px;">
+      <h2>Map Overview<span class="sub">Choose a map view to see paddocks needing spray, low nitrogen or off pH — plus ownership, state and crop for every paddock.</span></h2>
+      ${renderOverview()}
+    </div>
+    <footer class="credits">Green Acre Farms — a paddock-to-pantry sim · progress saves automatically</footer>
+  `;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  if(uiScreen==='menu'){
+    app.innerHTML = renderMenuScreen();
+    return;
+  }
+  if(uiScreen==='sleep'){
+    app.innerHTML = renderSleepScreen();
+    return;
+  }
+  if(uiScreen==='sleepSetup'){
+    app.innerHTML = renderSleepSetupScreen();
+    return;
+  }
+  if(uiScreen==='overview'){
+    app.innerHTML = renderOverviewScreen();
+    return;
+  }
+  if(uiScreen==='finances'){
+    app.innerHTML = renderFinancesScreen();
+    return;
+  }
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="brand">
+        <span class="eyebrow">Paddock to Pantry</span>
+        <h1 class="farm-logo">🌾 Green Acre Farms 🌾</h1>
+      </div>
+      <div class="stat-cluster">
+        <div class="stat"><span class="label">Farm Time</span><span class="value mono">${timeLabel()} · ${clockLabel()}</span></div>
+        <div class="stat"><span class="label">Cash</span><span class="value money mono">${money(state.money)}</span></div>
+        
+<div class="save-quit-group">
+  <button class="header-savequit-btn" onclick="showMapOverview()" title="Map Overview"><span class="sq-icon">🗺️</span><span class="sq-label">MAP OVERVIEW</span></button>
+  <button class="header-savequit-btn" onclick="showFinances()" title="Finances"><span class="sq-icon">💰</span><span class="sq-label">FINANCES</span></button>
+  <button class="header-savequit-btn" onclick="headerSaveGame()" title="Save Game"><span class="sq-icon">▣</span><span class="sq-label">SAVE GAME</span></button>
+  <button class="header-savequit-btn" onclick="headerQuitGame()" title="Quit Game"><span class="sq-icon power-icon">⏻</span><span class="sq-label">QUIT GAME</span></button>
+</div>
+<button class="next-day" onclick="openSleepMenu()">😴 Sleep</button>
+      </div>
+    </header>
+    <div id="toast" class="${state.toastMsg?'show':''}">${state.toastMsg}</div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>Farm Map<span class="sub">Roads separate every paddock; colour shows growth stage.</span></h2>
+        ${renderMap()}
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <div class="tab-btn ${state.activeTab==='field'?'active':''}" onclick="setTab('field')">Paddock</div>
+          <div class="tab-btn ${state.activeTab==='kiosk'?'active':''}" onclick="setTab('kiosk')">Kiosk</div>
+          <div class="tab-btn ${state.activeTab==='processing'?'active':''}" onclick="setTab('processing')">Mills &amp; Dairy</div>
+          <div class="tab-btn ${state.activeTab==='livestock'?'active':''}" onclick="setTab('livestock')">Livestock</div>
+          <div class="tab-btn ${state.activeTab==='yieldmap'?'active':''}" onclick="setTab('yieldmap')">Yield Map</div>
+        </div>
+        ${state.activeTab==='field' ? renderFieldPanel() : ''}
+        ${state.activeTab==='kiosk' ? renderKiosk() : ''}
+        ${state.activeTab==='processing' ? renderProcessing() : ''}
+        ${state.activeTab==='livestock' ? renderLivestock() : ''}
+        ${state.activeTab==='yieldmap' ? renderYieldMap() : ''}
+      </div>
+    </div>
+    <footer class="credits">Green Acre Farms — a paddock-to-pantry sim · progress saves automatically</footer>
+  `;
+}
+function renderToastOnly(){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.className = state.toastMsg ? 'show' : '';
+  t.textContent = state.toastMsg;
+}
+
+/* ============================= INIT ============================= */
+loadGame();
+
+function headerSaveGame(){
+  try{
+    saveGame();
+    const el=document.createElement('div');
+    el.className='save-toast';
+    el.textContent='✓ Game saved';
+    document.body.appendChild(el);
+    el.style.display='block';
+    setTimeout(()=>el.remove(),1600);
+  }catch(err){
+    if(typeof toast==='function') toast('Unable to save the game.');
+    console.error(err);
+  }
+}
+
+function headerQuitGame(){
+  if(!confirm('Quit Green Acre Farms? Save your game first if you want to keep your progress.')) return;
+  try{saveGame();}catch(e){}
+  document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#17130f;color:#f4e5bf;font-family:Georgia,serif;text-align:center"><div><div style="font-size:42px;font-weight:bold">GREEN ACRE</div><div style="font-size:20px;letter-spacing:5px;margin-bottom:30px">FARMS</div><div style="font-family:Arial,sans-serif;color:#cdbf9e;margin-bottom:22px">Game saved. You have quit to the title screen.</div><button onclick="location.reload()" style="padding:12px 28px;border:1px solid #9b7b3d;border-radius:7px;background:#3a2b1e;color:#f4e5bf;font-weight:bold;cursor:pointer">RETURN TO GAME</button></div></div>';
+}
+</script>
+</body>
+</html>
