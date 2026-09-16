@@ -225,6 +225,35 @@
     box-shadow:0 0 26px rgba(255,212,121,0.7);
   }
 
+  .game-preview.banished{
+    background:linear-gradient(180deg,#0a120e 0%,#16241a 55%,#0c1710 100%);
+  }
+  .banished-glow{
+    position:absolute;left:50%;bottom:22%;transform:translateX(-50%);
+    width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle, rgba(120,180,120,0.22), transparent 70%);
+  }
+  .banished-wheel-wrap{
+    position:absolute;left:50%;bottom:20%;transform:translateX(-50%);
+    width:86px;height:86px;
+  }
+  .banished-wheel{
+    position:absolute;top:0;left:0;right:0;bottom:0;border-radius:50%;
+    border:4px solid #4d7358;
+  }
+  .banished-spoke{
+    position:absolute;left:50%;top:50%;width:86px;height:3px;
+    background:#4d7358;
+    transform-origin:center;
+  }
+  .banished-spoke.s1{transform:translate(-50%,-50%) rotate(0deg);}
+  .banished-spoke.s2{transform:translate(-50%,-50%) rotate(60deg);}
+  .banished-spoke.s3{transform:translate(-50%,-50%) rotate(120deg);}
+  .banished-fog{
+    position:absolute;left:0;right:0;bottom:0;height:24%;
+    background:linear-gradient(180deg, transparent, rgba(170,195,170,0.18));
+  }
+
   .game-body{padding:24px 26px;display:flex;flex-direction:column;flex:1;min-width:0;}
   .game-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .game-tag{
@@ -417,6 +446,33 @@
         </div>
         <div class="game-name">Green Acre Farms</div>
         <div class="game-desc">Buy, cultivate, sow and harvest paddocks, process your produce, and manage the books — a full farm business sim from the ground up.</div>
+        <div class="game-footer">
+          <span class="game-status">Live</span>
+          <span class="play-btn">Play ▸</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- BANISHED GROUNDS -->
+    <a class="game-card" href="https://overgrown-maps.preview.emergentagent.com/" target="_blank">
+      <div class="game-preview banished">
+        <div class="banished-glow"></div>
+        <div class="banished-wheel-wrap">
+          <div class="banished-wheel"></div>
+          <div class="banished-spoke s1"></div>
+          <div class="banished-spoke s2"></div>
+          <div class="banished-spoke s3"></div>
+        </div>
+        <div class="banished-fog"></div>
+      </div>
+      <div class="game-body">
+        <div class="game-tags">
+          <span class="game-tag">Horror</span>
+          <span class="game-tag">Survival</span>
+          <span class="game-tag">Open World</span>
+        </div>
+        <div class="game-name">Banished Grounds</div>
+        <div class="game-desc">An open-world survival horror playthrough set in an abandoned amusement park swallowed by nature. Pull three anchors, close the circle, and escape before it finds you.</div>
         <div class="game-footer">
           <span class="game-status">Live</span>
           <span class="play-btn">Play ▸</span>
