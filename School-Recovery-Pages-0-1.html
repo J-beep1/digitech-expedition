@@ -305,8 +305,8 @@ body.investigation-live>footer{background:#fffffff2}
 @media(prefers-reduced-motion:reduce){.mechanism-node .mechanism-box{transition:none}}
 
 /* A narrow persistent visual; detailed feedback stays with the repair task. */
-:root{--live-dock:350px}
-.system-dock{top:16px;right:20px;bottom:auto;width:var(--live-dock);max-height:none;overflow:visible;display:block}
+:root{--live-dock:350px;--workspace-edge:24px}
+.system-dock{top:calc(var(--live-top) + var(--workspace-edge));right:var(--workspace-edge);bottom:auto;width:var(--live-dock);max-height:none;overflow:visible;display:block}
 .system-dock .system-head{padding:10px 12px 0}
 .system-dock .system-head>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0;width:100%}
 .system-dock .system-head h2{font-size:16px;line-height:1.4;margin:0;white-space:nowrap}
@@ -338,21 +338,16 @@ body.investigation-live>footer{background:#fffffff2}
 .mechanism-feedback .system-legend span:nth-child(2)::before{background:#8ed7b0}
 .mechanism-feedback .system-legend span:nth-child(3)::before{background:#e9a3b5}
 @media(min-width:1001px){
- body.investigation-live .page{margin-left:0;width:calc(100% - var(--live-dock) - 40px)}
- body.investigation-live>header{width:calc(100% - var(--live-dock) - 40px)}
- .live-progress{right:auto;width:calc(100% - var(--live-dock) - 40px);grid-template-columns:minmax(210px,.8fr) minmax(280px,1.5fr);padding:10px 20px;row-gap:9px}
+ /* Reserve only the model rail. Let cards fill the rest of the workspace. */
+ body.investigation-live .page{max-width:none;margin:24px 0 32px;width:calc(100% - var(--live-dock) - var(--workspace-edge));padding:0 var(--workspace-edge)}
+ body.investigation-live>header,body.investigation-live>footer{width:calc(100% - var(--live-dock) - var(--workspace-edge));padding-left:var(--workspace-edge);padding-right:var(--workspace-edge)}
+ /* One continuous header above both the evidence and the account model. */
+ .live-progress{left:0;right:0;width:100%;grid-template-columns:minmax(210px,.8fr) minmax(280px,1.5fr);padding:10px var(--workspace-edge);row-gap:9px}
  .live-progress-title{display:block}
  .live-stage-trail{margin-top:6px}
  .live-progress-track{grid-row:auto;grid-column:auto}
  .next-action{grid-row:auto;grid-column:1/-1}
- .system-announcement{right:34px;top:30px}
-}
-@media(min-width:1001px) and (max-width:1100px){
- .live-progress{grid-template-columns:minmax(0,1fr)}
- .live-progress-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
- .live-stage-trail{margin-top:0;flex-shrink:0}
- .live-progress-track{grid-row:2;grid-column:1}
- .next-action{grid-row:3;grid-column:1}
+ .system-announcement{right:var(--workspace-edge);top:calc(var(--live-top) + 30px);width:var(--live-dock)}
 }
 @media(max-width:1000px){
  .system-dock{inset:auto 10px 8px;width:auto;max-height:none}
@@ -1118,7 +1113,7 @@ for(let n=1;n<=5;n++)$('followChallengeRun'+n).onclick=async()=>{
   window.addEventListener('resize',schedule);
   compact.addEventListener('change',()=>{placeMap();schedule();});
   shallow.addEventListener('change',()=>{placeMap();schedule();});
-  // Measure the left progress strip and the responsive workbench separately.
+  // Measure the full-width progress strip and the responsive workbench separately.
   // The page clears their actual size when directions wrap or a trial opens.
   if(typeof ResizeObserver!=='undefined'){
     const observer=new ResizeObserver(()=>{
